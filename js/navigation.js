@@ -5,7 +5,7 @@ const panels={compress:document.getElementById('panel-compress'),slice:document.
 const title=document.querySelector('#workspace .page-title h1'),description=document.querySelector('#workspace .page-title p');
 const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Пересохраняйте изображения между PNG, JPEG и WebP.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Получайте фрагмент нужного размера из исходного изображения.'],adjust:['Коррекция изображения','Настраивайте яркость, контраст, насыщенность и чёрно-белый режим.']};
 const advancedIds=new Set(['transform','watermark','batch','metadata','favicon']);
-function closeMenus(){document.querySelectorAll('.nav-group.open').forEach(g=>g.classList.remove('open'))}
+function closeMenus(){document.querySelectorAll('.nav-group.open').forEach(g=>{g.classList.remove('open');const t=g.querySelector('.nav-group-toggle');if(t)t.setAttribute('aria-expanded','false')})}
 function refreshGroups(active){document.querySelectorAll('.nav-group').forEach(g=>{const ids=(g.dataset.groupIds||'').split(',');const selected=!!active&&ids.includes(active)||[...g.querySelectorAll('.nav-dropdown-item')].some(b=>b.classList.contains('active'));g.classList.toggle('active',!!selected)})}
 function setBasicTool(tool){Object.entries(panels).forEach(([name,p])=>{if(p)p.classList.toggle('active',name===tool)});if(title&&info[tool])title.textContent=info[tool][0];if(description&&info[tool])description.textContent=info[tool][1];const grid=document.getElementById('gridOverlay');if(grid)grid.style.display=tool==='slice'?'block':'none'}
 function activate(page){closeMenus();document.querySelectorAll('.top-nav-link').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.body.classList.toggle('page-home',page==='home');document.body.classList.toggle('page-tool',page!=='home');if(page==='home'){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));refreshGroups('home');window.scrollTo({top:0,behavior:'smooth'});return}if(advancedIds.has(page)&&window.safelightSetAdvanced){window.safelightSetAdvanced(page);refreshGroups(page);return}setBasicTool(page);refreshGroups(page);window.scrollTo({top:0,behavior:'smooth'})}
@@ -17,4 +17,5 @@ const observer=new MutationObserver(()=>buildGroups());if(nav)observer.observe(n
 setTimeout(buildGroups,0);setTimeout(buildGroups,150);setTimeout(buildGroups,500);
 window.safelightActivate=activate;
 activate('home');
+const advanced=document.createElement('script');advanced.src='js/advanced.js?v=5';advanced.onerror=()=>console.error('Safelight: advanced.js failed to load');document.body.appendChild(advanced);
 })();
