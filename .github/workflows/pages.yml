@@ -29,9 +29,14 @@ jobs:
           curl -L --fail --retry 3 -o vendor/pdf.min.mjs https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs
           curl -L --fail --retry 3 -o vendor/pdf.worker.min.mjs https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs
 
-      - name: Prepare PDF.js worker path
+      - name: Rewrite third-party PDF/ZIP URLs to local assets
         run: |
-          sed -i 's#https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs#./vendor/pdf.worker.min.mjs#g' js/pdf-converter.js 2>/dev/null || true
+          find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.mjs' \) -not -path './.git/*' -print0 | xargs -0 sed -i \
+            -e 's#https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js#./vendor/jszip.min.js#g' \
+            -e 's#https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js#./vendor/jspdf.umd.min.js#g' \
+            -e 's#https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs#./vendor/pdf.min.mjs#g' \
+            -e 's#https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs#./vendor/pdf.worker.min.mjs#g' \
+            -e 's#https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.js#./vendor/pdf.worker.min.mjs#g'
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
