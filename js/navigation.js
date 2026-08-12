@@ -17,5 +17,5 @@ const observer=new MutationObserver(()=>buildGroups());if(nav)observer.observe(n
 setTimeout(buildGroups,0);setTimeout(buildGroups,150);setTimeout(buildGroups,500);
 window.safelightActivate=activate;
 activate('home');
-const advanced=document.createElement('script');advanced.src='js/advanced.js?v=5';advanced.onerror=()=>console.error('Safelight: advanced.js failed to load');document.body.appendChild(advanced);
+const advanced=document.createElement('script');advanced.src='js/advanced.js?v=5';advanced.onerror=()=>console.error('Safelight: advanced.js failed to load');advanced.onload=()=>{const compare=document.createElement('script');compare.src='js/compare.js?v=1';compare.onerror=()=>console.error('Safelight: compare.js failed to load');document.body.appendChild(compare)};document.body.appendChild(advanced);
 })();
