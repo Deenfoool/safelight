@@ -1,0 +1,22 @@
+# Dependencies / vendor (downloaded by CI for Pages offline build)
+vendor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs & temp
+*.log
+.tmp/
+.temp/
+
+# Local env
+.env
+.env.local
