@@ -1,0 +1,8 @@
+/* PWA install affordance appears only when the browser exposes installation. */
+.sl-pwa-install{display:none;width:100%;margin-top:10px;min-height:34px;border:1px solid rgba(163,230,53,.28);border-radius:8px;background:rgba(163,230,53,.07);color:#c8f36a;align-items:center;justify-content:center;gap:7px;font:700 9.5px var(--sans);cursor:pointer;transition:.15s ease}
+.sl-pwa-install.show{display:flex}
+.sl-pwa-install:hover{background:rgba(163,230,53,.12);border-color:rgba(163,230,53,.42);color:#e5ffc0}
+.sl-pwa-install svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sl-pwa-status{display:none;margin-top:7px;color:#6f6f78;font:500 8.5px/1.45 var(--sans)}
+.sl-pwa-status.show{display:block}
+@media(display-mode:standalone){.sl-pwa-install{display:none!important}}
