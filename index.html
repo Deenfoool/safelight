@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#09090b">
 <meta name="description" content="Safelight — локальная обработка изображений в браузере. Сжатие, нарезка, конвертация, ресайз без отправки файлов на сервер.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; worker-src 'self' blob:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Safelight">
@@ -44,14 +45,14 @@
 </main></div></div></section>
 <section id="about"><div class="wrap"><div class="about-grid"><div class="about-num">01</div><div><h2>Не отправляю <em>ничего</em> на сервер.</h2><p>Safelight работает в браузере. Изображение обрабатывается через Canvas API, а ZIP собирается локально.</p><div class="tags"><span class="tag">Canvas API</span><span class="tag">ZIP локально</span><span class="tag">Без сервера</span><span class="tag">Приватность</span><span class="tag">PNG / JPEG / WebP</span></div></div></div></div></section>
 <footer><div class="wrap"><div class="copy">© <b>Safelight</b> — MIT · сделано с любопытством и кофеином</div><div class="copy">локальная обработка</div></div></footer>
-<script src="vendor/jszip.min.js?v=1"></script>
-<script src="vendor/pdf.min.js?v=1"></script>
-<script src="vendor/jspdf.umd.min.js?v=1"></script>
+<script src="vendor/jszip.min.js?v=2"></script>
+<script src="vendor/pdf.min.js?v=2"></script>
+<script src="vendor/jspdf.umd.min.js?v=2"></script>
 <script src="js/app.js?v=8"></script>
-<script src="js/navigation.js?v=16"></script>
+<script src="js/navigation.js?v=17"></script>
 <script src="js/metadata-tools.js?v=1"></script>
 <script src="js/metadata-export-bridge.js?v=1"></script>
-<script src="js/privacy-effects.js?v=2"></script>
+<script src="js/privacy-effects.js?v=3"></script>
 <script src="js/privacy-effects-fix.js?v=1"></script>
 <script src="js/palette-tools.js?v=1"></script>
 <script src="js/pwa.js?v=1"></script>
