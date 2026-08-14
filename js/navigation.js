@@ -53,9 +53,6 @@
 
   function activate(page) {
     closeMenus();
-
-    // Every tool gets an isolated preview. Nothing rendered by the previous tool
-    // is allowed to remain visually on top of the immutable source image.
     window.dispatchEvent(new CustomEvent("safelight:toolchange", { detail: { page } }));
 
     document.querySelectorAll(".top-nav-link").forEach((button) =>
@@ -192,8 +189,10 @@
   }
 
   loadScript("js/advanced.js?v=7", () => {
-    loadScript("js/compare.js?v=5", () => {
-      loadScript("js/hardening.js?v=1");
+    loadScript("js/compare.js?v=6", () => {
+      loadScript("js/hardening.js?v=1", () => {
+        loadScript("js/source-cleanup.js?v=1");
+      });
     });
   });
 })();
