@@ -354,25 +354,12 @@
   }
 
   async function ensureJsPdf() {
-    if (window.jspdf?.jsPDF) return true;
-    const load = (src) => new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-    try { await load("./vendor/jspdf.umd.min.js"); }
-    catch (_) {
-      try { await load("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"); }
-      catch (_) { return false; }
-    }
     return !!window.jspdf?.jsPDF;
   }
 
   async function exportCanvas(canvas, format, suffix) {
     if (format === "pdf") {
-      if (!(await ensureJsPdf())) throw new Error("PDF модуль не загрузился");
+      if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
       const { jsPDF } = window.jspdf;
       const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
       const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
@@ -398,7 +385,7 @@
     const text = watermarkText();
     const opacity = watermarkOpacity();
     ctx.save();
-    ctx.font = `600 ${size}px Inter,Arial,sans-serif`;
+    ctx.font = `600 ${size}px system-ui,Arial,sans-serif`;
     ctx.fillStyle = `rgba(255,255,255,${opacity})`;
     ctx.shadowColor = "rgba(0,0,0,.55)";
     ctx.shadowBlur = Math.max(2, size / 10);
@@ -444,7 +431,7 @@
   }
 
   async function exportSlice(format) {
-    if (!window.JSZip) throw new Error("ZIP модуль не загрузился");
+    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился");
     const image = await imageFrom(sourceImageElement().src);
     const { x, y } = sliceBoundaries();
     const zip = new JSZip();
