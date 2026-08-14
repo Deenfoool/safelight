@@ -1,4 +1,5 @@
 /* Small shell overrides kept separate so the legacy page remains untouched. */
+.sl-app section,.sl-app .panel{padding:0!important;margin:0}
 .sl-app .preview-wrap[style*="display:none"]{display:none!important}
 .sl-app .readout[style*="display:none"]{display:none!important}
 /* Keep the preview wrapper fitted to the rendered image so compare/crop/slice overlays share exact image bounds. */
