@@ -118,7 +118,7 @@
     const text = ($("wm-text")?.value || "Safelight").trim() || "Safelight";
     const opacity = Math.max(1, Math.min(100, Number($("wm-opacity")?.value) || 45)) / 100;
     const position = $("wm-pos")?.value || "br", pad = size * 0.55;
-    ctx.font = `600 ${size}px Inter,Arial,sans-serif`; ctx.fillStyle = `rgba(255,255,255,${opacity})`; ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = Math.max(2, size / 10);
+    ctx.font = `600 ${size}px system-ui,Arial,sans-serif`; ctx.fillStyle = `rgba(255,255,255,${opacity})`; ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = Math.max(2, size / 10);
     const metrics = ctx.measureText(text); let x = pad, y = size + pad;
     if (position.includes("r")) x = out.width - metrics.width - pad;
     if (position === "center") { x = (out.width - metrics.width) / 2; y = (out.height + size) / 2; }
@@ -210,14 +210,12 @@
   }
   async function ensureJsPdf() {
     if (window.jspdf?.jsPDF) return true;
-    const load = (src) => new Promise((resolve, reject) => { const script = document.createElement("script"); script.src = src; script.onload = resolve; script.onerror = reject; document.head.appendChild(script); });
-    try { await load("./vendor/jspdf.umd.min.js"); } catch (_) { try { await load("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"); } catch (_) { return false; } }
-    return !!window.jspdf?.jsPDF;
+    return false;
   }
   async function exportImage(format) {
     if (!lastCanvas) await renderNow(); if (!lastCanvas) throw new Error("Нет изображения для экспорта");
     if (format === "pdf") {
-      if (!(await ensureJsPdf())) throw new Error("PDF модуль не загрузился");
+      if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
       const { jsPDF } = window.jspdf, orientation = lastCanvas.width > lastCanvas.height ? "landscape" : "portrait";
       const doc = new jsPDF({ orientation, unit: "mm", format: "a4" }), pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin = 10;
       const scale = Math.min((pageW - margin * 2) / lastCanvas.width, (pageH - margin * 2) / lastCanvas.height), w = lastCanvas.width * scale, h = lastCanvas.height * scale;
@@ -237,7 +235,7 @@
     if (window.sliceMode === "horizontal") cols = 1; if (window.sliceMode === "vertical") rows = 1; return { rows, cols };
   }
   async function exportSlice(format) {
-    if (!window.JSZip) throw new Error("ZIP модуль не загрузился"); const { rows, cols } = gridCounts(), zip = new JSZip();
+    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился"); const { rows, cols } = gridCounts(), zip = new JSZip();
     const width = sourceImage.naturalWidth, height = sourceImage.naturalHeight;
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const x0 = Math.round((c * width) / cols), x1 = Math.round(((c + 1) * width) / cols), y0 = Math.round((r * height) / rows), y1 = Math.round(((r + 1) * height) / rows);
@@ -248,7 +246,7 @@
     download(await zip.generateAsync({ type: "blob" }), baseName() + "-tiles.zip");
   }
   async function exportBatch(format) {
-    if (!window.JSZip) throw new Error("ZIP модуль не загрузился");
+    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился");
     const files = [...($("batch-files")?.files || [])].filter((file) => file.type.startsWith("image/")); if (!files.length) throw new Error("Сначала выберите изображения для пакетной обработки");
     const zip = new JSZip(), maxWidth = Math.max(0, Number($("b-width")?.value) || 0), quality = Math.max(0.01, Math.min(1, (Number($("b-quality")?.value) || 85) / 100)), bar = $("b-bar");
     for (let i = 0; i < files.length; i++) {
@@ -262,7 +260,7 @@
     download(await zip.generateAsync({ type: "blob" }), "safelight-batch.zip");
   }
   async function exportFavicon() {
-    if (!window.JSZip) throw new Error("ZIP модуль не загрузился"); const zip = new JSZip();
+    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился"); const zip = new JSZip();
     for (const size of [16, 32, 48, 180, 192, 512]) {
       const canvas = document.createElement("canvas"); canvas.width = canvas.height = size; const ctx = canvas.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
       const scale = Math.min(size / sourceImage.naturalWidth, size / sourceImage.naturalHeight), width = sourceImage.naturalWidth * scale, height = sourceImage.naturalHeight * scale;
