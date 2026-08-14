@@ -3,6 +3,15 @@
   if (window.safelightMetadataExportBridgeLoaded) return;
   window.safelightMetadataExportBridgeLoaded = true;
 
+  function ensureLegacyMetaBox() {
+    const panel = document.getElementById("panel-metadata");
+    if (!panel || document.getElementById("meta-box")) return;
+    const box = document.createElement("div");
+    box.id = "meta-box";
+    box.hidden = true;
+    panel.appendChild(box);
+  }
+
   function metadataActive() {
     return !!document.querySelector("#sl-inspector-panels #panel-metadata.active");
   }
@@ -56,6 +65,13 @@
   }
 
   window.addEventListener("safelight:toolchange", () => {
+    ensureLegacyMetaBox();
     document.querySelector(".sl-export-wrap")?.classList.remove("open");
   });
+
+  function bootCompat() {
+    ensureLegacyMetaBox();
+    if (!document.getElementById("panel-metadata")) setTimeout(bootCompat, 50);
+  }
+  bootCompat();
 })();
