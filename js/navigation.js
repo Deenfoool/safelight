@@ -200,6 +200,9 @@
     document.head.appendChild(link);
   }
 
+  loadStyle("css/visual-polish.css?v=1");
+  loadScript("js/visual-polish.js?v=1");
+
   loadScript("js/advanced.js?v=8", () => {
     loadStyle("css/app-shell-fixes.css?v=1");
     loadScript("js/ui-shell.js?v=1", () => {
