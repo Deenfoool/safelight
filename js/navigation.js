@@ -200,15 +200,16 @@
     document.head.appendChild(link);
   }
 
-  loadStyle("css/visual-polish.css?v=1");
-  loadScript("js/visual-polish.js?v=1");
+  loadStyle("css/visual-polish.css?v=2");
+  loadScript("js/visual-polish.js?v=2");
 
   loadScript("js/advanced.js?v=8", () => {
     loadStyle("css/app-shell-fixes.css?v=1");
+    loadStyle("css/live-editor.css?v=1");
     loadScript("js/ui-shell.js?v=1", () => {
-      loadScript("js/compare.js?v=7", () => {
-        loadScript("js/hardening.js?v=2", () => {
-          loadScript("js/source-cleanup.js?v=1");
+      loadScript("js/hardening.js?v=2", () => {
+        loadScript("js/source-cleanup.js?v=1", () => {
+          loadScript("js/live-editor.js?v=1");
         });
       });
     });
