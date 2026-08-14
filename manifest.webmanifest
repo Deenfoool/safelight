@@ -1,0 +1,27 @@
+{
+  "name": "Safelight — локальная обработка изображений",
+  "short_name": "Safelight",
+  "description": "Локальная обработка изображений в браузере без отправки файлов на сервер.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "ru",
+  "categories": ["photo", "graphics", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "assets/images/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
