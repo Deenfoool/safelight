@@ -5,6 +5,27 @@
 
   let deferredPrompt = null;
 
+  function installManifest() {
+    if (!document.querySelector('link[rel="manifest"]')) {
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = "manifest.webmanifest";
+      document.head.appendChild(link);
+    }
+    const metas = [
+      ["apple-mobile-web-app-capable", "yes"],
+      ["apple-mobile-web-app-status-bar-style", "black-translucent"],
+      ["apple-mobile-web-app-title", "Safelight"]
+    ];
+    metas.forEach(([name, content]) => {
+      if (document.querySelector('meta[name="' + name + '"]')) return;
+      const meta = document.createElement("meta");
+      meta.name = name;
+      meta.content = content;
+      document.head.appendChild(meta);
+    });
+  }
+
   function standalone() {
     return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
   }
@@ -43,6 +64,8 @@
     });
     return button;
   }
+
+  installManifest();
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
