@@ -1,395 +1,43 @@
-(function () {
-  "use strict";
-  if (window.safelightPrivacyEffectsLoaded) return;
-  window.safelightPrivacyEffectsLoaded = true;
-
-  const nav = document.querySelector(".top-nav-links");
-  const main = document.querySelector("main.workmain");
-  if (!nav || !main) return;
-
-  const state = {
-    mode: "blur",
-    strength: 18,
-    areas: [],
-    selectedId: null,
-    nextId: 1,
-    interaction: null,
-    sourceKey: "",
-  };
-
-  function addNav() {
-    if (nav.querySelector('[data-page="privacy"]')) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "top-nav-link advanced-nav";
-    button.dataset.page = "privacy";
-    button.innerHTML = '<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7v10M12 7v10M16 7v10M4 11h16M4 15h16"/></svg></span><span>Размытие</span>';
-    nav.appendChild(button);
-  }
-
-  function addPanel() {
-    if (document.getElementById("panel-privacy")) return;
-    const section = document.createElement("section");
-    section.className = "panel";
-    section.id = "panel-privacy";
-    section.innerHTML = `
-      <div class="panel-card sl-pe-panel">
-        <h2>РАЗМЫТИЕ / ПИКСЕЛИЗАЦИЯ</h2>
-        <p class="desc">Скрывайте лица, номера, документы и другие области прямо на изображении.</p>
-        <div class="sl-pe-mode" role="group" aria-label="Режим скрытия">
-          <button type="button" class="sl-pe-mode-btn active" data-pe-mode="blur">Размытие</button>
-          <button type="button" class="sl-pe-mode-btn" data-pe-mode="pixelate">Пикселизация</button>
-        </div>
-        <div class="slider-row sl-pe-strength-row">
-          <div class="top"><span>Интенсивность</span><b id="pe-strength-value">18</b></div>
-          <input id="pe-strength" type="range" min="2" max="64" value="18">
-        </div>
-        <div class="sl-pe-help"><b>Нарисуйте область на фотографии</b><span>Зажмите мышь и протяните. Готовую область можно двигать и менять её размер за правый нижний угол.</span></div>
-        <div class="sl-pe-actions">
-          <button type="button" id="pe-delete" class="sl-pe-action" disabled>Удалить выбранную</button>
-          <button type="button" id="pe-clear" class="sl-pe-action danger" disabled>Очистить всё</button>
-        </div>
-        <div class="sl-pe-summary"><span>Областей</span><b id="pe-count">0</b></div>
-        <input id="pe-revision" type="hidden" value="0">
-      </div>`;
-    main.appendChild(section);
-  }
-
-  addNav();
-  addPanel();
-
-  const $ = (id) => document.getElementById(id);
-
-  function active() {
-    return !!document.querySelector("#panel-privacy.active");
-  }
-
-  function selected() {
-    return state.areas.find((area) => area.id === state.selectedId) || null;
-  }
-
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function normalizeArea(area) {
-    area.x = clamp(area.x, 0, 1);
-    area.y = clamp(area.y, 0, 1);
-    area.w = clamp(area.w, 0.002, 1 - area.x);
-    area.h = clamp(area.h, 0.002, 1 - area.y);
-  }
-
-  function bumpRender() {
-    const revision = $("pe-revision");
-    if (revision) {
-      revision.value = String((Number(revision.value) || 0) + 1);
-      revision.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    renderOverlay();
-    updateUi();
-  }
-
-  function updateUi() {
-    const sel = selected();
-    const strength = $("pe-strength");
-    const value = $("pe-strength-value");
-    if (strength) strength.value = String(sel ? sel.strength : state.strength);
-    if (value) value.textContent = String(sel ? sel.strength : state.strength);
-    document.querySelectorAll(".sl-pe-mode-btn").forEach((button) => {
-      button.classList.toggle("active", button.dataset.peMode === (sel ? sel.mode : state.mode));
-    });
-    if ($("pe-count")) $("pe-count").textContent = String(state.areas.length);
-    if ($("pe-delete")) $("pe-delete").disabled = !sel;
-    if ($("pe-clear")) $("pe-clear").disabled = !state.areas.length;
-  }
-
-  function imageElement() {
-    const live = $("sl-live-canvas");
-    if (live && getComputedStyle(live).display !== "none" && live.width && live.height) return live;
-    const preview = $("previewImg");
-    return preview && preview.src ? preview : null;
-  }
-
-  function ensureSurface() {
-    const wrap = $("previewWrap");
-    if (!wrap) return null;
-    let surface = $("sl-privacy-surface");
-    if (!surface) {
-      surface = document.createElement("div");
-      surface.id = "sl-privacy-surface";
-      surface.className = "sl-privacy-surface";
-      surface.setAttribute("aria-label", "Области размытия и пикселизации");
-      wrap.appendChild(surface);
-      bindSurface(surface);
-    }
-    return surface;
-  }
-
-  function syncSurface() {
-    const wrap = $("previewWrap");
-    const surface = ensureSurface();
-    const image = imageElement();
-    if (!wrap || !surface || !image || !active()) {
-      if (surface) surface.classList.remove("show");
-      return;
-    }
-    const wr = wrap.getBoundingClientRect();
-    const ir = image.getBoundingClientRect();
-    if (!ir.width || !ir.height) {
-      surface.classList.remove("show");
-      return;
-    }
-    surface.style.left = (ir.left - wr.left) + "px";
-    surface.style.top = (ir.top - wr.top) + "px";
-    surface.style.width = ir.width + "px";
-    surface.style.height = ir.height + "px";
-    surface.classList.add("show");
-    renderOverlay();
-  }
-
-  function renderOverlay() {
-    const surface = $("sl-privacy-surface");
-    if (!surface) return;
-    const existing = new Map([...surface.querySelectorAll(".sl-pe-area")].map((el) => [Number(el.dataset.id), el]));
-    state.areas.forEach((area) => {
-      let el = existing.get(area.id);
-      if (!el) {
-        el = document.createElement("div");
-        el.className = "sl-pe-area";
-        el.dataset.id = String(area.id);
-        el.innerHTML = '<span class="sl-pe-label"></span><i class="sl-pe-resize" data-pe-resize="1"></i>';
-        surface.appendChild(el);
-      }
-      existing.delete(area.id);
-      el.classList.toggle("selected", area.id === state.selectedId);
-      el.classList.toggle("pixelate", area.mode === "pixelate");
-      el.style.left = (area.x * 100) + "%";
-      el.style.top = (area.y * 100) + "%";
-      el.style.width = (area.w * 100) + "%";
-      el.style.height = (area.h * 100) + "%";
-      const label = el.querySelector(".sl-pe-label");
-      if (label) label.textContent = area.mode === "pixelate" ? "Пиксели " + area.strength : "Размытие " + area.strength;
-    });
-    existing.forEach((el) => el.remove());
-  }
-
-  function pointFromEvent(event, surface) {
-    const rect = surface.getBoundingClientRect();
-    return {
-      x: clamp((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1),
-      y: clamp((event.clientY - rect.top) / Math.max(1, rect.height), 0, 1),
-    };
-  }
-
-  function bindSurface(surface) {
-    surface.addEventListener("pointerdown", (event) => {
-      if (!active() || event.button !== 0) return;
-      const areaEl = event.target.closest(".sl-pe-area");
-      const p = pointFromEvent(event, surface);
-      surface.setPointerCapture?.(event.pointerId);
-
-      if (!areaEl) {
-        const area = {
-          id: state.nextId++,
-          x: p.x,
-          y: p.y,
-          w: 0.002,
-          h: 0.002,
-          mode: state.mode,
-          strength: state.strength,
-        };
-        state.areas.push(area);
-        state.selectedId = area.id;
-        state.interaction = { type: "draw", id: area.id, sx: p.x, sy: p.y };
-        renderOverlay();
-        updateUi();
-        event.preventDefault();
-        return;
-      }
-
-      const id = Number(areaEl.dataset.id);
-      const area = state.areas.find((item) => item.id === id);
-      if (!area) return;
-      state.selectedId = id;
-      if (event.target.closest("[data-pe-resize]")) {
-        state.interaction = { type: "resize", id, sx: p.x, sy: p.y, w: area.w, h: area.h };
-      } else {
-        state.interaction = { type: "move", id, sx: p.x, sy: p.y, x: area.x, y: area.y };
-      }
-      renderOverlay();
-      updateUi();
-      event.preventDefault();
-      event.stopPropagation();
-    });
-
-    surface.addEventListener("pointermove", (event) => {
-      const action = state.interaction;
-      if (!action) return;
-      const area = state.areas.find((item) => item.id === action.id);
-      if (!area) return;
-      const p = pointFromEvent(event, surface);
-      if (action.type === "draw") {
-        area.x = Math.min(action.sx, p.x);
-        area.y = Math.min(action.sy, p.y);
-        area.w = Math.max(0.002, Math.abs(p.x - action.sx));
-        area.h = Math.max(0.002, Math.abs(p.y - action.sy));
-      } else if (action.type === "move") {
-        area.x = clamp(action.x + (p.x - action.sx), 0, 1 - area.w);
-        area.y = clamp(action.y + (p.y - action.sy), 0, 1 - area.h);
-      } else if (action.type === "resize") {
-        area.w = clamp(action.w + (p.x - action.sx), 0.015, 1 - area.x);
-        area.h = clamp(action.h + (p.y - action.sy), 0.015, 1 - area.y);
-      }
-      normalizeArea(area);
-      renderOverlay();
-      event.preventDefault();
-    });
-
-    function finish(event) {
-      const action = state.interaction;
-      if (!action) return;
-      const area = state.areas.find((item) => item.id === action.id);
-      state.interaction = null;
-      if (action.type === "draw" && area && (area.w < 0.01 || area.h < 0.01)) {
-        state.areas = state.areas.filter((item) => item.id !== area.id);
-        if (state.selectedId === area.id) state.selectedId = null;
-      }
-      try { surface.releasePointerCapture?.(event.pointerId); } catch (_) {}
-      bumpRender();
-      event.preventDefault();
-    }
-    surface.addEventListener("pointerup", finish);
-    surface.addEventListener("pointercancel", finish);
-  }
-
-  function resetAreas() {
-    state.areas = [];
-    state.selectedId = null;
-    state.interaction = null;
-    bumpRender();
-  }
-
-  document.addEventListener("click", (event) => {
-    const mode = event.target.closest("[data-pe-mode]");
-    if (mode) {
-      const next = mode.dataset.peMode === "pixelate" ? "pixelate" : "blur";
-      const sel = selected();
-      state.mode = next;
-      if (sel) sel.mode = next;
-      bumpRender();
-      return;
-    }
-    if (event.target.closest("#pe-delete")) {
-      if (state.selectedId != null) {
-        state.areas = state.areas.filter((area) => area.id !== state.selectedId);
-        state.selectedId = null;
-        bumpRender();
-      }
-      return;
-    }
-    if (event.target.closest("#pe-clear")) resetAreas();
-  });
-
-  document.addEventListener("input", (event) => {
-    if (event.target.id !== "pe-strength") return;
-    const value = clamp(Number(event.target.value) || 18, 2, 64);
-    state.strength = value;
-    const sel = selected();
-    if (sel) sel.strength = value;
-    if ($("pe-strength-value")) $("pe-strength-value").textContent = String(value);
-    renderOverlay();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (!active() || state.selectedId == null) return;
-    if (event.key === "Delete" || event.key === "Backspace") {
-      const tag = event.target?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-      state.areas = state.areas.filter((area) => area.id !== state.selectedId);
-      state.selectedId = null;
-      bumpRender();
-      event.preventDefault();
-    }
-  });
-
-  window.addEventListener("safelight:toolchange", (event) => {
-    setTimeout(() => {
-      if (event.detail?.page !== "privacy") state.selectedId = null;
-      syncSurface();
-      updateUi();
-    }, 0);
-  });
-  window.addEventListener("safelight:live-render", () => requestAnimationFrame(syncSurface));
-  window.addEventListener("resize", () => requestAnimationFrame(syncSurface), { passive: true });
-
-  const preview = $("previewImg");
-  if (preview) {
-    new MutationObserver(() => {
-      const key = preview.src || "";
-      if (key && key !== state.sourceKey) {
-        state.sourceKey = key;
-        state.areas = [];
-        state.selectedId = null;
-        state.interaction = null;
-        updateUi();
-        renderOverlay();
-      }
-      requestAnimationFrame(syncSurface);
-    }).observe(preview, { attributes: true, attributeFilter: ["src"] });
-    state.sourceKey = preview.src || "";
-  }
-
-  async function render(sourceImage) {
-    const out = document.createElement("canvas");
-    out.width = sourceImage.naturalWidth || sourceImage.width;
-    out.height = sourceImage.naturalHeight || sourceImage.height;
-    const ctx = out.getContext("2d");
-    ctx.drawImage(sourceImage, 0, 0, out.width, out.height);
-
-    for (const area of state.areas) {
-      const x = Math.max(0, Math.round(area.x * out.width));
-      const y = Math.max(0, Math.round(area.y * out.height));
-      const w = Math.max(1, Math.min(out.width - x, Math.round(area.w * out.width)));
-      const h = Math.max(1, Math.min(out.height - y, Math.round(area.h * out.height)));
-      if (!w || !h) continue;
-
-      const snapshot = document.createElement("canvas");
-      snapshot.width = out.width;
-      snapshot.height = out.height;
-      snapshot.getContext("2d").drawImage(out, 0, 0);
-
-      if (area.mode === "pixelate") {
-        const block = Math.max(2, Math.round(area.strength));
-        const tiny = document.createElement("canvas");
-        tiny.width = Math.max(1, Math.ceil(w / block));
-        tiny.height = Math.max(1, Math.ceil(h / block));
-        const tx = tiny.getContext("2d");
-        tx.imageSmoothingEnabled = true;
-        tx.drawImage(snapshot, x, y, w, h, 0, 0, tiny.width, tiny.height);
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(tiny, 0, 0, tiny.width, tiny.height, x, y, w, h);
-        ctx.restore();
-      } else {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        ctx.clip();
-        ctx.filter = "blur(" + Math.max(1, area.strength) + "px)";
-        ctx.drawImage(snapshot, 0, 0);
-        ctx.filter = "none";
-        ctx.restore();
-      }
-    }
-    return out;
-  }
-
-  window.safelightPrivacyEffects = {
-    render,
-    getAreas: () => state.areas.map((area) => ({ ...area })),
-    reset: resetAreas,
-    syncSurface,
-  };
-
-  updateUi();
+(function(){
+'use strict';
+if(window.safelightPrivacyEffectsLoaded)return;window.safelightPrivacyEffectsLoaded=true;
+const $=id=>document.getElementById(id);
+const state={mode:'blur',strength:18,areas:[],selectedId:null,nextId:1,interaction:null,sourceKey:'',sourceImage:null,renderTimer:0,lastCanvas:null};
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function active(){return !!document.querySelector('#panel-privacy.active')}
+function selected(){return state.areas.find(a=>a.id===state.selectedId)||null}
+function makePanel(){if($('panel-privacy'))return $('panel-privacy');const s=document.createElement('section');s.className='panel';s.id='panel-privacy';s.innerHTML=`<div class="panel-card sl-pe-panel"><h2>РАЗМЫТИЕ / ПИКСЕЛИЗАЦИЯ</h2><p class="desc">Скрывайте лица, номера, документы и другие области прямо на изображении.</p><div class="sl-pe-mode" role="group" aria-label="Режим скрытия"><button type="button" class="sl-pe-mode-btn active" data-pe-mode="blur">Размытие</button><button type="button" class="sl-pe-mode-btn" data-pe-mode="pixelate">Пикселизация</button></div><div class="slider-row sl-pe-strength-row"><div class="top"><span>Интенсивность</span><b id="pe-strength-value">18</b></div><input id="pe-strength" type="range" min="2" max="64" value="18"></div><div class="sl-pe-help"><b>Нарисуйте область на фотографии</b><span>Зажмите мышь и протяните. Готовую область можно двигать и менять её размер за правый нижний угол.</span></div><div class="sl-pe-actions"><button type="button" id="pe-delete" class="sl-pe-action" disabled>Удалить выбранную</button><button type="button" id="pe-clear" class="sl-pe-action danger" disabled>Очистить всё</button></div><div class="sl-pe-summary"><span>Областей</span><b id="pe-count">0</b></div></div>`;const host=$('sl-inspector-panels')||document.querySelector('main.workmain');host?.appendChild(s);return s}
+function makeSidebarButton(){if(document.querySelector('.sl-sidebar [data-page="privacy"]'))return;const groups=[...document.querySelectorAll('.sl-sidebar .sl-nav-group')];const group=groups.find(g=>g.querySelector('.sl-nav-label')?.textContent.trim()==='Редактирование')||groups[0];if(!group)return;const b=document.createElement('button');b.type='button';b.className='top-nav-link sl-tool';b.dataset.page='privacy';b.innerHTML='<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7v10M12 7v10M16 7v10M4 11h16M4 15h16"/></svg></span><span>Размытие</span>';b.addEventListener('click',e=>{e.preventDefault();activatePrivacy()});group.appendChild(b)}
+function setInspectorText(){if(!active())return;const t=$('sl-inspector-title'),d=$('sl-inspector-desc');if(t)t.textContent='Размытие / пикселизация';if(d)d.textContent='Скрывайте выбранные области и сразу экспортируйте готовое изображение.'}
+function activatePrivacy(){document.body.classList.remove('page-home');document.body.classList.add('page-tool');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));makePanel().classList.add('active');document.querySelectorAll('.sl-sidebar .sl-tool').forEach(b=>b.classList.toggle('active',b.dataset.page==='privacy'));window.dispatchEvent(new CustomEvent('safelight:toolchange',{detail:{page:'privacy'}}));setTimeout(()=>{setInspectorText();scheduleRender(90);syncSurface()},0)}
+function installShell(){makePanel();const app=document.querySelector('.sl-app');if(!app){setTimeout(installShell,60);return}const panel=$('panel-privacy');if(panel&&panel.parentElement?.id!=='sl-inspector-panels')$('sl-inspector-panels')?.appendChild(panel);makeSidebarButton();setInspectorText();syncSurface()}
+function updateUi(){const sel=selected(),strength=$('pe-strength'),value=$('pe-strength-value'),mode=sel?sel.mode:state.mode,s=sel?sel.strength:state.strength;if(strength)strength.value=String(s);if(value)value.textContent=String(s);document.querySelectorAll('.sl-pe-mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.peMode===mode));if($('pe-count'))$('pe-count').textContent=String(state.areas.length);if($('pe-delete'))$('pe-delete').disabled=!sel;if($('pe-clear'))$('pe-clear').disabled=!state.areas.length}
+function imageElement(){const live=$('sl-live-canvas');if(live&&getComputedStyle(live).display!=='none'&&live.width&&live.height)return live;const p=$('previewImg');return p?.src?p:null}
+function ensureSurface(){const wrap=$('previewWrap');if(!wrap)return null;let s=$('sl-privacy-surface');if(!s){s=document.createElement('div');s.id='sl-privacy-surface';s.className='sl-privacy-surface';s.setAttribute('aria-label','Области размытия и пикселизации');wrap.appendChild(s);bindSurface(s)}return s}
+function syncSurface(){const wrap=$('previewWrap'),surface=ensureSurface(),img=imageElement();if(!wrap||!surface||!img||!active()){surface?.classList.remove('show');return}const wr=wrap.getBoundingClientRect(),ir=img.getBoundingClientRect();if(!ir.width||!ir.height){surface.classList.remove('show');return}surface.style.left=ir.left-wr.left+'px';surface.style.top=ir.top-wr.top+'px';surface.style.width=ir.width+'px';surface.style.height=ir.height+'px';surface.classList.add('show');renderOverlay()}
+function renderOverlay(){const s=$('sl-privacy-surface');if(!s)return;const old=new Map([...s.querySelectorAll('.sl-pe-area')].map(el=>[Number(el.dataset.id),el]));for(const a of state.areas){let el=old.get(a.id);if(!el){el=document.createElement('div');el.className='sl-pe-area';el.dataset.id=String(a.id);el.innerHTML='<span class="sl-pe-label"></span><i class="sl-pe-resize" data-pe-resize="1"></i>';s.appendChild(el)}old.delete(a.id);el.classList.toggle('selected',a.id===state.selectedId);el.classList.toggle('pixelate',a.mode==='pixelate');el.style.left=a.x*100+'%';el.style.top=a.y*100+'%';el.style.width=a.w*100+'%';el.style.height=a.h*100+'%';const l=el.querySelector('.sl-pe-label');if(l)l.textContent=a.mode==='pixelate'?'Пиксели '+a.strength:'Размытие '+a.strength}old.forEach(el=>el.remove())}
+function point(e,s){const r=s.getBoundingClientRect();return{x:clamp((e.clientX-r.left)/Math.max(1,r.width),0,1),y:clamp((e.clientY-r.top)/Math.max(1,r.height),0,1)}}
+function normalize(a){a.x=clamp(a.x,0,1);a.y=clamp(a.y,0,1);a.w=clamp(a.w,.002,1-a.x);a.h=clamp(a.h,.002,1-a.y)}
+function changed(){renderOverlay();updateUi();scheduleRender(90)}
+function bindSurface(s){s.addEventListener('pointerdown',e=>{if(!active()||e.button!==0)return;const el=e.target.closest('.sl-pe-area'),p=point(e,s);s.setPointerCapture?.(e.pointerId);if(!el){const a={id:state.nextId++,x:p.x,y:p.y,w:.002,h:.002,mode:state.mode,strength:state.strength};state.areas.push(a);state.selectedId=a.id;state.interaction={type:'draw',id:a.id,sx:p.x,sy:p.y};renderOverlay();updateUi();e.preventDefault();return}const id=Number(el.dataset.id),a=state.areas.find(x=>x.id===id);if(!a)return;state.selectedId=id;state.interaction=e.target.closest('[data-pe-resize]')?{type:'resize',id,sx:p.x,sy:p.y,w:a.w,h:a.h}:{type:'move',id,sx:p.x,sy:p.y,x:a.x,y:a.y};renderOverlay();updateUi();e.preventDefault();e.stopPropagation()});s.addEventListener('pointermove',e=>{const it=state.interaction;if(!it)return;const a=state.areas.find(x=>x.id===it.id);if(!a)return;const p=point(e,s);if(it.type==='draw'){a.x=Math.min(it.sx,p.x);a.y=Math.min(it.sy,p.y);a.w=Math.max(.002,Math.abs(p.x-it.sx));a.h=Math.max(.002,Math.abs(p.y-it.sy))}else if(it.type==='move'){a.x=clamp(it.x+p.x-it.sx,0,1-a.w);a.y=clamp(it.y+p.y-it.sy,0,1-a.h)}else{a.w=clamp(it.w+p.x-it.sx,.015,1-a.x);a.h=clamp(it.h+p.y-it.sy,.015,1-a.y)}normalize(a);renderOverlay();e.preventDefault()});const finish=e=>{const it=state.interaction;if(!it)return;const a=state.areas.find(x=>x.id===it.id);state.interaction=null;if(it.type==='draw'&&a&&(a.w<.01||a.h<.01)){state.areas=state.areas.filter(x=>x.id!==a.id);if(state.selectedId===a.id)state.selectedId=null}try{s.releasePointerCapture?.(e.pointerId)}catch(_){}changed();e.preventDefault()};s.addEventListener('pointerup',finish);s.addEventListener('pointercancel',finish)}
+function resetAreas(){state.areas=[];state.selectedId=null;state.interaction=null;changed()}
+function loadSource(){const p=$('previewImg');if(!p?.src)return Promise.reject(new Error('Сначала загрузите изображение'));if(state.sourceImage&&state.sourceKey===p.src)return Promise.resolve(state.sourceImage);return new Promise((res,rej)=>{const im=new Image();im.onload=()=>{state.sourceImage=im;state.sourceKey=p.src;res(im)};im.onerror=rej;im.src=p.src})}
+async function buildCanvas(){const src=await loadSource(),out=document.createElement('canvas');out.width=src.naturalWidth;out.height=src.naturalHeight;const ctx=out.getContext('2d');ctx.drawImage(src,0,0,out.width,out.height);for(const a of state.areas){const x=Math.max(0,Math.round(a.x*out.width)),y=Math.max(0,Math.round(a.y*out.height)),w=Math.max(1,Math.min(out.width-x,Math.round(a.w*out.width))),h=Math.max(1,Math.min(out.height-y,Math.round(a.h*out.height)));const snap=document.createElement('canvas');snap.width=out.width;snap.height=out.height;snap.getContext('2d').drawImage(out,0,0);if(a.mode==='pixelate'){const block=Math.max(2,Math.round(a.strength)),tiny=document.createElement('canvas');tiny.width=Math.max(1,Math.ceil(w/block));tiny.height=Math.max(1,Math.ceil(h/block));tiny.getContext('2d').drawImage(snap,x,y,w,h,0,0,tiny.width,tiny.height);ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(tiny,0,0,tiny.width,tiny.height,x,y,w,h);ctx.restore()}else{ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.filter='blur('+Math.max(1,a.strength)+'px)';ctx.drawImage(snap,0,0);ctx.filter='none';ctx.restore()}}return out}
+function scheduleRender(delay){clearTimeout(state.renderTimer);if(!active())return;state.renderTimer=setTimeout(renderCurrent,delay??70)}
+async function renderCurrent(){if(!active())return;try{const built=await buildCanvas(),wrap=$('previewWrap');if(!wrap)return;let live=$('sl-live-canvas');if(!live){live=document.createElement('canvas');live.id='sl-live-canvas';live.className='sl-live-canvas';wrap.appendChild(live)}live.width=built.width;live.height=built.height;const x=live.getContext('2d');x.clearRect(0,0,live.width,live.height);x.drawImage(built,0,0);state.lastCanvas=document.createElement('canvas');state.lastCanvas.width=live.width;state.lastCanvas.height=live.height;state.lastCanvas.getContext('2d').drawImage(live,0,0);wrap.classList.add('sl-live-ready');if($('ro-dims'))$('ro-dims').textContent=live.width+' × '+live.height+' px';if($('ro-format'))$('ro-format').textContent='LIVE';requestAnimationFrame(syncSurface)}catch(e){console.error('Safelight privacy effects:',e)}}
+function blob(canvas,type,q){return new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('Не удалось подготовить файл')),type,q))}
+function download(b,name){const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+function baseName(){return(($('meta-name')?.textContent||'safelight').trim().replace(/\.[^.]+$/,'')||'safelight')}
+async function ensurePdf(){if(window.jspdf?.jsPDF)return true;const load=src=>new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s)});try{await load('./vendor/jspdf.umd.min.js')}catch(_){try{await load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js')}catch(_){return false}}return !!window.jspdf?.jsPDF}
+async function exportResult(format){const c=await buildCanvas();if(format==='pdf'){if(!(await ensurePdf()))throw new Error('PDF модуль не загрузился');const{jsPDF}=window.jspdf,doc=new jsPDF({orientation:c.width>c.height?'landscape':'portrait',unit:'mm',format:'a4'}),pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight(),m=10,sc=Math.min((pw-m*2)/c.width,(ph-m*2)/c.height),w=c.width*sc,h=c.height*sc;doc.addImage(c.toDataURL('image/jpeg',.94),'JPEG',(pw-w)/2,(ph-h)/2,w,h,undefined,'FAST');download(doc.output('blob'),baseName()+'-privacy.pdf');return}let out=c;if(format==='jpeg'){out=document.createElement('canvas');out.width=c.width;out.height=c.height;const x=out.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,out.width,out.height);x.drawImage(c,0,0)}const mime=format==='png'?'image/png':format==='webp'?'image/webp':'image/jpeg';download(await blob(out,mime,format==='png'?undefined:.92),baseName()+'-privacy.'+(format==='jpeg'?'jpg':format))}
+function showHint(t){const h=$('sl-export-hint');if(!h)return;h.textContent=t;h.classList.add('show');clearTimeout(showHint.t);showHint.t=setTimeout(()=>h.classList.remove('show'),3000)}
+document.addEventListener('click',e=>{const m=e.target.closest('[data-pe-mode]');if(m){const next=m.dataset.peMode==='pixelate'?'pixelate':'blur',sel=selected();state.mode=next;if(sel)sel.mode=next;changed();return}if(e.target.closest('#pe-delete')){if(state.selectedId!=null){state.areas=state.areas.filter(a=>a.id!==state.selectedId);state.selectedId=null;changed()}return}if(e.target.closest('#pe-clear'))resetAreas();if(e.target.closest('#sl-reset')&&active())setTimeout(resetAreas,0)},true);
+document.addEventListener('input',e=>{if(e.target.id!=='pe-strength')return;const v=clamp(Number(e.target.value)||18,2,64);state.strength=v;const sel=selected();if(sel)sel.strength=v;if($('pe-strength-value'))$('pe-strength-value').textContent=String(v);renderOverlay();scheduleRender(100)},true);
+document.addEventListener('keydown',e=>{if(!active()||state.selectedId==null)return;if(e.key==='Delete'||e.key==='Backspace'){const tag=e.target?.tagName;if(tag==='INPUT'||tag==='TEXTAREA')return;state.areas=state.areas.filter(a=>a.id!==state.selectedId);state.selectedId=null;changed();e.preventDefault()}},true);
+document.addEventListener('click',e=>{const option=e.target.closest('.sl-export-option[data-export]');if(!option||!active())return;const f=option.dataset.export;if(!['webp','jpeg','png','pdf'].includes(f))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();option.closest('.sl-export-wrap')?.classList.remove('open');const b=$('sl-export');if(b)b.disabled=true;exportResult(f).then(()=>showHint('Экспорт готов.')).catch(err=>{console.error(err);showHint(err.message||'Не удалось экспортировать файл')}).finally(()=>{if(b)b.disabled=false})},true);
+window.addEventListener('safelight:toolchange',e=>{setTimeout(()=>{if(e.detail?.page!=='privacy')state.selectedId=null;setInspectorText();syncSurface();updateUi();if(e.detail?.page==='privacy')scheduleRender(100)},20)});
+window.addEventListener('resize',()=>requestAnimationFrame(syncSurface),{passive:true});
+const preview=$('previewImg');if(preview)new MutationObserver(()=>{const k=preview.src||'';if(k&&k!==state.sourceKey){state.sourceKey=k;state.sourceImage=null;state.areas=[];state.selectedId=null;state.interaction=null;updateUi();renderOverlay();if(active())scheduleRender(120)}requestAnimationFrame(syncSurface)}).observe(preview,{attributes:true,attributeFilter:['src']});
+window.safelightPrivacyEffects={render:async()=>buildCanvas(),getAreas:()=>state.areas.map(a=>({...a})),reset:resetAreas,activate:activatePrivacy,syncSurface};
+installShell();updateUi();
 })();
