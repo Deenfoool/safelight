@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-14-4";
+const CACHE = "safelight-shell-v2026-08-14-5";
 const CORE = [
   "./",
   "./index.html",
@@ -16,6 +16,10 @@ const CORE = [
   "./css/privacy-effects.css",
   "./css/palette-tools.css",
   "./css/pwa.css",
+  "./vendor/jszip.min.js",
+  "./vendor/pdf.min.js",
+  "./vendor/pdf.worker.min.js",
+  "./vendor/jspdf.umd.min.js",
   "./js/app.js",
   "./js/navigation.js",
   "./js/visual-polish.js",
@@ -58,14 +62,16 @@ self.addEventListener("activate", (event) => {
 });
 
 function cacheable(response) {
-  return response && (response.ok || response.type === "opaque");
+  return response && response.ok;
 }
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+  // Safelight runtime is self-contained. Do not cache or proxy third-party requests.
+  if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
