@@ -165,7 +165,11 @@
   if (hero) {
     hero.addEventListener("click", () => {
       activate("compress");
-      setTimeout(() => document.getElementById("dropzone")?.click(), 250);
+      setTimeout(() => {
+        const add = document.getElementById("sl-add-images");
+        if (add) add.click();
+        else document.getElementById("dropzone")?.click();
+      }, 250);
     });
   }
 
@@ -188,10 +192,21 @@
     document.body.appendChild(script);
   }
 
-  loadScript("js/advanced.js?v=7", () => {
-    loadScript("js/compare.js?v=6", () => {
-      loadScript("js/hardening.js?v=1", () => {
-        loadScript("js/source-cleanup.js?v=1");
+  function loadStyle(src) {
+    if ([...document.styleSheets].some((sheet) => sheet.href && sheet.href.includes(src.split("?")[0]))) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = src;
+    document.head.appendChild(link);
+  }
+
+  loadScript("js/advanced.js?v=8", () => {
+    loadStyle("css/app-shell-fixes.css?v=1");
+    loadScript("js/ui-shell.js?v=1", () => {
+      loadScript("js/compare.js?v=7", () => {
+        loadScript("js/hardening.js?v=2", () => {
+          loadScript("js/source-cleanup.js?v=1");
+        });
       });
     });
   });
