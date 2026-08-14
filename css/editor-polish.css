@@ -1,0 +1,32 @@
+/* Final editor chrome + visible animated grid background. */
+body.page-tool>#sl-grid-bg{display:none!important}
+body.page-tool .sl-app{position:relative;isolation:isolate;background:#09090b!important}
+#sl-editor-grid{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;opacity:1}
+body.page-tool .sl-topbar,body.page-tool .sl-app-body{position:relative;z-index:1}
+body.page-tool .sl-topbar{background:rgba(9,9,11,.82)!important;backdrop-filter:blur(13px)}
+body.page-tool .sl-app-body{background:rgba(9,9,11,.12)!important}
+body.page-tool .sl-sidebar{background:linear-gradient(90deg,rgba(10,10,12,.82),rgba(13,13,16,.68))!important;backdrop-filter:blur(8px)}
+body.page-tool .sl-center{background:rgba(9,9,11,.18)!important}
+body.page-tool .sl-inspector{background:rgba(12,12,15,.74)!important;backdrop-filter:blur(10px)}
+body.page-tool .sl-filmstrip{background:rgba(10,10,13,.68)!important;backdrop-filter:blur(8px)}
+body.page-tool .sl-app .stage{background:rgba(10,10,13,.42)!important;backdrop-filter:blur(2px)}
+body.page-tool .sl-app .readout{background:rgba(13,13,16,.70)!important;backdrop-filter:blur(8px)}
+
+/* The top Add button is redundant: adding files stays available in the filmstrip. */
+.sl-topbar .sl-add{display:none!important}
+
+/* Real Safelight branding from assets/images. */
+.sl-brand{min-width:132px;padding-right:16px!important}
+.sl-brand .sl-brand-logo{width:28px;height:28px;display:block;object-fit:contain;filter:drop-shadow(0 0 10px rgba(163,230,53,.12))}
+body>nav .logo.sl-image-logo{display:flex;align-items:center;height:46px}
+body>nav .logo.sl-image-logo img{display:block;height:34px;width:auto;max-width:168px;object-fit:contain}
+
+/* Cleaner export glyph. */
+.sl-export svg{width:17px!important;height:17px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+
+@media(max-width:760px){
+  #sl-editor-grid{opacity:.78}
+  .sl-brand{min-width:auto;padding-right:10px!important}
+  .sl-brand span{display:none}
+}
+@media(prefers-reduced-motion:reduce){#sl-editor-grid{display:none!important}}
