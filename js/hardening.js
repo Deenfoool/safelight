@@ -150,7 +150,7 @@
     try {
       await loadScript("./vendor/jspdf.umd.min.js");
     } catch (_) {
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js");
+      return false;
     }
     return !!window.jspdf?.jsPDF;
   }
@@ -176,7 +176,7 @@
           setStatus("Исходник уже PDF. Выберите PNG, JPEG или WebP.");
           return;
         }
-        if (!(await ensureJsPdf())) throw new Error("jsPDF не загрузился");
+        if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
 
         const canvas = document.createElement("canvas");
         canvas.width = im.naturalWidth;
@@ -219,7 +219,6 @@
       const from = isPdfSource() ? "PDF · страница 1" : (currentType().replace("image/", "") || "SOURCE").toUpperCase();
       setConverterResult(blob, ext, from, target.toUpperCase() + " · " + formatBytes(blob.size));
       setStatus(isPdfSource() ? "Готово. Конвертирована первая страница PDF." : "Готово.");
-      // compare.js will build the current tool's own preview from the immutable previewImg source.
       setTimeout(() => window.safelightCompare?.refresh(), 30);
     } catch (error) {
       console.error("Safelight converter:", error);
@@ -262,7 +261,6 @@
   });
   updateQualityVisibility();
 
-  // Own the converter click before the legacy handler. This removes stale PDF/image state crossover.
   document.addEventListener(
     "click",
     (event) => {
@@ -302,7 +300,6 @@
     true
   );
 
-  // Prevent stale transform/watermark downloads after a new source is loaded.
   const trStatus = document.getElementById("tr-status");
   if (trStatus) {
     new MutationObserver(() => {
@@ -318,21 +315,18 @@
     }).observe(wmStatus, { childList: true, characterData: true, subtree: true });
   }
 
-  // A tool preview is ephemeral: switching tools always reveals the original source again.
   window.addEventListener("safelight:toolchange", (event) => {
     window.safelightCompare?.hide();
     if (event.detail?.page !== "convert") hidePdfPagePreview();
   });
 
   new MutationObserver(() => {
-    // Let the PDF/image loader finish updating metadata before checking type.
     setTimeout(resetPerSourceState, 0);
   }).observe(preview, { attributes: true, attributeFilter: ["src"] });
 
-  // Fix the stale hardcoded tool count from the early 6-tool build.
   const statLabels = [...document.querySelectorAll(".stat .label")];
   const toolsLabel = statLabels.find((el) => el.textContent.trim() === "инструментов");
-  if (toolsLabel?.previousElementSibling) toolsLabel.previousElementSibling.textContent = "11";
+  if (toolsLabel?.previousElementSibling) toolsLabel.previousElementSibling.textContent = "13";
 
   const aboutTags = document.querySelector("#about .tags");
   if (aboutTags && ![...aboutTags.children].some((el) => el.textContent.includes("PDF"))) {
