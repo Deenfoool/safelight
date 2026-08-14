@@ -1,9 +1,10 @@
-const CACHE = "safelight-shell-v2026-08-14-3";
+const CACHE = "safelight-shell-v2026-08-14-4";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./css/style.css",
+  "./css/local-fonts.css",
   "./css/navigation.css",
   "./css/visual-polish.css",
   "./css/app-shell.css",
