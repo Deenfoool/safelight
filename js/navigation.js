@@ -147,7 +147,7 @@
       ["Основные", "M4 5h16v14H4zM8 9h8M8 13h5", ["compress", "slice", "convert", "resize", "crop"]],
       ["Редактирование", "M4 20 8 19l10-10-3-3L5 16zM14 5l3 3", ["adjust", "transform", "watermark"]],
       ["Пакетная обработка", "M4 5h7v6H4zM13 5h7v6h-7zM4 13h7v6H4zM13 13h7v6h-7z", ["batch"]],
-      ["Инструменты", "M12 3 14 8l5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5-5-4-3.5L10 8z", ["metadata", "favicon"]],
+      ["Инструменты", "M12 3 14 8l5 .5-4 3.5 1.5 5L12 14l-4.5 3 1.5 5L12 14l-4.5 3 1.5-5-4-3.5L10 8z", ["metadata", "favicon"]],
     ];
     groups.forEach(([label, icon, groupIds]) => makeGroup(label, icon, groupIds));
 
@@ -200,18 +200,18 @@
     document.head.appendChild(link);
   }
 
-  loadStyle("css/visual-polish.css?v=3");
-  loadScript("js/visual-polish.js?v=3");
+  loadStyle("css/visual-polish.css?v=4");
+  loadScript("js/visual-polish.js?v=4");
 
-  loadScript("js/advanced.js?v=8", () => {
-    loadStyle("css/app-shell-fixes.css?v=1");
-    loadStyle("css/live-editor.css?v=2");
-    loadStyle("css/direct-manipulation.css?v=1");
-    loadScript("js/ui-shell.js?v=1", () => {
-      loadScript("js/hardening.js?v=2", () => {
-        loadScript("js/source-cleanup.js?v=1", () => {
-          loadScript("js/live-editor.js?v=2", () => {
-            loadScript("js/direct-manipulation.js?v=1");
+  loadScript("js/advanced.js?v=9", () => {
+    loadStyle("css/app-shell-fixes.css?v=2");
+    loadStyle("css/live-editor.css?v=3");
+    loadStyle("css/direct-manipulation.css?v=2");
+    loadScript("js/ui-shell.js?v=2", () => {
+      loadScript("js/hardening.js?v=3", () => {
+        loadScript("js/source-cleanup.js?v=2", () => {
+          loadScript("js/live-editor.js?v=3", () => {
+            loadScript("js/direct-manipulation.js?v=2");
           });
         });
       });
