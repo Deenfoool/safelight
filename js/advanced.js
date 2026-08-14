@@ -1,63 +1,824 @@
-(function(){
-'use strict';
-const nav=document.querySelector('.top-nav-links'),main=document.querySelector('main.workmain');if(!nav||!main)return;
-const tools=[
-{id:'transform',label:'Трансформация',icon:'M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4M8 8l-3-3m11 11 3 3M16 8l3-3M8 16l-3 3'},
-{id:'watermark',label:'Водяной знак',icon:'M4 5h16v14H4zM8 15l3-3 2 2 2-2 3 3M8 9h.01'},
-{id:'batch',label:'Массовая обработка',icon:'M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z'},
-{id:'metadata',label:'Метаданные',icon:'M6 3h9l3 3v15H6zM15 3v4h4M9 12h6M9 16h6'},
-{id:'favicon',label:'Favicon',icon:'M4 4h16v16H4zM8 16l3-4 2 2 2-3 3 5'}];
-function addNav(t){if(nav.querySelector('[data-page="'+t.id+'"]'))return;const b=document.createElement('button');b.type='button';b.className='top-nav-link advanced-nav';b.dataset.page=t.id;b.innerHTML='<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="'+t.icon+'"/></svg></span><span>'+t.label+'</span>';nav.appendChild(b)}tools.forEach(addNav);
-function card(id,title,desc,html){const s=document.createElement('section');s.className='panel';s.id='panel-'+id;s.innerHTML='<div class="panel-card"><h2>'+title+'</h2><p class="desc">'+desc+'</p>'+html+'</div>';main.appendChild(s);return s}
-function ready(){const wrap=document.getElementById('previewWrap'),img=document.getElementById('previewImg');return !!(wrap&&img&&wrap.style.display!=='none'&&img.src)}
-function getImage(){return new Promise((resolve,reject)=>{if(!ready())return reject(new Error('no-image'));const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=document.getElementById('previewImg').src})}
-function dl(blob,name){if(!blob)return;const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
-function fmt(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1048576)return(n/1024).toFixed(1)+' KB';return(n/1048576).toFixed(2)+' MB'}
-function canvasBlob(c,type,q){return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('toBlob-failed')),type,q))}
-const transform=card('transform','ТРАНСФОРМАЦИЯ','Поворачивайте и отражайте изображение локально.','<div class="transform-actions"><button type="button" class="btn ghost" data-tr="ccw">↶ 90°</button><button type="button" class="btn ghost" data-tr="cw">↷ 90°</button><button type="button" class="btn ghost" data-tr="180">180°</button><button type="button" class="btn ghost" data-tr="h">↔ Горизонталь</button><button type="button" class="btn ghost" data-tr="v">↕ Вертикаль</button></div><button type="button" class="btn primary" id="tr-download">Скачать PNG</button><div class="status-line" id="tr-status"></div>');
-let trAngle=0,fh=false,fv=false,trBlob=null;transform.querySelectorAll('[data-tr]').forEach(b=>b.addEventListener('click',async()=>{const status=transform.querySelector('#tr-status');if(!ready()){status.textContent='Сначала загрузите изображение.';return}const a=b.dataset.tr;if(a==='ccw')trAngle=(trAngle+270)%360;if(a==='cw')trAngle=(trAngle+90)%360;if(a==='180')trAngle=(trAngle+180)%360;if(a==='h')fh=!fh;if(a==='v')fv=!fv;try{const im=await getImage(),swap=trAngle%180!==0,c=document.createElement('canvas');c.width=swap?im.naturalHeight:im.naturalWidth;c.height=swap?im.naturalWidth:im.naturalHeight;const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(trAngle*Math.PI/180);x.scale(fh?-1:1,fv?-1:1);x.drawImage(im,-im.naturalWidth/2,-im.naturalHeight/2);trBlob=await canvasBlob(c,'image/png');status.textContent='Предпросмотр обновлён.'}catch(e){trBlob=null;status.textContent='Не удалось преобразовать изображение.'}}));transform.querySelector('#tr-download').addEventListener('click',()=>{if(!trBlob){transform.querySelector('#tr-status').textContent='Сначала примените трансформацию.';return}dl(trBlob,'safelight-transform.png')});
-const wm=card('watermark','ВОДЯНОЙ ЗНАК','Добавляйте текстовый watermark прямо в браузере.','<div class="field-row"><div class="field wm-wide"><label>Текст</label><input id="wm-text" value="Safelight"></div><div class="field"><label>Размер</label><input id="wm-size" type="number" min="8" max="1000" value="48"></div><div class="field"><label>Прозрачность</label><input id="wm-opacity" type="number" min="1" max="100" value="45"></div><div class="field"><label>Позиция</label><select id="wm-pos"><option value="br">Низ / право</option><option value="bl">Низ / лево</option><option value="tr">Верх / право</option><option value="tl">Верх / лево</option><option value="center">Центр</option></select></div></div><button type="button" class="btn primary" id="wm-run">Нанести водяной знак</button><button type="button" class="btn ghost" id="wm-download">Скачать</button><div class="status-line" id="wm-status"></div>');let wmBlob=null;wm.querySelector('#wm-run').addEventListener('click',async()=>{const status=wm.querySelector('#wm-status');if(!ready()){status.textContent='Сначала загрузите изображение.';return}try{const im=await getImage(),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.drawImage(im,0,0);const size=Math.max(8,Math.min(1000,+wm.querySelector('#wm-size').value||48)),text=wm.querySelector('#wm-text').value.trim()||'Safelight',op=Math.max(1,Math.min(100,+wm.querySelector('#wm-opacity').value||45))/100,p=wm.querySelector('#wm-pos').value,pad=size*.55;x.font='600 '+size+'px Inter,Arial,sans-serif';x.fillStyle='rgba(255,255,255,'+op+')';x.shadowColor='rgba(0,0,0,.5)';x.shadowBlur=Math.max(2,size/10);const m=x.measureText(text);let px=pad,py=size+pad;if(p.includes('r'))px=c.width-m.width-pad;if(p==='center'){px=(c.width-m.width)/2;py=(c.height+size)/2}if(p==='br'||p==='bl')py=c.height-pad;px=Math.max(0,Math.min(c.width-m.width,px));py=Math.max(size,Math.min(c.height,py));wmBlob=await canvasBlob(c,'image/png');status.textContent='Готово.'}catch(e){wmBlob=null;status.textContent='Не удалось создать водяной знак.'}});wm.querySelector('#wm-download').addEventListener('click',()=>{if(!wmBlob){wm.querySelector('#wm-status').textContent='Сначала нанесите водяной знак.';return}dl(wmBlob,'safelight-watermark.png')});
-const batch=card('batch','МАССОВАЯ ОБРАБОТКА','Обрабатывайте много изображений и скачивайте один ZIP.','<label class="batch-drop"><span>Выберите несколько изображений</span><input id="batch-files" type="file" accept="image/*" multiple></label><div class="field-row"><div class="field"><label>Формат</label><select id="b-format"><option value="webp" selected>WebP</option><option value="jpeg">JPEG</option><option value="png">PNG</option></select></div><div class="field"><label>Качество</label><input id="b-quality" type="number" min="1" max="100" value="85"></div><div class="field"><label>Макс. ширина</label><input id="b-width" type="number" min="0" value="0"></div></div><button type="button" class="btn primary" id="b-run">Обработать всё и скачать ZIP</button><div class="batch-progress"><div id="b-bar"></div></div><div class="status-line" id="b-status"></div>');
-let bfs=[];batch.querySelector('#batch-files').addEventListener('change',e=>{bfs=[...e.target.files].filter(f=>f.type.startsWith('image/'));batch.querySelector('#b-bar').style.width='0%';batch.querySelector('#b-status').textContent=bfs.length?'Выбрано: '+bfs.length+' файлов.':'Подходящих изображений не найдено.'});batch.querySelector('#b-run').addEventListener('click',async()=>{const status=batch.querySelector('#b-status'),run=batch.querySelector('#b-run');if(!bfs.length){status.textContent='Сначала выберите файлы.';return}if(!window.JSZip){status.textContent='ZIP-библиотека не загрузилась.';return}run.disabled=true;try{const z=new JSZip(),fmtv=batch.querySelector('#b-format').value,q=Math.max(1,Math.min(100,+batch.querySelector('#b-quality').value||85))/100,maxW=Math.max(0,+batch.querySelector('#b-width').value||0),mime=fmtv==='png'?'image/png':fmtv==='webp'?'image/webp':'image/jpeg',ext=fmtv==='jpeg'?'jpg':fmtv;for(let i=0;i<bfs.length;i++){const im=await createImageBitmap(bfs[i]),c=document.createElement('canvas'),s=maxW&&im.width>maxW?maxW/im.width:1;c.width=Math.max(1,Math.round(im.width*s));c.height=Math.max(1,Math.round(im.height*s));c.getContext('2d').drawImage(im,0,0,c.width,c.height);const blob=await canvasBlob(c,mime,fmtv==='png'?undefined:q);z.file(bfs[i].name.replace(/\.[^.]+$/,'')+'-optimized.'+ext,blob);if(im.close)im.close();batch.querySelector('#b-bar').style.width=Math.round((i+1)/bfs.length*100)+'%';status.textContent='Обработано '+(i+1)+' / '+bfs.length}dl(await z.generateAsync({type:'blob'}),'safelight-batch.zip');status.textContent='Готово. ZIP скачан.'}catch(e){status.textContent='Ошибка обработки: '+(e.message||'неизвестная ошибка');}finally{run.disabled=false}});
-const metadata=card('metadata','МЕТАДАННЫЕ','Проверяйте информацию о файле и очищайте её пересохранением.','<div class="meta-box" id="meta-box">Загрузите изображение.</div><button type="button" class="btn primary" id="meta-clean">Очистить и скачать PNG</button><div class="status-line" id="meta-status"></div>');metadata.querySelector('#meta-clean').addEventListener('click',async()=>{const status=metadata.querySelector('#meta-status');if(!ready()){status.textContent='Сначала загрузите изображение.';return}try{const im=await getImage(),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);dl(await canvasBlob(c,'image/png'),'safelight-clean.png');status.textContent='Готово. Результат пересохранён через Canvas без исходных метаданных.'}catch(e){status.textContent='Не удалось очистить метаданные.'}});
-const favicon=card('favicon','FAVICON GENERATOR','Создавайте набор иконок для сайта из одного изображения.','<button type="button" class="btn primary" id="f-run">Создать favicon-пакет</button><div class="code-box" id="f-code"></div><div class="status-line" id="f-status"></div>');favicon.querySelector('#f-run').addEventListener('click',async()=>{const status=favicon.querySelector('#f-status');if(!ready()){status.textContent='Сначала загрузите изображение.';return}if(!window.JSZip){status.textContent='ZIP-библиотека не загрузилась.';return}try{const im=await getImage(),z=new JSZip();for(const n of [16,32,48,180,192,512]){const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,n,n);const scale=Math.min(n/im.naturalWidth,n/im.naturalHeight),w=im.naturalWidth*scale,h=im.naturalHeight*scale;x.drawImage(im,(n-w)/2,(n-h)/2,w,h);z.file('favicon-'+n+'.png',await canvasBlob(c,'image/png'))}dl(await z.generateAsync({type:'blob'}),'safelight-favicon-pack.zip');favicon.querySelector('#f-code').textContent='<link rel="icon" href="favicon-32.png">\n<link rel="apple-touch-icon" href="favicon-180.png">';status.textContent='Готово. Пакет скачан.'}catch(e){status.textContent='Не удалось создать favicon-пакет.'}});
-function setAdvanced(id){document.body.classList.remove('page-home');document.body.classList.add('page-tool');document.querySelectorAll('.top-nav-link').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+id));const t={transform:['Трансформация','Поворот и отражение изображений.'],watermark:['Водяной знак','Добавляйте текстовый watermark локально.'],batch:['Массовая обработка','Обрабатывайте множество изображений одним действием.'],metadata:['Метаданные','Проверяйте и очищайте данные изображения.'],favicon:['Favicon Generator','Создавайте набор иконок для сайта.']}[id];if(t){document.querySelector('#workspace .page-title h1').textContent=t[0];document.querySelector('#workspace .page-title p').textContent=t[1]}const grid=document.getElementById('gridOverlay');if(grid)grid.style.display='none';if(id==='metadata'&&ready()){const name=document.getElementById('meta-name').textContent,type=document.getElementById('meta-type').textContent,size=document.getElementById('meta-size').textContent,dims=document.getElementById('meta-dims').textContent;document.getElementById('meta-box').innerHTML='<div>Файл <b>'+name+'</b></div><div>Тип <b>'+type+'</b></div><div>Размер <b>'+size+'</b></div><div>Размеры <b>'+dims+'</b></div><small>Canvas-пересохранение удаляет исходные EXIF/комментарии из результата.</small>'}window.scrollTo({top:0,behavior:'smooth'})}
-window.safelightSetAdvanced=setAdvanced;
+(function () {
+  "use strict";
 
-/* PDF bridge: PDF.js renders PDF pages locally, jsPDF creates PDF locally. */
-(function initPdfConverter(){
-  const fileInput=document.getElementById('fileInput'),dropzone=document.getElementById('dropzone'),panel=document.getElementById('panel-convert');
-  if(!fileInput||!dropzone||!panel)return;
-  fileInput.setAttribute('accept','image/*,application/pdf,.pdf');
-  const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-  const PDFWORKER='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  const JSPDF='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
-  function load(src){return new Promise((res,rej)=>{if(document.querySelector('script[src="'+src+'"]'))return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Не удалось загрузить библиотеку'));document.head.appendChild(s)})}
-  let libs=null,pdfFile=null,pdfPageCanvas=null,pdfPageCount=0,pdfPreviewUrl=null,pdfResultBlob=null,pdfInput=false;
-  const status=()=>panel.querySelector('#v-status');
-  function setStatus(t){const e=status();if(e)e.textContent=t}
-  function ensurePreviewStyles(){if(document.getElementById('pdf-preview-style'))return;const s=document.createElement('style');s.id='pdf-preview-style';s.textContent='.pdf-preview{display:none;margin-top:20px}.pdf-preview.show{display:block}.pdf-compare{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#111;aspect-ratio:16/10;min-height:220px}.pdf-compare img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12px}.pdf-compare .after-layer{position:absolute;inset:0;width:50%;overflow:hidden;border-right:2px solid #4ade80;background:#111}.pdf-compare .after-layer img{width:100%;max-width:none}.pdf-compare input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;z-index:4}.pdf-slider-line{position:absolute;top:0;bottom:0;width:2px;background:#4ade80;z-index:3;left:50%;pointer-events:none}.pdf-slider-handle{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#4ade80;color:#09090b;display:grid;place-items:center;font-weight:800;pointer-events:none}.pdf-legend{display:flex;justify-content:space-between;margin-top:8px;color:var(--text-dim);font-size:11px}.pdf-label{position:absolute;top:10px;padding:4px 7px;border-radius:5px;background:rgba(9,9,11,.78);font:600 10px var(--mono);z-index:2}.pdf-label.before{left:10px}.pdf-label.after{right:10px}.pdf-meta{margin-top:10px;color:var(--text-dim);font-size:12px}';document.head.appendChild(s)}
-  function ensurePreview(){ensurePreviewStyles();let box=panel.querySelector('#pdf-preview');if(box)return box;box=document.createElement('div');box.id='pdf-preview';box.className='pdf-preview';box.innerHTML='<div class="pdf-compare"><span class="pdf-label before">ДО</span><span class="pdf-label after">ПОСЛЕ</span><img id="pdf-before-img" alt="До"><div class="after-layer" id="pdf-after-layer"><img id="pdf-after-img" alt="После"></div><div class="pdf-slider-line" id="pdf-slider-line"></div><div class="pdf-slider-handle" id="pdf-slider-handle">↔</div><input id="pdf-slider" type="range" min="0" max="100" value="50" aria-label="Сравнение до и после"></div><div class="pdf-legend"><span>До</span><span>После</span></div><div class="pdf-meta" id="pdf-preview-meta"></div></div>';const result=panel.querySelector('#v-result');result.insertAdjacentElement('afterend',box);const slider=box.querySelector('#pdf-slider');const layer=box.querySelector('#pdf-after-layer'),line=box.querySelector('#pdf-slider-line'),handle=box.querySelector('#pdf-slider-handle');slider.addEventListener('input',()=>{const v=Number(slider.value);layer.style.width=v+'%';line.style.left=v+'%';handle.style.left=v+'%'});return box}
-  function showPreview(before,after,meta){const box=ensurePreview();box.querySelector('#pdf-before-img').src=before;box.querySelector('#pdf-after-img').src=after;box.querySelector('#pdf-preview-meta').textContent=meta||'';box.querySelector('#pdf-slider').value=50;box.querySelector('#pdf-after-layer').style.width='50%';box.querySelector('#pdf-slider-line').style.left='50%';box.querySelector('#pdf-slider-handle').style.left='50%';box.classList.add('show')}
-  async function ensureLibs(needPdf,needJspdf){if(!libs)libs={};try{if(needPdf&&!window.pdfjsLib){await load(PDFJS);window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFWORKER}if(needJspdf&&!window.jspdf){await load(JSPDF)}return true}catch(e){setStatus('Не удалось загрузить PDF-инструменты. Проверьте соединение и обновите страницу.');return false}}
-  async function renderPdfPage(file,pageNum=1){if(!(await ensureLibs(true,false)))throw new Error('pdf-lib');const data=await file.arrayBuffer(),doc=await window.pdfjsLib.getDocument({data}).promise;pdfPageCount=doc.numPages;const page=await doc.getPage(pageNum),viewport=page.getViewport({scale:1.5}),c=document.createElement('canvas');c.width=Math.ceil(viewport.width);c.height=Math.ceil(viewport.height);await page.render({canvasContext:c.getContext('2d'),viewport}).promise;return{canvas:c,pages:doc.numPages}}
-  async function handlePdf(file){pdfFile=file;pdfInput=true;setStatus('Читаю PDF…');try{const r=await renderPdfPage(file);pdfPageCanvas=r.canvas;const url=URL.createObjectURL(file);if(pdfPreviewUrl)URL.revokeObjectURL(pdfPreviewUrl);pdfPreviewUrl=url;document.getElementById('previewImg').src=r.canvas.toDataURL('image/png');document.getElementById('previewWrap').style.display='inline-block';document.getElementById('stageEmpty').style.display='none';document.getElementById('readout').style.display='flex';document.getElementById('meta-name').textContent=file.name;document.getElementById('meta-size').textContent=fmt(file.size);document.getElementById('meta-type').textContent='application/pdf';document.getElementById('meta-dims').textContent=r.canvas.width+' × '+r.canvas.height;document.getElementById('ro-dims').textContent=r.canvas.width+' × '+r.canvas.height+' px';document.getElementById('ro-size').textContent=fmt(file.size);document.getElementById('ro-format').textContent='PDF';document.getElementById('t-name').textContent=file.name;document.getElementById('t-name2').textContent=file.name;document.getElementById('t-status').textContent='готово — PDF загружен локально';document.getElementById('t-dims').textContent=r.canvas.width+'x'+r.canvas.height+' px, PDF';document.getElementById('t-size').textContent=fmt(file.size);setStatus('PDF загружен: '+r.pages+' стр.');document.querySelectorAll('.result').forEach(e=>e.classList.remove('show'));}catch(e){setStatus('Не удалось прочитать PDF.');pdfFile=null;pdfInput=false}}
-  function isPdf(f){return f&&((f.type||'').toLowerCase()==='application/pdf'||/\.pdf$/i.test(f.name||''))}
-  fileInput.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(isPdf(f)){e.stopImmediatePropagation();e.preventDefault();handlePdf(f);fileInput.value=''}},true);
-  dropzone.addEventListener('drop',e=>{const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(isPdf(f)){e.stopImmediatePropagation();e.preventDefault();dropzone.classList.remove('drag');handlePdf(f)}},true);
-  const format=document.getElementById('v-format'),run=document.getElementById('v-run');if(!format||!run)return;
-  if(![...format.options].some(o=>o.value==='pdf')){const o=document.createElement('option');o.value='pdf';o.textContent='PDF';format.appendChild(o)}
-  const qualityRow=document.getElementById('v-quality-row');format.addEventListener('change',()=>{if(qualityRow)qualityRow.style.display=(format.value==='png'||format.value==='pdf')?'none':'flex'});
-  const newRun=run.cloneNode(true);run.replaceWith(newRun);
-  newRun.addEventListener('click',async()=>{const fmtTarget=format.value;const before=document.getElementById('previewImg').src;if(!before){setStatus('Сначала загрузите изображение или PDF.');return}newRun.disabled=true;setStatus('Конвертирую…');try{
-    if(fmtTarget==='pdf'){
-      if(pdfInput&&pdfFile){setStatus('PDF уже является исходным форматом. Выберите PNG, JPEG или WebP.');return}
-      if(!(await ensureLibs(false,true)))return;const im=await getImage(),{jsPDF}=window.jspdf;const ratio=im.naturalWidth/im.naturalHeight;const a4=[210,297],margin=10;let pw=a4[0]-margin*2,ph=pw/ratio;if(ph>a4[1]-margin*2){ph=a4[1]-margin*2;pw=ph*ratio}const doc=new jsPDF({orientation:pw>ph?'landscape':'portrait',unit:'mm',format:[pw+margin*2,ph+margin*2]});doc.addImage(im,'JPEG',margin,margin,pw,ph,'SAFELIGHT','FAST');pdfResultBlob=doc.output('blob');const after=await renderPdfBlobFirstPage(pdfResultBlob);showPreview(before,after,'PDF создан локально · '+fmt(pdfResultBlob.size));document.getElementById('v-before').textContent='IMAGE · '+fmt(im.src?0:0);document.getElementById('v-after').textContent='PDF · '+fmt(pdfResultBlob.size);document.getElementById('v-result').classList.add('show');setStatus='';document.getElementById('v-status').textContent='Готово. Перетащите ползунок для сравнения.';
-    }else{
-      if(!pdfInput){const im=await getImage(),c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;c.getContext('2d').drawImage(im,0,0);const q=Number(document.getElementById('v-quality').value)/100;const blob=await canvasBlob(c,fmtTarget==='png'?'image/png':fmtTarget==='webp'?'image/webp':'image/jpeg',fmtTarget==='png'?undefined:q);pdfResultBlob=blob;const after=URL.createObjectURL(blob);showPreview(before,after,fmtTarget.toUpperCase()+' · '+fmt(blob.size));document.getElementById('v-before').textContent='SOURCE · '+fmt(0);document.getElementById('v-after').textContent=fmtTarget.toUpperCase()+' · '+fmt(blob.size);document.getElementById('v-result').classList.add('show');document.getElementById('v-download').onclick=()=>dl(blob,'safelight-converted.'+(fmtTarget==='jpeg'?'jpg':fmtTarget));document.getElementById('v-status').textContent='Готово. Перетащите ползунок для сравнения.';
-      }else{if(fmtTarget==='pdf'){return}if(!(pdfFile&&pdfPageCanvas))throw new Error('pdf-missing');const blob=await canvasBlob(pdfPageCanvas,fmtTarget==='png'?'image/png':fmtTarget==='webp'?'image/webp':'image/jpeg',fmtTarget==='png'?undefined:Number(document.getElementById('v-quality').value)/100);pdfResultBlob=blob;const after=URL.createObjectURL(blob);showPreview(document.getElementById('previewImg').src,after,fmtTarget.toUpperCase()+' · первая страница из '+pdfPageCount);document.getElementById('v-before').textContent='PDF · '+fmt(pdfFile.size);document.getElementById('v-after').textContent=fmtTarget.toUpperCase()+' · '+fmt(blob.size);document.getElementById('v-result').classList.add('show');document.getElementById('v-download').onclick=()=>dl(blob,'safelight-page-1.'+(fmtTarget==='jpeg'?'jpg':fmtTarget));document.getElementById('v-status').textContent='Готово. Для многостраничного PDF сейчас конвертируется первая страница.'}}
-  }catch(e){console.error(e);setStatus('Ошибка конвертации: '+(e.message||'неизвестная ошибка'))}finally{newRun.disabled=false}});
-  async function renderPdfBlobFirstPage(blob){const r=await renderPdfPage(new File([blob],'result.pdf',{type:'application/pdf'}));return r.canvas.toDataURL('image/png')}
-  const dlButton=document.getElementById('v-download');dlButton.addEventListener('click',e=>{if(pdfResultBlob){e.preventDefault();dl(pdfResultBlob,pdfInput?'safelight-converted.'+(format.value==='jpeg'?'jpg':format.value):'safelight-converted.'+(format.value==='pdf'?'pdf':format.value==='jpeg'?'jpg':format.value))}},true);
-})();
+  const nav = document.querySelector(".top-nav-links");
+  const main = document.querySelector("main.workmain");
+  if (!nav || !main) return;
+
+  // Shared transform state for compare.js live preview
+  window.safelightTransformState = { angle: 0, h: false, v: false };
+
+  const tools = [
+    {
+      id: "transform",
+      label: "Трансформация",
+      icon: "M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4M8 8l-3-3m11 11 3 3M16 8l3-3M8 16l-3 3",
+    },
+    {
+      id: "watermark",
+      label: "Водяной знак",
+      icon: "M4 5h16v14H4zM8 15l3-3 2 2 2-2 3 3M8 9h.01",
+    },
+    {
+      id: "batch",
+      label: "Массовая обработка",
+      icon: "M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z",
+    },
+    {
+      id: "metadata",
+      label: "Метаданные",
+      icon: "M6 3h9l3 3v15H6zM15 3v4h4M9 12h6M9 16h6",
+    },
+    {
+      id: "favicon",
+      label: "Favicon",
+      icon: "M4 4h16v16H4zM8 16l3-4 2 2 2-3 3 5",
+    },
+  ];
+
+  function addNav(t) {
+    if (nav.querySelector('[data-page="' + t.id + '"]')) return;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "top-nav-link advanced-nav";
+    b.dataset.page = t.id;
+    b.innerHTML =
+      '<span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="' +
+      t.icon +
+      '"/></svg></span><span>' +
+      t.label +
+      "</span>";
+    nav.appendChild(b);
+  }
+  tools.forEach(addNav);
+
+  function card(id, title, desc, html) {
+    const s = document.createElement("section");
+    s.className = "panel";
+    s.id = "panel-" + id;
+    s.innerHTML =
+      '<div class="panel-card"><h2>' +
+      title +
+      '</h2><p class="desc">' +
+      desc +
+      "</p>" +
+      html +
+      "</div>";
+    main.appendChild(s);
+    return s;
+  }
+
+  function ready() {
+    const wrap = document.getElementById("previewWrap");
+    const img = document.getElementById("previewImg");
+    return !!(wrap && img && wrap.style.display !== "none" && img.src);
+  }
+
+  function getImage() {
+    return new Promise((resolve, reject) => {
+      if (!ready()) return reject(new Error("no-image"));
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = document.getElementById("previewImg").src;
+    });
+  }
+
+  function dl(blob, name) {
+    if (!blob) return;
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = u;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 3000);
+  }
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1048576).toFixed(2) + " MB";
+  }
+
+  function canvasBlob(c, type, q) {
+    return new Promise((resolve, reject) =>
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob-failed"))), type, q)
+    );
+  }
+
+  // ---- Transform ----
+  const transform = card(
+    "transform",
+    "ТРАНСФОРМАЦИЯ",
+    "Поворачивайте и отражайте изображение локально.",
+    '<div class="transform-actions">' +
+      '<button type="button" class="btn ghost" data-tr="ccw">↶ 90°</button>' +
+      '<button type="button" class="btn ghost" data-tr="cw">↷ 90°</button>' +
+      '<button type="button" class="btn ghost" data-tr="180">180°</button>' +
+      '<button type="button" class="btn ghost" data-tr="h">↔ Горизонталь</button>' +
+      '<button type="button" class="btn ghost" data-tr="v">↕ Вертикаль</button>' +
+      "</div>" +
+      '<button type="button" class="btn primary" id="tr-download">Скачать PNG</button>' +
+      '<div class="status-line" id="tr-status"></div>'
+  );
+
+  let trBlob = null;
+
+  transform.querySelectorAll("[data-tr]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const status = transform.querySelector("#tr-status");
+      if (!ready()) {
+        status.textContent = "Сначала загрузите изображение.";
+        return;
+      }
+
+      const a = b.dataset.tr;
+      const state = window.safelightTransformState;
+      if (a === "ccw") state.angle = (state.angle + 270) % 360;
+      if (a === "cw") state.angle = (state.angle + 90) % 360;
+      if (a === "180") state.angle = (state.angle + 180) % 360;
+      if (a === "h") state.h = !state.h;
+      if (a === "v") state.v = !state.v;
+
+      try {
+        const im = await getImage();
+        const swap = state.angle % 180 !== 0;
+        const c = document.createElement("canvas");
+        c.width = swap ? im.naturalHeight : im.naturalWidth;
+        c.height = swap ? im.naturalWidth : im.naturalHeight;
+        const x = c.getContext("2d");
+        x.translate(c.width / 2, c.height / 2);
+        x.rotate((state.angle * Math.PI) / 180);
+        x.scale(state.h ? -1 : 1, state.v ? -1 : 1);
+        x.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
+        trBlob = await canvasBlob(c, "image/png");
+        status.textContent = "Предпросмотр обновлён.";
+      } catch (e) {
+        trBlob = null;
+        status.textContent = "Не удалось преобразовать изображение.";
+      }
+    })
+  );
+
+  transform.querySelector("#tr-download").addEventListener("click", () => {
+    if (!trBlob) {
+      transform.querySelector("#tr-status").textContent = "Сначала примените трансформацию.";
+      return;
+    }
+    dl(trBlob, "safelight-transform.png");
+  });
+
+  // ---- Watermark ----
+  const wm = card(
+    "watermark",
+    "ВОДЯНОЙ ЗНАК",
+    "Добавляйте текстовый watermark прямо в браузере.",
+    '<div class="field-row">' +
+      '<div class="field wm-wide"><label>Текст</label><input id="wm-text" value="Safelight"></div>' +
+      '<div class="field"><label>Размер</label><input id="wm-size" type="number" min="8" max="1000" value="48"></div>' +
+      '<div class="field"><label>Прозрачность</label><input id="wm-opacity" type="number" min="1" max="100" value="45"></div>' +
+      '<div class="field"><label>Позиция</label><select id="wm-pos">' +
+      '<option value="br">Низ / право</option>' +
+      '<option value="bl">Низ / лево</option>' +
+      '<option value="tr">Верх / право</option>' +
+      '<option value="tl">Верх / лево</option>' +
+      '<option value="center">Центр</option>' +
+      "</select></div></div>" +
+      '<button type="button" class="btn primary" id="wm-run">Нанести водяной знак</button>' +
+      '<button type="button" class="btn ghost" id="wm-download">Скачать</button>' +
+      '<div class="status-line" id="wm-status"></div>'
+  );
+
+  let wmBlob = null;
+
+  wm.querySelector("#wm-run").addEventListener("click", async () => {
+    const status = wm.querySelector("#wm-status");
+    if (!ready()) {
+      status.textContent = "Сначала загрузите изображение.";
+      return;
+    }
+    try {
+      const im = await getImage();
+      const c = document.createElement("canvas");
+      c.width = im.naturalWidth;
+      c.height = im.naturalHeight;
+      const x = c.getContext("2d");
+      x.drawImage(im, 0, 0);
+
+      const size = Math.max(8, Math.min(1000, +wm.querySelector("#wm-size").value || 48));
+      const text = wm.querySelector("#wm-text").value.trim() || "Safelight";
+      const op = Math.max(1, Math.min(100, +wm.querySelector("#wm-opacity").value || 45)) / 100;
+      const p = wm.querySelector("#wm-pos").value;
+      const pad = size * 0.55;
+
+      x.font = "600 " + size + "px Inter,Arial,sans-serif";
+      x.fillStyle = "rgba(255,255,255," + op + ")";
+      x.shadowColor = "rgba(0,0,0,.5)";
+      x.shadowBlur = Math.max(2, size / 10);
+      const m = x.measureText(text);
+
+      let px = pad;
+      let py = size + pad;
+      if (p.includes("r")) px = c.width - m.width - pad;
+      if (p === "center") {
+        px = (c.width - m.width) / 2;
+        py = (c.height + size) / 2;
+      }
+      if (p === "br" || p === "bl") py = c.height - pad;
+      px = Math.max(0, Math.min(c.width - m.width, px));
+      py = Math.max(size, Math.min(c.height, py));
+
+      x.fillText(text, px, py);
+      wmBlob = await canvasBlob(c, "image/png");
+      status.textContent = "Готово.";
+    } catch (e) {
+      wmBlob = null;
+      status.textContent = "Не удалось создать водяной знак.";
+    }
+  });
+
+  wm.querySelector("#wm-download").addEventListener("click", () => {
+    if (!wmBlob) {
+      wm.querySelector("#wm-status").textContent = "Сначала нанесите водяной знак.";
+      return;
+    }
+    dl(wmBlob, "safelight-watermark.png");
+  });
+
+  // ---- Batch ----
+  const batch = card(
+    "batch",
+    "МАССОВАЯ ОБРАБОТКА",
+    "Обрабатывайте много изображений и скачивайте один ZIP.",
+    '<label class="batch-drop"><span>Выберите несколько изображений</span>' +
+      '<input id="batch-files" type="file" accept="image/*" multiple></label>' +
+      '<div class="field-row">' +
+      '<div class="field"><label>Формат</label><select id="b-format">' +
+      '<option value="webp" selected>WebP</option>' +
+      '<option value="jpeg">JPEG</option>' +
+      '<option value="png">PNG</option></select></div>' +
+      '<div class="field"><label>Качество</label><input id="b-quality" type="number" min="1" max="100" value="85"></div>' +
+      '<div class="field"><label>Макс. ширина</label><input id="b-width" type="number" min="0" value="0"></div>' +
+      "</div>" +
+      '<button type="button" class="btn primary" id="b-run">Обработать всё и скачать ZIP</button>' +
+      '<div class="batch-progress"><div id="b-bar"></div></div>' +
+      '<div class="status-line" id="b-status"></div>'
+  );
+
+  let bfs = [];
+
+  batch.querySelector("#batch-files").addEventListener("change", (e) => {
+    bfs = [...e.target.files].filter((f) => f.type.startsWith("image/"));
+    batch.querySelector("#b-bar").style.width = "0%";
+    batch.querySelector("#b-status").textContent = bfs.length
+      ? "Выбрано: " + bfs.length + " файлов."
+      : "Подходящих изображений не найдено.";
+  });
+
+  batch.querySelector("#b-run").addEventListener("click", async () => {
+    const status = batch.querySelector("#b-status");
+    const run = batch.querySelector("#b-run");
+    if (!bfs.length) {
+      status.textContent = "Сначала выберите файлы.";
+      return;
+    }
+    if (!window.JSZip) {
+      status.textContent = "ZIP-библиотека не загрузилась.";
+      return;
+    }
+
+    run.disabled = true;
+    try {
+      const z = new JSZip();
+      const fmtv = batch.querySelector("#b-format").value;
+      const q = Math.max(1, Math.min(100, +batch.querySelector("#b-quality").value || 85)) / 100;
+      const maxW = Math.max(0, +batch.querySelector("#b-width").value || 0);
+      const mime =
+        fmtv === "png" ? "image/png" : fmtv === "webp" ? "image/webp" : "image/jpeg";
+      const ext = fmtv === "jpeg" ? "jpg" : fmtv;
+
+      for (let i = 0; i < bfs.length; i++) {
+        const im = await createImageBitmap(bfs[i]);
+        const c = document.createElement("canvas");
+        const s = maxW && im.width > maxW ? maxW / im.width : 1;
+        c.width = Math.max(1, Math.round(im.width * s));
+        c.height = Math.max(1, Math.round(im.height * s));
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        const blob = await canvasBlob(c, mime, fmtv === "png" ? undefined : q);
+        z.file(bfs[i].name.replace(/\.[^.]+$/, "") + "-optimized." + ext, blob);
+        if (im.close) im.close();
+        batch.querySelector("#b-bar").style.width = Math.round(((i + 1) / bfs.length) * 100) + "%";
+        status.textContent = "Обработано " + (i + 1) + " / " + bfs.length;
+      }
+
+      dl(await z.generateAsync({ type: "blob" }), "safelight-batch.zip");
+      status.textContent = "Готово. ZIP скачан.";
+    } catch (e) {
+      status.textContent = "Ошибка обработки: " + (e.message || "неизвестная ошибка");
+    } finally {
+      run.disabled = false;
+    }
+  });
+
+  // ---- Metadata ----
+  const metadata = card(
+    "metadata",
+    "МЕТАДАННЫЕ",
+    "Проверяйте информацию о файле и очищайте её пересохранением.",
+    '<div class="meta-box" id="meta-box">Загрузите изображение.</div>' +
+      '<button type="button" class="btn primary" id="meta-clean">Очистить и скачать PNG</button>' +
+      '<div class="status-line" id="meta-status"></div>'
+  );
+
+  metadata.querySelector("#meta-clean").addEventListener("click", async () => {
+    const status = metadata.querySelector("#meta-status");
+    if (!ready()) {
+      status.textContent = "Сначала загрузите изображение.";
+      return;
+    }
+    try {
+      const im = await getImage();
+      const c = document.createElement("canvas");
+      c.width = im.naturalWidth;
+      c.height = im.naturalHeight;
+      c.getContext("2d").drawImage(im, 0, 0);
+      dl(await canvasBlob(c, "image/png"), "safelight-clean.png");
+      status.textContent =
+        "Готово. Результат пересохранён через Canvas без исходных метаданных.";
+    } catch (e) {
+      status.textContent = "Не удалось очистить метаданные.";
+    }
+  });
+
+  // ---- Favicon ----
+  const favicon = card(
+    "favicon",
+    "FAVICON GENERATOR",
+    "Создавайте набор иконок для сайта из одного изображения.",
+    '<button type="button" class="btn primary" id="f-run">Создать favicon-пакет</button>' +
+      '<div class="code-box" id="f-code"></div>' +
+      '<div class="status-line" id="f-status"></div>'
+  );
+
+  favicon.querySelector("#f-run").addEventListener("click", async () => {
+    const status = favicon.querySelector("#f-status");
+    if (!ready()) {
+      status.textContent = "Сначала загрузите изображение.";
+      return;
+    }
+    if (!window.JSZip) {
+      status.textContent = "ZIP-библиотека не загрузилась.";
+      return;
+    }
+    try {
+      const im = await getImage();
+      const z = new JSZip();
+      for (const n of [16, 32, 48, 180, 192, 512]) {
+        const c = document.createElement("canvas");
+        c.width = c.height = n;
+        const x = c.getContext("2d");
+        x.fillStyle = "#fff";
+        x.fillRect(0, 0, n, n);
+        const scale = Math.min(n / im.naturalWidth, n / im.naturalHeight);
+        const w = im.naturalWidth * scale;
+        const h = im.naturalHeight * scale;
+        x.drawImage(im, (n - w) / 2, (n - h) / 2, w, h);
+        z.file("favicon-" + n + ".png", await canvasBlob(c, "image/png"));
+      }
+      dl(await z.generateAsync({ type: "blob" }), "safelight-favicon-pack.zip");
+      favicon.querySelector("#f-code").textContent =
+        '<link rel="icon" href="favicon-32.png">\n' +
+        '<link rel="apple-touch-icon" href="favicon-180.png">';
+      status.textContent = "Готово. Пакет скачан.";
+    } catch (e) {
+      status.textContent = "Не удалось создать favicon-пакет.";
+    }
+  });
+
+  // ---- Advanced page switcher ----
+  function setAdvanced(id) {
+    document.body.classList.remove("page-home");
+    document.body.classList.add("page-tool");
+    document.querySelectorAll(".top-nav-link").forEach((b) =>
+      b.classList.toggle("active", b.dataset.page === id)
+    );
+    document.querySelectorAll(".panel").forEach((p) =>
+      p.classList.toggle("active", p.id === "panel-" + id)
+    );
+
+    const titles = {
+      transform: ["Трансформация", "Поворот и отражение изображений."],
+      watermark: ["Водяной знак", "Добавляйте текстовый watermark локально."],
+      batch: ["Массовая обработка", "Обрабатывайте множество изображений одним действием."],
+      metadata: ["Метаданные", "Проверяйте и очищайте данные изображения."],
+      favicon: ["Favicon Generator", "Создавайте набор иконок для сайта."],
+    };
+    const t = titles[id];
+    if (t) {
+      document.querySelector("#workspace .page-title h1").textContent = t[0];
+      document.querySelector("#workspace .page-title p").textContent = t[1];
+    }
+
+    const grid = document.getElementById("gridOverlay");
+    if (grid) grid.style.display = "none";
+
+    if (id === "metadata" && ready()) {
+      const name = document.getElementById("meta-name").textContent;
+      const type = document.getElementById("meta-type").textContent;
+      const size = document.getElementById("meta-size").textContent;
+      const dims = document.getElementById("meta-dims").textContent;
+      document.getElementById("meta-box").innerHTML =
+        "<div>Файл <b>" +
+        name +
+        "</b></div><div>Тип <b>" +
+        type +
+        "</b></div><div>Размер <b>" +
+        size +
+        "</b></div><div>Размеры <b>" +
+        dims +
+        "</b></div><small>Canvas-пересохранение удаляет исходные EXIF/комментарии из результата.</small>";
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.safelightSetAdvanced = setAdvanced;
+
+  /* ------------------------------------------------------------------
+   * PDF bridge: PDF.js renders pages locally, jsPDF creates PDF locally.
+   * ------------------------------------------------------------------ */
+  (function initPdfConverter() {
+    const fileInput = document.getElementById("fileInput");
+    const dropzone = document.getElementById("dropzone");
+    const panel = document.getElementById("panel-convert");
+    if (!fileInput || !dropzone || !panel) return;
+
+    fileInput.setAttribute("accept", "image/*,application/pdf,.pdf");
+
+    const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    const PDFWORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const JSPDF = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js";
+
+    function load(src) {
+      return new Promise((res, rej) => {
+        if (document.querySelector('script[src="' + src + '"]')) return res();
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = res;
+        s.onerror = () => rej(new Error("Не удалось загрузить библиотеку"));
+        document.head.appendChild(s);
+      });
+    }
+
+    let libs = null;
+    let pdfFile = null;
+    let pdfPageCanvas = null;
+    let pdfPageCount = 0;
+    let pdfPreviewUrl = null;
+    let pdfResultBlob = null;
+    let pdfInput = false;
+
+    function setStatus(t) {
+      const e = panel.querySelector("#v-status");
+      if (e) e.textContent = t;
+    }
+
+    function ensurePreviewStyles() {
+      if (document.getElementById("pdf-preview-style")) return;
+      const s = document.createElement("style");
+      s.id = "pdf-preview-style";
+      s.textContent =
+        ".pdf-preview{display:none;margin-top:20px}.pdf-preview.show{display:block}" +
+        ".pdf-compare{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#111;aspect-ratio:16/10;min-height:220px}" +
+        ".pdf-compare img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:12px}" +
+        ".pdf-compare .after-layer{position:absolute;inset:0;width:50%;overflow:hidden;border-right:2px solid #4ade80;background:#111}" +
+        ".pdf-compare .after-layer img{width:100%;max-width:none}" +
+        ".pdf-compare input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;z-index:4}" +
+        ".pdf-slider-line{position:absolute;top:0;bottom:0;width:2px;background:#4ade80;z-index:3;left:50%;pointer-events:none}" +
+        ".pdf-slider-handle{position:absolute;left:50%;top:50%;z-index:3;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#4ade80;color:#09090b;display:grid;place-items:center;font-weight:800;pointer-events:none}" +
+        ".pdf-legend{display:flex;justify-content:space-between;margin-top:8px;color:var(--text-dim);font-size:11px}" +
+        ".pdf-label{position:absolute;top:10px;padding:4px 7px;border-radius:5px;background:rgba(9,9,11,.78);font:600 10px var(--mono);z-index:2}" +
+        ".pdf-label.before{left:10px}.pdf-label.after{right:10px}.pdf-meta{margin-top:10px;color:var(--text-dim);font-size:12px}";
+      document.head.appendChild(s);
+    }
+
+    function ensurePreview() {
+      ensurePreviewStyles();
+      let box = panel.querySelector("#pdf-preview");
+      if (box) return box;
+      box = document.createElement("div");
+      box.id = "pdf-preview";
+      box.className = "pdf-preview";
+      box.innerHTML =
+        '<div class="pdf-compare">' +
+        '<span class="pdf-label before">ДО</span><span class="pdf-label after">ПОСЛЕ</span>' +
+        '<img id="pdf-before-img" alt="До">' +
+        '<div class="after-layer" id="pdf-after-layer"><img id="pdf-after-img" alt="После"></div>' +
+        '<div class="pdf-slider-line" id="pdf-slider-line"></div>' +
+        '<div class="pdf-slider-handle" id="pdf-slider-handle">↔</div>' +
+        '<input id="pdf-slider" type="range" min="0" max="100" value="50" aria-label="Сравнение до и после">' +
+        "</div>" +
+        '<div class="pdf-legend"><span>До</span><span>После</span></div>' +
+        '<div class="pdf-meta" id="pdf-preview-meta"></div>';
+      const result = panel.querySelector("#v-result");
+      result.insertAdjacentElement("afterend", box);
+      const slider = box.querySelector("#pdf-slider");
+      const layer = box.querySelector("#pdf-after-layer");
+      const line = box.querySelector("#pdf-slider-line");
+      const handle = box.querySelector("#pdf-slider-handle");
+      slider.addEventListener("input", () => {
+        const v = Number(slider.value);
+        layer.style.width = v + "%";
+        line.style.left = v + "%";
+        handle.style.left = v + "%";
+      });
+      return box;
+    }
+
+    function showPreview(before, after, meta) {
+      const box = ensurePreview();
+      box.querySelector("#pdf-before-img").src = before;
+      box.querySelector("#pdf-after-img").src = after;
+      box.querySelector("#pdf-preview-meta").textContent = meta || "";
+      box.querySelector("#pdf-slider").value = 50;
+      box.querySelector("#pdf-after-layer").style.width = "50%";
+      box.querySelector("#pdf-slider-line").style.left = "50%";
+      box.querySelector("#pdf-slider-handle").style.left = "50%";
+      box.classList.add("show");
+    }
+
+    async function ensureLibs(needPdf, needJspdf) {
+      if (!libs) libs = {};
+      try {
+        if (needPdf && !window.pdfjsLib) {
+          await load(PDFJS);
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFWORKER;
+        }
+        if (needJspdf && !window.jspdf) {
+          await load(JSPDF);
+        }
+        return true;
+      } catch (e) {
+        setStatus("Не удалось загрузить PDF-инструменты. Проверьте соединение и обновите страницу.");
+        return false;
+      }
+    }
+
+    async function renderPdfPage(file, pageNum) {
+      pageNum = pageNum || 1;
+      if (!(await ensureLibs(true, false))) throw new Error("pdf-lib");
+      const data = await file.arrayBuffer();
+      const doc = await window.pdfjsLib.getDocument({ data }).promise;
+      pdfPageCount = doc.numPages;
+      const page = await doc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const c = document.createElement("canvas");
+      c.width = Math.ceil(viewport.width);
+      c.height = Math.ceil(viewport.height);
+      await page.render({ canvasContext: c.getContext("2d"), viewport }).promise;
+      return { canvas: c, pages: doc.numPages };
+    }
+
+    async function handlePdf(file) {
+      pdfFile = file;
+      pdfInput = true;
+      setStatus("Читаю PDF…");
+      try {
+        const r = await renderPdfPage(file);
+        pdfPageCanvas = r.canvas;
+        const url = URL.createObjectURL(file);
+        if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+        pdfPreviewUrl = url;
+
+        document.getElementById("previewImg").src = r.canvas.toDataURL("image/png");
+        document.getElementById("previewWrap").style.display = "inline-block";
+        document.getElementById("stageEmpty").style.display = "none";
+        document.getElementById("readout").style.display = "flex";
+
+        document.getElementById("meta-name").textContent = file.name;
+        document.getElementById("meta-size").textContent = fmt(file.size);
+        document.getElementById("meta-type").textContent = "application/pdf";
+        document.getElementById("meta-dims").textContent =
+          r.canvas.width + " × " + r.canvas.height;
+        document.getElementById("ro-dims").textContent =
+          r.canvas.width + " × " + r.canvas.height + " px";
+        document.getElementById("ro-size").textContent = fmt(file.size);
+        document.getElementById("ro-format").textContent = "PDF";
+
+        document.getElementById("t-name").textContent = file.name;
+        document.getElementById("t-name2").textContent = file.name;
+        document.getElementById("t-status").textContent = "готово — PDF загружен локально";
+        document.getElementById("t-dims").textContent =
+          r.canvas.width + "x" + r.canvas.height + " px, PDF";
+        document.getElementById("t-size").textContent = fmt(file.size);
+
+        setStatus("PDF загружен: " + r.pages + " стр.");
+        document.querySelectorAll(".result").forEach((e) => e.classList.remove("show"));
+      } catch (e) {
+        setStatus("Не удалось прочитать PDF.");
+        pdfFile = null;
+        pdfInput = false;
+      }
+    }
+
+    function isPdf(f) {
+      return (
+        f &&
+        ((f.type || "").toLowerCase() === "application/pdf" || /\.pdf$/i.test(f.name || ""))
+      );
+    }
+
+    fileInput.addEventListener(
+      "change",
+      (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (isPdf(f)) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          handlePdf(f);
+          fileInput.value = "";
+        }
+      },
+      true
+    );
+
+    dropzone.addEventListener(
+      "drop",
+      (e) => {
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (isPdf(f)) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          dropzone.classList.remove("drag");
+          handlePdf(f);
+        }
+      },
+      true
+    );
+
+    const format = document.getElementById("v-format");
+    const run = document.getElementById("v-run");
+    if (!format || !run) return;
+
+    if (![...format.options].some((o) => o.value === "pdf")) {
+      const o = document.createElement("option");
+      o.value = "pdf";
+      o.textContent = "PDF";
+      format.appendChild(o);
+    }
+
+    const qualityRow = document.getElementById("v-quality-row");
+    format.addEventListener("change", () => {
+      if (qualityRow)
+        qualityRow.style.display =
+          format.value === "png" || format.value === "pdf" ? "none" : "flex";
+    });
+
+    const newRun = run.cloneNode(true);
+    run.replaceWith(newRun);
+
+    newRun.addEventListener("click", async () => {
+      const fmtTarget = format.value;
+      const before = document.getElementById("previewImg").src;
+      if (!before) {
+        setStatus("Сначала загрузите изображение или PDF.");
+        return;
+      }
+
+      newRun.disabled = true;
+      setStatus("Конвертирую…");
+
+      try {
+        if (fmtTarget === "pdf") {
+          if (pdfInput && pdfFile) {
+            setStatus("PDF уже является исходным форматом. Выберите PNG, JPEG или WebP.");
+            return;
+          }
+          if (!(await ensureLibs(false, true))) return;
+
+          const im = await getImage();
+          const { jsPDF } = window.jspdf;
+          const ratio = im.naturalWidth / im.naturalHeight;
+          const a4 = [210, 297];
+          const margin = 10;
+          let pw = a4[0] - margin * 2;
+          let ph = pw / ratio;
+          if (ph > a4[1] - margin * 2) {
+            ph = a4[1] - margin * 2;
+            pw = ph * ratio;
+          }
+          const doc = new jsPDF({
+            orientation: pw > ph ? "landscape" : "portrait",
+            unit: "mm",
+            format: [pw + margin * 2, ph + margin * 2],
+          });
+          doc.addImage(im, "JPEG", margin, margin, pw, ph, "SAFELIGHT", "FAST");
+          pdfResultBlob = doc.output("blob");
+
+          const after = await renderPdfBlobFirstPage(pdfResultBlob);
+          showPreview(before, after, "PDF создан локально · " + fmt(pdfResultBlob.size));
+          document.getElementById("v-before").textContent = "IMAGE";
+          document.getElementById("v-after").textContent =
+            "PDF · " + fmt(pdfResultBlob.size);
+          document.getElementById("v-result").classList.add("show");
+          setStatus("Готово. Перетащите ползунок для сравнения.");
+        } else if (!pdfInput) {
+          const im = await getImage();
+          const c = document.createElement("canvas");
+          c.width = im.naturalWidth;
+          c.height = im.naturalHeight;
+          c.getContext("2d").drawImage(im, 0, 0);
+          const q = Number(document.getElementById("v-quality").value) / 100;
+          const blob = await canvasBlob(
+            c,
+            fmtTarget === "png"
+              ? "image/png"
+              : fmtTarget === "webp"
+                ? "image/webp"
+                : "image/jpeg",
+            fmtTarget === "png" ? undefined : q
+          );
+          pdfResultBlob = blob;
+          const after = URL.createObjectURL(blob);
+          showPreview(before, after, fmtTarget.toUpperCase() + " · " + fmt(blob.size));
+          document.getElementById("v-before").textContent = "SOURCE";
+          document.getElementById("v-after").textContent =
+            fmtTarget.toUpperCase() + " · " + fmt(blob.size);
+          document.getElementById("v-result").classList.add("show");
+          document.getElementById("v-download").onclick = () =>
+            dl(
+              blob,
+              "safelight-converted." + (fmtTarget === "jpeg" ? "jpg" : fmtTarget)
+            );
+          setStatus("Готово. Перетащите ползунок для сравнения.");
+        } else {
+          if (!(pdfFile && pdfPageCanvas)) throw new Error("pdf-missing");
+          const blob = await canvasBlob(
+            pdfPageCanvas,
+            fmtTarget === "png"
+              ? "image/png"
+              : fmtTarget === "webp"
+                ? "image/webp"
+                : "image/jpeg",
+            fmtTarget === "png"
+              ? undefined
+              : Number(document.getElementById("v-quality").value) / 100
+          );
+          pdfResultBlob = blob;
+          const after = URL.createObjectURL(blob);
+          showPreview(
+            document.getElementById("previewImg").src,
+            after,
+            fmtTarget.toUpperCase() + " · первая страница из " + pdfPageCount
+          );
+          document.getElementById("v-before").textContent =
+            "PDF · " + fmt(pdfFile.size);
+          document.getElementById("v-after").textContent =
+            fmtTarget.toUpperCase() + " · " + fmt(blob.size);
+          document.getElementById("v-result").classList.add("show");
+          document.getElementById("v-download").onclick = () =>
+            dl(
+              blob,
+              "safelight-page-1." + (fmtTarget === "jpeg" ? "jpg" : fmtTarget)
+            );
+          setStatus(
+            "Готово. Для многостраничного PDF сейчас конвертируется первая страница."
+          );
+        }
+      } catch (e) {
+        console.error(e);
+        setStatus("Ошибка конвертации: " + (e.message || "неизвестная ошибка"));
+      } finally {
+        newRun.disabled = false;
+      }
+    });
+
+    async function renderPdfBlobFirstPage(blob) {
+      const r = await renderPdfPage(
+        new File([blob], "result.pdf", { type: "application/pdf" })
+      );
+      return r.canvas.toDataURL("image/png");
+    }
+
+    const dlButton = document.getElementById("v-download");
+    dlButton.addEventListener(
+      "click",
+      (e) => {
+        if (pdfResultBlob) {
+          e.preventDefault();
+          const ext =
+            format.value === "pdf"
+              ? "pdf"
+              : format.value === "jpeg"
+                ? "jpg"
+                : format.value;
+          dl(pdfResultBlob, "safelight-converted." + ext);
+        }
+      },
+      true
+    );
+  })();
 })();
