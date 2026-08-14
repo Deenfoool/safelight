@@ -207,11 +207,14 @@
     loadStyle("css/app-shell-fixes.css?v=2");
     loadStyle("css/live-editor.css?v=3");
     loadStyle("css/direct-manipulation.css?v=2");
+    loadStyle("css/editor-polish.css?v=1");
     loadScript("js/ui-shell.js?v=2", () => {
       loadScript("js/hardening.js?v=3", () => {
         loadScript("js/source-cleanup.js?v=2", () => {
           loadScript("js/live-editor.js?v=3", () => {
-            loadScript("js/direct-manipulation.js?v=2");
+            loadScript("js/direct-manipulation.js?v=2", () => {
+              loadScript("js/editor-polish.js?v=1");
+            });
           });
         });
       });
