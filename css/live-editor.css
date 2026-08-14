@@ -1,0 +1,43 @@
+/* Live editor: the center image is the result, not a separate preview. */
+.sl-app .sl-live-canvas{display:none;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:5px;box-shadow:0 14px 45px rgba(0,0,0,.45)}
+.sl-app .preview-wrap.sl-live-ready .sl-live-canvas{display:block}
+.sl-app .preview-wrap.sl-live-ready>#previewImg{display:none!important}
+.sl-app .preview-wrap.sl-live-ready .af{display:none!important}
+
+/* Old apply/download/result UI is replaced by realtime controls + the single top export. */
+.sl-app .sl-inspector-panels .panel .btn.primary,
+.sl-app .sl-inspector-panels .panel .result,
+.sl-app .sl-inspector-panels .panel .status-line,
+.sl-app .sl-inspector-panels .batch-progress{display:none!important}
+.sl-app .sl-inspector-panels .sl-format-field{display:none!important}
+.sl-app #v-quality-row{display:flex!important}
+
+.sl-live-state{margin:14px 0 4px;padding:11px 12px;border:1px solid rgba(163,230,53,.18);border-radius:8px;background:rgba(163,230,53,.045);display:flex;align-items:center;gap:9px;color:#a1a1aa;font:500 10.5px/1.5 var(--sans)}
+.sl-live-state i{width:7px;height:7px;border-radius:50%;background:#a3e635;box-shadow:0 0 10px rgba(163,230,53,.55);flex:none}.sl-live-state b{color:#d4d4d8;font-weight:600}
+
+/* Export dropdown */
+.sl-export-wrap{position:relative;display:inline-flex;align-items:center}
+.sl-export .sl-export-caret{font-size:11px;opacity:.72;margin-left:1px}
+.sl-export-menu{position:absolute;right:0;top:calc(100% + 9px);width:224px;padding:7px;border:1px solid #303035;border-radius:10px;background:rgba(15,15,18,.98);box-shadow:0 20px 55px rgba(0,0,0,.48);backdrop-filter:blur(16px);opacity:0;visibility:hidden;transform:translateY(-5px) scale(.985);transform-origin:top right;transition:.15s;z-index:2000}
+.sl-export-wrap.open .sl-export-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.sl-export-menu-title{padding:7px 9px 5px;color:#67676f;font:700 9px var(--sans);letter-spacing:.09em;text-transform:uppercase}
+.sl-export-option{width:100%;min-height:38px;padding:8px 9px;border:0;border-radius:7px;background:transparent;color:#d4d4d8;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;cursor:pointer;font:600 11px var(--sans)}
+.sl-export-option:hover{background:rgba(163,230,53,.075);color:#fff}.sl-export-option span:last-child{color:#6f6f78;font:500 9px var(--mono)}
+.sl-export-option:hover span:last-child{color:#a3e635}
+.sl-export-sep{height:1px;background:#27272c;margin:5px 4px}
+.sl-export-menu-note{padding:7px 9px;color:#65656d;font:500 9px/1.5 var(--sans)}
+
+/* Make the live-editing model explicit instead of talking about a separate preview. */
+.sl-inspector-note b{color:#d4d4d8!important}
+
+/* Portfolio-style animated background must remain visible through the editor chrome. */
+body.page-tool .sl-app{background:rgba(9,9,11,.48)!important}
+body.page-tool .sl-app-body{background:rgba(9,9,11,.38)!important}
+body.page-tool .sl-sidebar{background:linear-gradient(90deg,rgba(13,13,16,.86),rgba(15,15,18,.76))!important;backdrop-filter:blur(9px)}
+body.page-tool .sl-center{background:rgba(9,9,11,.40)!important}
+body.page-tool .sl-inspector{background:rgba(14,14,17,.78)!important;backdrop-filter:blur(10px)}
+body.page-tool .sl-filmstrip{background:rgba(13,13,16,.78)!important;backdrop-filter:blur(8px)}
+body.page-tool .sl-app .stage{background:rgba(13,13,16,.58)!important;backdrop-filter:blur(4px)}
+body.page-tool .sl-app .readout{background:rgba(15,15,18,.72)!important}
+
+@media(max-width:760px){.sl-export-menu{position:fixed;top:68px;right:10px;width:min(260px,calc(100vw - 20px))}}
