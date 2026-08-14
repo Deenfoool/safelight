@@ -42,9 +42,9 @@
   }
 
   function setBasicTool(tool) {
-    Object.entries(panels).forEach(([name, panel]) => {
-      if (panel) panel.classList.toggle("active", name === tool);
-    });
+    document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
+    const panel = panels[tool];
+    if (panel) panel.classList.add("active");
     if (title && info[tool]) title.textContent = info[tool][0];
     if (description && info[tool]) description.textContent = info[tool][1];
     const grid = document.getElementById("gridOverlay");
