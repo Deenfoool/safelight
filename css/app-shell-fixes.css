@@ -1,0 +1,7 @@
+/* Small shell overrides kept separate so the legacy page remains untouched. */
+.sl-app .preview-wrap[style*="display:none"]{display:none!important}
+.sl-app .readout[style*="display:none"]{display:none!important}
+/* Export is intentionally centralized in the top-right toolbar. */
+.sl-app #s-run,.sl-app #b-run,.sl-app #meta-clean,.sl-app #f-run{display:none!important}
+/* Keep image-processing/apply actions visible, but hide all secondary download buttons. */
+.sl-app #c-download,.sl-app #v-download,.sl-app #r-download,.sl-app #cr-download,.sl-app #a-download,.sl-app #tr-download,.sl-app #wm-download{display:none!important}
