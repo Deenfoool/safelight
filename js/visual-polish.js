@@ -47,21 +47,21 @@
         for(let col=-1;col<cols;col++){
           const p=point(col,row,t);if(col===-1)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
         }
-        ctx.strokeStyle='rgba(74,222,128,0.085)';ctx.stroke();
+        ctx.strokeStyle='rgba(163,230,53,0.095)';ctx.stroke();
       }
       for(let col=-1;col<cols;col++){
         ctx.beginPath();
         for(let row=-1;row<rows;row++){
           const p=point(col,row,t);if(row===-1)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
         }
-        ctx.strokeStyle='rgba(74,222,128,0.085)';ctx.stroke();
+        ctx.strokeStyle='rgba(163,230,53,0.095)';ctx.stroke();
       }
       [[width*.18,height*.24],[width*.72,height*.38],[width*.47,height*.78]].forEach(([sx,sy],i)=>{
         const pulse=(Math.sin(t*.0011+i*2.2)+1)*.5;
         const radius=90+pulse*80;
         const glow=ctx.createRadialGradient(sx,sy,0,sx,sy,radius);
-        glow.addColorStop(0,'rgba(74,222,128,0.038)');
-        glow.addColorStop(1,'rgba(74,222,128,0)');
+        glow.addColorStop(0,'rgba(163,230,53,0.045)');
+        glow.addColorStop(1,'rgba(163,230,53,0)');
         ctx.fillStyle=glow;ctx.fillRect(sx-radius,sy-radius,radius*2,radius*2);
       });
       raf=requestAnimationFrame(draw);
@@ -97,7 +97,7 @@
           </div>
         </div>
         <div class="hlc-node">
-          <div class="hlc-label">ПРЕДПРОСМОТР</div>
+          <div class="hlc-label">РЕЗУЛЬТАТ</div>
           <strong id="t-status">ожидаю загрузку файла_</strong>
           <span id="t-dims">—</span>
         </div>
