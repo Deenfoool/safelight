@@ -1,7 +1,11 @@
 /* Small shell overrides kept separate so the legacy page remains untouched. */
 .sl-app .preview-wrap[style*="display:none"]{display:none!important}
 .sl-app .readout[style*="display:none"]{display:none!important}
+/* Keep the preview wrapper fitted to the rendered image so compare/crop/slice overlays share exact image bounds. */
+.sl-app .sl-center .preview-wrap{width:auto;height:auto;max-width:100%;max-height:100%;display:inline-block!important}
+.sl-app .sl-center .preview-wrap>img{width:auto;height:auto;max-width:100%;max-height:calc(100vh - 320px);object-fit:contain}
 /* Export is intentionally centralized in the top-right toolbar. */
 .sl-app #s-run,.sl-app #b-run,.sl-app #meta-clean,.sl-app #f-run{display:none!important}
 /* Keep image-processing/apply actions visible, but hide all secondary download buttons. */
 .sl-app #c-download,.sl-app #v-download,.sl-app #r-download,.sl-app #cr-download,.sl-app #a-download,.sl-app #tr-download,.sl-app #wm-download{display:none!important}
+@media(max-width:760px){.sl-app .sl-center .preview-wrap>img{max-height:58vh}}
