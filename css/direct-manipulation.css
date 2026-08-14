@@ -1,0 +1,62 @@
+/* Direct manipulation layer: movable slice guides, draggable watermark, cleaner transform UI. */
+.sl-direct-overlay{position:absolute;inset:0;z-index:35;pointer-events:none;overflow:visible}
+
+/* For slice/watermark the original image remains the visual base; interactive overlays sit above it. */
+.sl-app .preview-wrap.sl-interactive-slice.sl-live-ready>#previewImg,
+.sl-app .preview-wrap.sl-interactive-watermark.sl-live-ready>#previewImg{display:block!important}
+.sl-app .preview-wrap.sl-interactive-slice .sl-live-canvas,
+.sl-app .preview-wrap.sl-interactive-watermark .sl-live-canvas{display:none!important}
+.sl-app .preview-wrap.sl-interactive-slice #gridOverlay{display:none!important}
+
+/* Slice guides */
+.sl-slice-frame{position:absolute;border:1px solid rgba(163,230,53,.32);border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.32);pointer-events:none}
+.sl-slice-guide{position:absolute;padding:0;margin:0;border:0;background:transparent;pointer-events:auto;z-index:4;touch-action:none;outline:none}
+.sl-slice-guide.vertical{width:18px;transform:translateX(-50%);cursor:ew-resize}
+.sl-slice-guide.horizontal{height:18px;transform:translateY(-50%);cursor:ns-resize}
+.sl-slice-guide:before{content:"";position:absolute;background:#a3e635;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 0 12px rgba(163,230,53,.32);transition:.15s}
+.sl-slice-guide.vertical:before{left:8px;top:0;bottom:0;width:2px}
+.sl-slice-guide.horizontal:before{top:8px;left:0;right:0;height:2px}
+.sl-slice-guide:after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;border:1px solid rgba(163,230,53,.55);background:#11140d;box-shadow:0 5px 16px rgba(0,0,0,.48);opacity:0;transition:.15s}
+.sl-slice-guide.vertical:after{left:50%;top:50%;transform:translate(-50%,-50%)}
+.sl-slice-guide.horizontal:after{left:50%;top:50%;transform:translate(-50%,-50%)}
+.sl-slice-guide:hover:after,.sl-slice-guide:focus-visible:after,.sl-dragging-guide .sl-slice-guide:after{opacity:1}
+.sl-dragging-guide{cursor:grabbing!important;user-select:none}
+
+/* Watermark direct positioning */
+.sl-watermark-drag{position:absolute;transform:translate(-50%,-50%);border:1px dashed rgba(255,255,255,.62);border-radius:6px;padding:.28em .48em;background:rgba(9,9,11,.14);color:#fff;font-family:Inter,Arial,sans-serif;font-weight:600;line-height:1;white-space:nowrap;text-shadow:0 2px 9px rgba(0,0,0,.65);box-shadow:0 0 0 3px rgba(163,230,53,.08);pointer-events:auto;cursor:grab;touch-action:none;max-width:88%;overflow:hidden;text-overflow:ellipsis}
+.sl-watermark-drag:hover{border-color:#a3e635;box-shadow:0 0 0 4px rgba(163,230,53,.10),0 9px 28px rgba(0,0,0,.30)}
+.sl-watermark-drag:active,.sl-dragging-watermark .sl-watermark-drag{cursor:grabbing;border-color:#a3e635}
+.sl-watermark-fill{position:absolute;overflow:hidden;pointer-events:none}
+.sl-watermark-fill span{position:absolute;transform:translate(-50%,-50%) rotate(-30deg);color:#fff;font-family:Inter,Arial,sans-serif;font-weight:600;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.55)}
+.sl-hidden-position-field{display:none!important}
+.sl-wm-fill-row{margin:8px 0 18px;padding:13px;border:1px solid #2b2b31;border-radius:8px;background:rgba(20,20,23,.72);display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.sl-wm-fill-row input{margin-top:2px;accent-color:#a3e635}
+.sl-wm-fill-row span{display:flex;flex-direction:column;gap:4px}
+.sl-wm-fill-row b{color:#dedee2;font-size:11px;font-weight:600}
+.sl-wm-fill-row small{color:#74747d;font-size:9.5px;line-height:1.45}
+
+/* Cleaner transform tool */
+.sl-transform-shell{display:flex;flex-direction:column;gap:14px}
+.sl-transform-block{padding:13px;border:1px solid #29292f;border-radius:9px;background:rgba(20,20,23,.66)}
+.sl-transform-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#8c8c95;font-size:10px}
+.sl-transform-label span{font-weight:600;color:#b4b4bc}.sl-transform-label b{font:600 9px var(--mono);color:#67676f}
+.sl-transform-grid{display:grid;gap:8px}
+.sl-transform-grid.rotate{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sl-transform-grid.flip{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sl-transform-grid .btn.ghost{min-width:0;min-height:68px;padding:10px 7px;border:1px solid #313138;border-radius:8px;background:#18181c;color:#c9c9cf;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:9.5px;line-height:1.25;text-align:center;transition:.15s}
+.sl-transform-grid .btn.ghost:hover{border-color:#52525a;background:#1d1d21;color:#fff;transform:translateY(-1px)}
+.sl-transform-grid .btn.ghost.active{border-color:rgba(163,230,53,.48);background:rgba(163,230,53,.08);color:#d9f99d}
+.sl-tr-symbol{font-size:21px;line-height:1;color:#a3e635}
+
+/* Export now lives inside the inspector, directly above the original-safety note. */
+.sl-inspector-export{display:flex!important;width:100%;margin:20px 0 10px;position:relative}
+.sl-inspector-export .sl-export{width:100%;height:44px;justify-content:center;font-size:12px}
+.sl-inspector-export .sl-export-menu{right:0;left:0;width:100%;top:auto;bottom:calc(100% + 8px);transform-origin:bottom center}
+.sl-inspector-export.open .sl-export-menu{transform:translateY(0) scale(1)}
+.sl-topbar>.sl-export-wrap{display:none!important}
+.sl-inspector-note{margin-top:0!important}
+
+@media(max-width:760px){
+  .sl-transform-grid.rotate{grid-template-columns:1fr 1fr}.sl-transform-grid.rotate .btn:last-child{grid-column:1/-1}
+  .sl-inspector-export .sl-export-menu{position:absolute;top:auto;right:0;bottom:calc(100% + 8px);width:100%}
+}
