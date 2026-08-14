@@ -71,10 +71,6 @@
     return !!(source.src && source.complete && wrap.style.display !== "none");
   }
 
-  function sourceType() {
-    return (document.getElementById("meta-type")?.textContent || "").toLowerCase();
-  }
-
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -85,7 +81,6 @@
 
   function setPosition(value) {
     const n = Math.max(0, Math.min(100, Number(value) || 0));
-    // Divider X is literal: 0 = all AFTER, 100 = all BEFORE.
     after.style.clipPath = `inset(0 0 0 ${n}%)`;
     divider.style.left = n + "%";
     handle.style.left = n + "%";
@@ -94,9 +89,12 @@
   range.addEventListener("input", () => setPosition(range.value));
   setPosition(50);
 
-  function revokeUrls() {
-    for (const url of urls) URL.revokeObjectURL(url);
-    urls.clear();
+  function revokeUrls(except) {
+    for (const url of [...urls]) {
+      if (url === except) continue;
+      URL.revokeObjectURL(url);
+      urls.delete(url);
+    }
   }
 
   function ownUrl(blob) {
@@ -141,7 +139,8 @@
   }
 
   function showPair(afterBlob, beforeMeta, afterMeta, beforeSrc) {
-    revokeUrls();
+    const keep = beforeSrc && urls.has(beforeSrc) ? beforeSrc : null;
+    revokeUrls(keep);
     const a = beforeSrc || source.src;
     const b = ownUrl(afterBlob);
     compare.classList.add("special", "show");
@@ -195,12 +194,7 @@
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(im, 0, 0, w, h);
-      return {
-        mode: "pair",
-        blob: await canvasBlob(canvas, "image/png"),
-        beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px",
-        afterMeta: w + " × " + h + " px",
-      };
+      return { mode: "pair", blob: await canvasBlob(canvas, "image/png"), beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px", afterMeta: w + " × " + h + " px" };
     }
 
     if (tool === "crop") {
@@ -214,12 +208,7 @@
       canvas.width = w;
       canvas.height = h;
       ctx.drawImage(im, x, y, w, h, 0, 0, w, h);
-      return {
-        mode: "pair",
-        blob: await canvasBlob(canvas, "image/png"),
-        beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px",
-        afterMeta: w + " × " + h + " px",
-      };
+      return { mode: "pair", blob: await canvasBlob(canvas, "image/png"), beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px", afterMeta: w + " × " + h + " px" };
     }
 
     if (tool === "adjust") {
@@ -263,12 +252,7 @@
     ctx.rotate((state.angle * Math.PI) / 180);
     ctx.scale(state.h ? -1 : 1, state.v ? -1 : 1);
     ctx.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
-    return {
-      mode: "pair",
-      blob: await canvasBlob(canvas, "image/png"),
-      beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px",
-      afterMeta: canvas.width + " × " + canvas.height + " px · " + state.angle + "°",
-    };
+    return { mode: "pair", blob: await canvasBlob(canvas, "image/png"), beforeMeta: im.naturalWidth + " × " + im.naturalHeight + " px", afterMeta: canvas.width + " × " + canvas.height + " px · " + state.angle + "°" };
   }
 
   async function renderWatermark() {
@@ -291,10 +275,7 @@
     let x = pad;
     let y = size + pad;
     if (p.includes("r")) x = canvas.width - m.width - pad;
-    if (p === "center") {
-      x = (canvas.width - m.width) / 2;
-      y = (canvas.height + size) / 2;
-    }
+    if (p === "center") { x = (canvas.width - m.width) / 2; y = (canvas.height + size) / 2; }
     if (p === "br" || p === "bl") y = canvas.height - pad;
     x = Math.max(0, Math.min(canvas.width - m.width, x));
     y = Math.max(size, Math.min(canvas.height, y));
@@ -309,6 +290,7 @@
       showSpecial('<div class="cp-card cp-status">Выберите изображения — здесь появится пример результата для первого файла.</div>');
       return;
     }
+    revokeUrls();
     const beforeUrl = ownUrl(files[0]);
     const im = await imageFrom(beforeUrl);
     const fmt = document.getElementById("b-format")?.value || "webp";
@@ -316,18 +298,12 @@
     const maxWidth = Math.max(0, Number(document.getElementById("b-width")?.value) || 0);
     let w = im.naturalWidth;
     let h = im.naturalHeight;
-    if (maxWidth && w > maxWidth) {
-      h = Math.max(1, Math.round((h * maxWidth) / w));
-      w = maxWidth;
-    }
+    if (maxWidth && w > maxWidth) { h = Math.max(1, Math.round((h * maxWidth) / w)); w = maxWidth; }
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
-    if (fmt === "jpeg") {
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, w, h);
-    }
+    if (fmt === "jpeg") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); }
     ctx.drawImage(im, 0, 0, w, h);
     const result = await canvasBlob(canvas, mimeFor(fmt), fmt === "png" ? undefined : quality);
     showPair(result, im.naturalWidth + " × " + im.naturalHeight, w + " × " + h + " · " + fmt.toUpperCase(), beforeUrl);
@@ -339,10 +315,7 @@
 
     try {
       if (["compress", "convert", "resize", "crop", "adjust"].includes(tool)) {
-        if (tool === "convert" && document.getElementById("v-format")?.value === "pdf") {
-          hide();
-          return;
-        }
+        if (tool === "convert" && document.getElementById("v-format")?.value === "pdf") { hide(); return; }
         const result = await renderBaseTool(tool);
         if (ticket !== buildToken || !result) return;
         if (result.mode === "slider") showSlider(result.blob);
@@ -373,10 +346,7 @@
         return;
       }
 
-      if (tool === "batch") {
-        await renderBatch();
-        return;
-      }
+      if (tool === "batch") { await renderBatch(); return; }
 
       if (tool === "metadata") {
         const name = document.getElementById("meta-name")?.textContent || "—";
@@ -390,8 +360,7 @@
       if (tool === "favicon") {
         const im = await imageFrom(source.src);
         if (ticket !== buildToken) return;
-        const sizes = [32, 180, 512];
-        const html = sizes.map((n) => {
+        const html = [32, 180, 512].map((n) => {
           const c = document.createElement("canvas");
           c.width = c.height = n;
           const ctx = c.getContext("2d");
@@ -411,9 +380,7 @@
 
   function schedule(tool, delay = 60) {
     const current = tool || activeTool();
-    setTimeout(() => {
-      if (current === activeTool()) build(current);
-    }, delay);
+    setTimeout(() => { if (current === activeTool()) build(current); }, delay);
   }
 
   const resultObserver = new MutationObserver((mutations) => {
@@ -456,8 +423,8 @@
     else hide();
   });
 
-  window.addEventListener("safelight:toolchange", () => hide());
-  new MutationObserver(() => hide()).observe(source, { attributes: true, attributeFilter: ["src"] });
+  window.addEventListener("safelight:toolchange", hide);
+  new MutationObserver(hide).observe(source, { attributes: true, attributeFilter: ["src"] });
   window.addEventListener("resize", () => {
     if (compare.classList.contains("show") && !compare.classList.contains("special")) setPosition(range.value);
   });
