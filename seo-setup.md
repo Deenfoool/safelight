@@ -1,0 +1,1 @@
+Safelight search indexing setup in progress.
