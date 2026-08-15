@@ -1,141 +1,126 @@
 # Safelight
 
-> Локальный image toolkit для браузера. Быстрая обработка изображений без отправки пользовательских файлов на сервер.
+**Privacy-first image tools that run entirely in your browser.**
 
-![Safelight](assets/images/portfolio.png)
+Compress, convert, resize, crop, blur, inspect metadata, extract palettes and more — without uploading your images to a server.
 
-**Safelight** — image processing without sending your images away.
+[**Open Safelight**](https://deenfoool.github.io/safelight/) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [MIT License](LICENSE)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Demo](https://img.shields.io/badge/demo-GitHub%20Pages-4ade80)](https://deenfoool.github.io/safelight/)
-
-**Демо:** [deenfoool.github.io/safelight](https://deenfoool.github.io/safelight/)
+![Safelight interface](portfolio.png)
 
 ---
 
-## О проекте
+## Why Safelight?
 
-**Safelight** превращает браузер в небольшой графический инструмент: сжатие, конвертация, изменение размера, нарезка, коррекция и другие операции выполняются прямо на устройстве пользователя.
+Most online image tools ask you to upload a file before doing something as simple as converting it to WebP or removing metadata.
 
-- Никаких аккаунтов
-- Изображения не загружаются на сервер Safelight
-- Изменения применяются к рабочему изображению в реальном времени
-- Экспорт выполняется одной общей кнопкой
-- Каждый инструмент работает от исходного изображения, а не от результата предыдущего
-- Можно установить как PWA-приложение
-- Интерфейс использует локальные системные шрифты и не обращается к Google Fonts
-- ZIP и PDF runtime лежат внутри репозитория и не требуют CDN
+Safelight takes a different approach: **your image stays on your device**. Processing happens locally with browser APIs and Canvas.
 
-## Возможности
+- No account
+- No backend upload
+- No tracking-dependent workflow
+- Works as an installable PWA
+- Core runtime is bundled locally — no Google Fonts or CDN dependency
+- Original files stay untouched until you explicitly export a result
 
-- PNG / JPEG / WebP
-- PDF → PNG / JPEG / WebP (первая страница)
-- PNG / JPEG / WebP → PDF
-- Сжатие и контроль качества
-- Нарезка изображений с перетаскиваемыми линиями и ZIP
-- Изменение размера и обрезка
-- Базовая цветокоррекция в реальном времени
-- Поворот и отражение
-- Перетаскиваемые водяные знаки и режим заполнения изображения
-- Размытие и пикселизация выбранных областей с ручным перемещением и изменением размера
-- Палитра изображения: 3 / 5 / 8 / 12 доминирующих цветов, HEX / RGB / HSL и пипетка по изображению
-- Экспорт палитры в CSS variables, JSON, TXT и PNG-карточку
-- Пакетная обработка
-- Просмотр EXIF/XMP-метаданных: камера, объектив, дата, параметры съёмки, автор и GPS
-- Предупреждение о сохранённой геолокации и оценка объёма метаданных
-- Очистка метаданных при экспорте с выбором категорий для JPEG; PNG/WebP создаются без исходных метаданных
-- Генерация favicon-пакета
-- PWA: manifest, service worker, install prompt и кэширование интерфейса
-- Адаптивный интерфейс
+## Try it
 
-## Приватность и офлайн
+**Live app:** https://deenfoool.github.io/safelight/
 
-Само изображение обрабатывается локально через Browser APIs / Canvas. Safelight не отправляет загруженный файл на свой backend.
+Drop in an image and start editing immediately. There is no signup screen and no upload step.
 
-Инструмент «Метаданные» анализирует EXIF/XMP/текстовые блоки прямо в браузере. При экспорте Safelight может создать очищенную копию изображения; оригинальный файл при этом не изменяется.
+## Features
 
-Инструменты размытия/пикселизации и палитры также работают локально: области, выбранные цвета и анализ изображения остаются в состоянии страницы.
+### Image editing
+- Compress PNG, JPEG and WebP
+- Convert between PNG / JPEG / WebP
+- Export images to PDF
+- Render the first page of supported PDFs to an image
+- Resize and crop
+- Brightness, contrast and saturation controls
+- Rotate and flip
+- Watermarks with draggable positioning
+- Blur or pixelate selected regions
 
-Safelight не загружает шрифты, ZIP-библиотеки или PDF-инструменты со сторонних CDN. Нужные runtime-файлы хранятся в `/vendor` и входят в PWA-кэш вместе с интерфейсом.
+### Utilities
+- Batch processing
+- Image slicing with draggable guides and ZIP export
+- Dominant color palette extraction: 3 / 5 / 8 / 12 colors
+- Eyedropper with HEX / RGB / HSL values
+- Palette export to CSS variables, JSON, TXT and PNG
+- Favicon package generation
 
-Локальный PDF renderer ориентирован на первую страницу и хорошо подходит для PDF с растровыми изображениями, включая PDF, созданные самим Safelight. Для сложных PDF с нестандартными шрифтами, объектными потоками или тяжёлой векторной графикой отображение может быть упрощённым.
+### Privacy tools
+- Inspect EXIF / XMP metadata locally
+- Detect camera, lens, date, author and GPS data when available
+- Warn when location data is present
+- Export cleaned image copies without the original metadata
 
-## Системные требования
+## Local-first by design
 
-| Требование | Значение |
-|---|---|
-| ОС | Любая современная ОС |
-| Браузер | Chrome / Chromium / Firefox / Edge / Safari |
-| Backend | Не требуется |
-| Интернет | Нужен только для первоначального открытия сайта; после кэширования PWA основной runtime работает офлайн |
+Safelight does not send the image you open to a Safelight backend.
 
-## Установка / запуск
+Image operations are performed locally in the browser. Metadata inspection, palette analysis, blur regions and other working state remain on the device while you use the app.
 
-Safelight не требует сборщика или backend.
+The application also ships its ZIP/PDF runtime inside the repository and uses local system fonts instead of Google Fonts.
+
+> Note: the built-in PDF renderer is intentionally lightweight and optimized for the first page and image-oriented PDFs. Complex PDFs with unusual fonts or heavy vector content may render in a simplified form.
+
+## Install as an app
+
+Safelight is a PWA. After opening it in a supported browser, you can install it and use the cached core interface offline.
+
+## Run locally
+
+No build step or backend is required.
 
 ```bash
 git clone https://github.com/Deenfoool/safelight.git
 cd safelight
-```
-
-Для локальной разработки удобнее запустить простой HTTP-сервер:
-
-```bash
 python -m http.server 8080
 ```
 
-или
+Then open `http://localhost:8080`.
 
-```bash
-npx serve .
-```
+## Tech
 
-После этого открой локальный адрес браузера. Все runtime-зависимости уже находятся в репозитории.
-
-## Технологии
-
-- HTML5
-- CSS3
 - Vanilla JavaScript
+- HTML5 / CSS3
 - Canvas API
-- Service Worker / Web App Manifest
-- System UI / local font stack
-- Локальный ZIP runtime
-- Локальный PDF export/runtime
-- Локальный PDF first-page renderer
+- Service Worker
+- Web App Manifest
+- Local ZIP runtime
+- Local PDF runtime
 
-## Почему Safelight?
+## Project status
 
-Для большинства простых операций с изображениями не нужен удалённый сервер. Safelight использует возможности браузера, поэтому исходный файл остаётся на устройстве пользователя, а обработка происходит локально.
+Safelight currently includes:
 
-## Roadmap
+- [x] Compression
+- [x] Slicing
+- [x] Format conversion
+- [x] PDF conversion
+- [x] Resize / crop
+- [x] Color adjustment
+- [x] Transform tools
+- [x] Watermarks
+- [x] Batch processing
+- [x] Metadata inspector / cleaner
+- [x] Favicon generator
+- [x] Region blur / pixelation
+- [x] Palette extraction / eyedropper
+- [x] PWA support
+- [x] Local fonts
+- [x] Offline vendor runtime
 
-- [x] Сжатие
-- [x] Нарезка
-- [x] Конвертация
-- [x] PDF-конвертация
-- [x] Изменение размера
-- [x] Обрезка
-- [x] Коррекция
-- [x] Трансформация
-- [x] Водяной знак
-- [x] Пакетная обработка
-- [x] EXIF/XMP inspector и очистка метаданных
-- [x] Favicon
-- [x] Редактирование в реальном времени
-- [x] Изоляция результатов между инструментами
-- [x] Интерактивные линии нарезки
-- [x] Перетаскиваемый watermark
-- [x] Размытие и пикселизация областей
-- [x] Палитра изображения и пипетка
-- [x] PWA / установка как приложение
-- [x] Локальные шрифты без Google Fonts
-- [x] Полностью автономный vendor-пакет без CDN
+## Feedback and contributions
 
-## Лицензия
+If Safelight is useful to you, **a GitHub star helps other people discover the project.**
+
+Found a bug or have an idea for a useful image tool? Open an [issue](https://github.com/Deenfoool/safelight/issues).
+
+Contributions and practical feedback are welcome.
+
+## License
 
 [MIT](LICENSE)
-
----
-
-**Safelight** — image processing without sending your images away.
