@@ -5,6 +5,7 @@ window.safelightHeicSupportLoaded=true;
 
 const $=id=>document.getElementById(id);
 const HEIC_MIMES=new Set(['image/heic','image/heif','image/heic-sequence','image/heif-sequence']);
+const HEIC_ACCEPT='.heic,.heif,image/heic,image/heif';
 let heicBlob=null;
 
 function isHeicFile(file){
@@ -37,6 +38,12 @@ function download(blob,name){
   setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
 
+function normalizeHeicFile(file){
+  if(!file||file.type||typeof File==='undefined')return file;
+  try{return new File([file],file.name,{type:'image/heic',lastModified:file.lastModified});}
+  catch(_){return file;}
+}
+
 function canvasToHeic(canvas,quality){
   return new Promise((resolve,reject)=>{
     canvas.toBlob(blob=>{
@@ -51,25 +58,51 @@ function canvasToHeic(canvas,quality){
   });
 }
 
+function ensureAccept(input){
+  if(!input)return;
+  const current=input.accept||'';
+  if(current.toLowerCase().includes('.heic'))return;
+  input.accept=(current?current+',':'')+HEIC_ACCEPT;
+}
+
 function prepareInput(){
   const input=$('fileInput');
+  const dropzone=$('dropzone');
   if(!input)return;
-  const extras='.heic,.heif,image/heic,image/heif';
-  if(!input.accept.toLowerCase().includes('.heic'))input.accept=(input.accept?input.accept+',':'')+extras;
+  ensureAccept(input);
+
+  // The PDF bridge rewrites accept after startup, so preserve HEIC whenever that happens.
+  new MutationObserver(()=>ensureAccept(input)).observe(input,{attributes:true,attributeFilter:['accept']});
 
   // Some operating systems expose HEIC files with an empty MIME type.
   // Normalize that case before the main Safelight upload listener reads the FileList.
   input.addEventListener('change',event=>{
     const file=event.target.files&&event.target.files[0];
-    if(!file||!isHeicFile(file)||file.type)return;
-    if(typeof DataTransfer==='undefined')return;
+    if(!file||!isHeicFile(file)||file.type||typeof DataTransfer==='undefined')return;
     try{
-      const normalized=new File([file],file.name,{type:'image/heic',lastModified:file.lastModified});
       const dt=new DataTransfer();
-      dt.items.add(normalized);
+      dt.items.add(normalizeHeicFile(file));
       event.target.files=dt.files;
     }catch(_){/* The main loader will still try the original file. */}
   },true);
+
+  if(dropzone){
+    dropzone.addEventListener('drop',event=>{
+      const file=event.dataTransfer?.files?.[0];
+      if(!file||!isHeicFile(file)||file.type||typeof DataTransfer==='undefined')return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      try{
+        const dt=new DataTransfer();
+        dt.items.add(normalizeHeicFile(file));
+        input.files=dt.files;
+        input.dispatchEvent(new Event('change',{bubbles:true}));
+        input.value='';
+      }catch(_){
+        alert('Не удалось открыть HEIC-файл в этом браузере.');
+      }
+    },true);
+  }
 }
 
 function prepareConverter(){
@@ -156,8 +189,8 @@ function installHeicDecodeHint(){
   input.addEventListener('change',event=>{
     const file=event.target.files&&event.target.files[0];
     if(!isHeicFile(file))return;
-    // The core loader uses the browser's image decoder. If HEIC is not supported,
-    // its normal image error is kept; this marker lets other UI layers identify the attempt.
+    // The core loader uses the browser's native image decoder. The marker is kept
+    // only briefly so other UI layers can identify a HEIC decoding attempt.
     document.body.dataset.safelightHeicInput='1';
     setTimeout(()=>delete document.body.dataset.safelightHeicInput,5000);
   },true);
