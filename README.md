@@ -33,7 +33,9 @@ Drop in an image and start editing immediately. There is no signup screen and no
 
 ### Image editing
 - Compress PNG, JPEG and WebP
-- Convert between PNG / JPEG / WebP
+- Convert between PNG / JPEG / WebP / HEIC
+- Open `.heic` / `.heif` files when the browser or operating system exposes a native HEIC decoder
+- Export HEIC only when the browser provides a real HEIC encoder; Safelight verifies the resulting MIME type and never renames a fallback PNG to `.heic`
 - Export images to PDF
 - Render the first page of supported PDFs to an image
 - Resize and crop
@@ -64,6 +66,8 @@ Image operations are performed locally in the browser. Metadata inspection, pale
 
 The application also ships its ZIP/PDF runtime inside the repository and uses local system fonts instead of Google Fonts.
 
+HEIC is capability-detected instead of faked. Import works only if the current browser/OS can decode HEIC locally, and HEIC export is enabled through the same local browser codec path only when the browser actually returns an `image/heic` or `image/heif` blob.
+
 > Note: the built-in PDF renderer is intentionally lightweight and optimized for the first page and image-oriented PDFs. Complex PDFs with unusual fonts or heavy vector content may render in a simplified form.
 
 ## Install as an app
@@ -91,6 +95,7 @@ Then open `http://localhost:8080`.
 - Web App Manifest
 - Local ZIP runtime
 - Local PDF runtime
+- Native browser image codecs, including capability-detected HEIC
 
 ## Project status
 
@@ -99,6 +104,8 @@ Safelight currently includes:
 - [x] Compression
 - [x] Slicing
 - [x] Format conversion
+- [x] HEIC / HEIF file selection and native-codec conversion path
+- [x] Verified HEIC export without fake file extensions
 - [x] PDF conversion
 - [x] Resize / crop
 - [x] Color adjustment
