@@ -16,22 +16,6 @@ const hero=document.getElementById('hero-cta');if(hero)hero.addEventListener('cl
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-group'))closeMenus()});const observer=new MutationObserver(buildGroups);if(nav)observer.observe(nav,{childList:true});[0,150,500].forEach(d=>setTimeout(buildGroups,d));window.safelightActivate=activate;activate('home');
 function loadScript(src,onload){const script=document.createElement('script');script.src=src;script.onerror=()=>console.error('Safelight: failed to load',src);if(onload)script.onload=onload;document.body.appendChild(script)}
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
-function ensureHeicUi(){
-  const input=document.getElementById('fileInput');
-  if(input){
-    const required=['.heic','.heif','image/heic','image/heif'];
-    const parts=(input.accept||'').split(',').map(v=>v.trim()).filter(Boolean);
-    const seen=new Set(parts.map(v=>v.toLowerCase()));
-    required.forEach(v=>{if(!seen.has(v))parts.push(v)});
-    input.accept=parts.join(',');
-  }
-  const format=document.getElementById('v-format');
-  if(format){
-    let option=format.querySelector('option[value="heic"]');
-    if(!option){option=document.createElement('option');option.value='heic';format.appendChild(option)}
-    option.textContent='HEIC (.heic)';
-  }
-}
 loadStyle('css/visual-polish.css?v=4');loadScript('js/visual-polish.js?v=4');
-loadScript('js/advanced.js?v=10',()=>{loadStyle('css/app-shell-fixes.css?v=2');loadStyle('css/live-editor.css?v=3');loadStyle('css/direct-manipulation.css?v=2');loadStyle('css/editor-polish.css?v=2');loadStyle('css/palette-tools.css?v=1');loadScript('js/ui-shell.js?v=2',()=>{ensureHeicUi();setTimeout(ensureHeicUi,250);loadScript('js/hardening.js?v=5',()=>{loadScript('js/source-cleanup.js?v=2',()=>{loadScript('js/live-editor.js?v=4',()=>{loadScript('js/direct-manipulation.js?v=3',()=>{loadScript('js/editor-polish.js?v=2',()=>{loadScript('js/privacy-effects-fix.js?v=1');loadScript('js/palette-tools.js?v=1')})})})})})})});
+loadScript('js/advanced.js?v=10',()=>{loadStyle('css/app-shell-fixes.css?v=2');loadStyle('css/live-editor.css?v=3');loadStyle('css/direct-manipulation.css?v=2');loadStyle('css/editor-polish.css?v=2');loadStyle('css/palette-tools.css?v=1');loadScript('js/ui-shell.js?v=3',()=>{loadScript('js/hardening.js?v=5',()=>{loadScript('js/source-cleanup.js?v=2',()=>{loadScript('js/live-editor.js?v=4',()=>{loadScript('js/direct-manipulation.js?v=3',()=>{loadScript('js/editor-polish.js?v=2',()=>{loadScript('js/privacy-effects-fix.js?v=1');loadScript('js/palette-tools.js?v=1')})})})})})})});
 })();
