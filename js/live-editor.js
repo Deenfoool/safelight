@@ -152,7 +152,7 @@
   async function buildToolCanvas(tool) {
     if (!sourceReady()) return null;
     if (tool === "compress") return compressionCanvas(qualityForTool(tool));
-    if (tool === "convert") return compressionCanvas(qualityForTool(tool));
+    if (tool === "convert") return drawOriginalCanvas();
     if (tool === "resize") return resizeCanvas(); if (tool === "crop") return cropCanvas(); if (tool === "adjust") return adjustCanvas();
     if (tool === "transform") return transformCanvas(); if (tool === "watermark") return watermarkCanvas(); if (tool === "slice") return sliceCanvas();
     if (tool === "batch") return batchCanvas(); if (tool === "favicon") return faviconCanvas(); return drawOriginalCanvas();
@@ -179,9 +179,6 @@
     sourceSrc = preview.src; clearLiveCanvas();
     try { sourceImage = await imageFrom(sourceSrc); scheduleRender(0); } catch (error) { sourceImage = null; console.error("Safelight source:", error); }
   }
-  function markFormatFields() {
-    ["c-format", "v-format", "s-format", "a-format", "b-format"].forEach((id) => { const field = $(id)?.closest(".field"); if (field) field.classList.add("sl-format-field"); });
-  }
   function installLiveState() {
     const inspector = document.querySelector(".sl-inspector"), panels = $("sl-inspector-panels"); if (!inspector || !panels || $("sl-live-state")) return;
     const state = document.createElement("div"); state.id = "sl-live-state"; state.className = "sl-live-state";
@@ -189,10 +186,19 @@
     panels.insertAdjacentElement("beforebegin", state);
     const note = inspector.querySelector(".sl-inspector-note span"); if (note) note.innerHTML = '<b>Оригинал остаётся неизменным</b>Каждый инструмент строит результат от исходного файла. Скачивание выполняется только через «Экспорт».';
   }
+  function metadataExportItems() {
+    if (typeof window.safelightMetadataExportItems === "function") return window.safelightMetadataExportItems();
+    return [
+      { value: "jpeg", label: "JPEG", meta: "выборочная очистка" },
+      { value: "webp", label: "WebP", meta: "чистый файл" },
+      { value: "png", label: "PNG", meta: "чистый файл" }
+    ];
+  }
   function exportMenuItems(tool) {
     if (tool === "favicon") return [{ value: "favicon-zip", label: "Favicon пакет", meta: "ZIP" }];
     if (tool === "slice") return [{ value: "slice-webp", label: "Нарезка WebP", meta: "ZIP" }, { value: "slice-jpeg", label: "Нарезка JPEG", meta: "ZIP" }, { value: "slice-png", label: "Нарезка PNG", meta: "ZIP" }];
     if (tool === "batch") return [{ value: "batch-webp", label: "Все в WebP", meta: "ZIP" }, { value: "batch-jpeg", label: "Все в JPEG", meta: "ZIP" }, { value: "batch-png", label: "Все в PNG", meta: "ZIP" }];
+    if (tool === "metadata") return metadataExportItems();
     const items = [{ value: "webp", label: "WebP", meta: "оптимально" }, { value: "jpeg", label: "JPEG", meta: "совместимо" }, { value: "png", label: "PNG", meta: "без потерь" }];
     if (tool === "convert") items.push({ value: "heic", label: "HEIC", meta: "HEVC" });
     items.push({ value: "pdf", label: "PDF", meta: "документ" });
@@ -209,8 +215,11 @@
     const wrap = document.createElement("div"); wrap.className = "sl-export-wrap"; button.parentNode.insertBefore(wrap, button); wrap.appendChild(button);
     const menu = document.createElement("div"); menu.className = "sl-export-menu"; wrap.appendChild(menu);
     function renderMenu() {
-      const items = exportMenuItems(currentTool());
-      menu.innerHTML = '<div class="sl-export-menu-title">Экспорт результата</div>' + items.map((item) => `<button class="sl-export-option" type="button" data-export="${item.value}"><span>${item.label}</span><span>${item.meta}</span></button>`).join("") + '<div class="sl-export-sep"></div><div class="sl-export-menu-note">Файл создаётся локально. Оригинал не изменяется.</div>';
+      const tool = currentTool();
+      const items = exportMenuItems(tool);
+      const title = tool === "metadata" ? "Экспорт без лишних данных" : "Экспорт результата";
+      const note = tool === "metadata" ? "JPEG учитывает выбранные категории очистки. PNG и WebP создаются без исходных метаданных." : "Файл создаётся локально. Оригинал не изменяется.";
+      menu.innerHTML = '<div class="sl-export-menu-title">' + title + '</div>' + items.map((item) => `<button class="sl-export-option" type="button" data-export="${item.value}"><span>${item.label}</span><span>${item.meta}</span></button>`).join("") + '<div class="sl-export-sep"></div><div class="sl-export-menu-note">' + note + '</div>';
     }
     button.addEventListener("click", (event) => { event.preventDefault(); event.stopImmediatePropagation(); if (button.disabled) return; normalizeExportLabel(button); renderMenu(); wrap.classList.toggle("open"); }, true);
     menu.addEventListener("click", async (event) => { const option = event.target.closest("[data-export]"); if (!option) return; event.preventDefault(); wrap.classList.remove("open"); await exportCurrent(option.dataset.export); });
@@ -253,11 +262,12 @@
   async function exportSlice(format) {
     if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился"); const { rows, cols } = gridCounts(), zip = new JSZip();
     const width = sourceImage.naturalWidth, height = sourceImage.naturalHeight;
+    const quality = Math.max(0.01, Math.min(1, (Number($("s-quality")?.value) || 90) / 100));
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const x0 = Math.round((c * width) / cols), x1 = Math.round(((c + 1) * width) / cols), y0 = Math.round((r * height) / rows), y1 = Math.round(((r + 1) * height) / rows);
       const tile = document.createElement("canvas"); tile.width = Math.max(1, x1 - x0); tile.height = Math.max(1, y1 - y0);
       tile.getContext("2d").drawImage(sourceImage, x0, y0, tile.width, tile.height, 0, 0, tile.width, tile.height);
-      zip.file(`${baseName()}-${r + 1}-${c + 1}.${extFor(format)}`, await canvasBlob(tile, mimeFor(format), format === "png" ? undefined : 0.92));
+      zip.file(`${baseName()}-${r + 1}-${c + 1}.${extFor(format)}`, await canvasBlob(tile, mimeFor(format), format === "png" ? undefined : quality));
     }
     download(await zip.generateAsync({ type: "blob" }), baseName() + "-tiles.zip");
   }
@@ -290,6 +300,11 @@
   async function exportCurrent(value) {
     if (exportBusy) return; exportBusy = true; const button = $("sl-export"); if (button) button.disabled = true;
     try {
+      if (currentTool() === "metadata" && typeof window.safelightMetadataExport === "function") {
+        await window.safelightMetadataExport(value);
+        showHint("Метаданные обработаны. Экспорт готов.");
+        return;
+      }
       if (!sourceReady()) throw new Error("Сначала загрузите изображение");
       if (value === "favicon-zip") await exportFavicon(); else if (value.startsWith("slice-")) await exportSlice(value.slice(6)); else if (value.startsWith("batch-")) await exportBatch(value.slice(6)); else await exportImage(value);
       showHint("Экспорт готов.");
@@ -302,7 +317,7 @@
     inspector.addEventListener("input", (event) => { if (ownsCurrentTool() && event.target.matches("input,select,textarea")) scheduleRender(); }, true);
     inspector.addEventListener("change", (event) => { if (ownsCurrentTool() && event.target.matches("input,select,textarea")) scheduleRender(0); }, true);
     inspector.addEventListener("click", (event) => { if (ownsCurrentTool() && event.target.closest("[data-tr],#s-mode button")) setTimeout(() => scheduleRender(0), 0); });
-    window.addEventListener("safelight:toolchange", () => setTimeout(() => { markFormatFields(); if (ownsCurrentTool()) scheduleRender(0); }, 0));
+    window.addEventListener("safelight:toolchange", () => setTimeout(() => { if (ownsCurrentTool()) scheduleRender(0); }, 0));
   }
   function watchSource() {
     const preview = $("previewImg"); if (!preview) return;
@@ -310,7 +325,7 @@
   }
   function boot() {
     if (!document.querySelector(".sl-app") || !$("previewImg")) { setTimeout(boot, 50); return; }
-    markFormatFields(); installLiveState(); installExportMenu(); bindControls(); watchSource();
+    installLiveState(); installExportMenu(); bindControls(); watchSource();
   }
   boot();
 })();
