@@ -4,14 +4,11 @@
   // ---- State ----
   let originalFile = null;
   let originalSize = 0;
-  let originalType = "";
   let imgW = 0;
   let imgH = 0;
 
   let compressedBlob = null;
   let compressedExt = "";
-  let convertedBlob = null;
-  let convertedExt = "";
   let resizeBlob = null;
   let cropBlob = null;
   let adjustBlob = null;
@@ -138,7 +135,6 @@
 
     originalFile = file;
     originalSize = file.size;
-    originalType = file.type;
 
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -360,50 +356,10 @@
     }
   });
 
-  // ---- Convert ----
-  $("v-format").addEventListener("change", () => {
-    $("v-quality-row").style.display = $("v-format").value === "png" ? "none" : "flex";
-  });
+  // Converter execution is owned by hardening.js. Keep only the quality readout here.
   $("v-quality").addEventListener("input", () => {
     $("v-quality-val").textContent = $("v-quality").value + "%";
   });
-
-  $("v-run").addEventListener("click", () => {
-    if (!originalFile) return;
-    $("v-run").disabled = true;
-    $("v-status").textContent = "Конвертирую…";
-
-    const fmt = $("v-format").value;
-    const q = Number($("v-quality").value) / 100;
-
-    setTimeout(() => {
-      sourceCanvas.toBlob(
-        (blob) => {
-          $("v-run").disabled = false;
-          if (!blob) {
-            $("v-status").textContent = "Не удалось конвертировать.";
-            return;
-          }
-          convertedBlob = blob;
-          convertedExt = extFor(fmt);
-          $("v-before").textContent =
-            (originalType.replace("image/", "") || "—").toUpperCase() +
-            " · " +
-            formatBytes(originalSize);
-          $("v-after").textContent = fmt.toUpperCase() + " · " + formatBytes(blob.size);
-          $("v-result").classList.add("show");
-          $("v-status").textContent = "Готово.";
-          markOperation();
-        },
-        mimeFor(fmt),
-        fmt === "png" ? undefined : q
-      );
-    }, 30);
-  });
-
-  $("v-download").addEventListener("click", () =>
-    downloadBlob(convertedBlob, baseName(originalFile.name) + "-converted." + convertedExt)
-  );
 
   // ---- Resize ----
   function syncResizeHeight() {
