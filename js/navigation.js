@@ -21,7 +21,7 @@ loadScript('js/advanced.js?v=10',()=>{
   loadStyle('css/live-editor.css?v=4');
   loadStyle('css/direct-manipulation.css?v=2');
   loadStyle('css/editor-polish.css?v=2');
-  loadScript('js/ui-shell.js?v=3',()=>{
+  loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=5',()=>{
         loadScript('js/direct-manipulation.js?v=3',()=>{
