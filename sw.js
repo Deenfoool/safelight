@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-17-11";
+const CACHE = "safelight-shell-v2026-08-17-12";
 const CORE = [
   "./",
   "./index.html",
@@ -17,7 +17,6 @@ const CORE = [
   "./css/pwa.css",
   "./vendor/jszip.min.js",
   "./vendor/pdf.min.js",
-  "./vendor/pdf.worker.min.js",
   "./vendor/jspdf.umd.min.js",
   "./vendor/elheif/elheif-wasm.js",
   "./js/app.js",
@@ -37,7 +36,6 @@ const CORE = [
   "./js/pwa.js",
   "./assets/images/favicon-16.png",
   "./assets/images/favicon-32.png",
-  "./assets/images/favicon-48.png",
   "./assets/images/favicon-180.png",
   "./assets/images/favicon-192.png",
   "./assets/images/favicon-512.png",
