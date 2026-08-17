@@ -27,4 +27,13 @@
 .sl-palette-marker{position:absolute;z-index:45;width:18px;height:18px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.7),0 0 18px rgba(163,230,53,.32);transform:translate(-50%,-50%);pointer-events:none;display:none}
 .sl-palette-marker.show{display:block}
 body.sl-palette-active .sl-center .preview-wrap{cursor:crosshair}
+
+/* Palette always samples and displays the untouched source image. */
+body.sl-palette-active .sl-app #previewWrap>#previewImg{display:block!important}
+body.sl-palette-active .sl-app #previewWrap>canvas,
+body.sl-palette-active .sl-app #previewWrap #sl-live-canvas{display:none!important}
+body.sl-palette-active .sl-app #previewWrap.sl-live-ready>#previewImg{display:block!important}
+body.sl-palette-active .sl-app #previewWrap .af,
+body.sl-palette-active .sl-app #previewWrap #gridOverlay{display:none!important}
+
 @media(max-width:760px){.sl-palette-color{grid-template-columns:36px minmax(0,1fr)}.sl-palette-swatch{width:36px;height:36px}.sl-palette-copy{display:none}}
