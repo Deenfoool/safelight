@@ -113,22 +113,7 @@
     window.addEventListener('resize',resize,{passive:true});
     window.addEventListener('safelight:toolchange',()=>setTimeout(resize,0));
     raf=requestAnimationFrame(draw);
-    window.addEventListener('beforeunload',()=>{cancelAnimationFrame(raf);ro.disconnect();},{once:true});
-  }
-
-  function loadStyle(src){
-    if([...document.styleSheets].some(sheet=>sheet.href&&sheet.href.includes(src.split('?')[0])))return;
-    const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link);
-  }
-  function loadScript(src){
-    if([...document.scripts].some(script=>script.src&&script.src.includes(src.split('?')[0])))return;
-    const script=document.createElement('script');script.src=src;script.onerror=()=>console.error('Safelight: failed to load',src);document.body.appendChild(script);
-  }
-  function loadAddons(){
-    loadStyle('css/privacy-effects.css?v=2');
-    loadStyle('css/pwa.css?v=1');
-    loadScript('js/privacy-effects.js?v=2');
-    loadScript('js/pwa.js?v=1');
+    window.addEventListener('beforeunload',()=>{cancelAnimationFrame(raf);ro.disconnect()},{once:true});
   }
 
   function boot(){
@@ -137,7 +122,6 @@
     if(!app){setTimeout(boot,40);return;}
     applyBranding(app);
     installEditorGrid(app);
-    loadAddons();
   }
 
   boot();
