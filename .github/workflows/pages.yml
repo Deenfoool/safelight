@@ -27,6 +27,9 @@ jobs:
           test -f vendor/jspdf.umd.min.js
           test -f vendor/pdf.min.js
           test -f vendor/pdf.worker.min.js
+          test -f vendor/elheif/elheif-wasm.js
+          test -f js/heic-codec-worker.js
+          test -f js/heic-support.js
           test -f css/local-fonts.css
           if grep -R -nE 'cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|unpkg\.com|cdn\.jsdelivr\.net' \
             --include='*.html' --include='*.js' --include='*.mjs' --include='*.css' \
