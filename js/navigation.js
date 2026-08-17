@@ -3,7 +3,7 @@
 const nav=document.querySelector('.top-nav-links');
 const panels={compress:document.getElementById('panel-compress'),slice:document.getElementById('panel-slice'),convert:document.getElementById('panel-convert'),resize:document.getElementById('panel-resize'),crop:document.getElementById('panel-crop'),adjust:document.getElementById('panel-adjust')};
 const title=document.querySelector('#workspace .page-title h1'),description=document.querySelector('#workspace .page-title p');
-const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP и PDF локально в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Получайте фрагмент нужного размера из исходного изображения.'],adjust:['Коррекция изображения','Настраивайте яркость, контраст, насыщенность и чёрно-белый режим.']};
+const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP, HEIC и PDF локально в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Получайте фрагмент нужного размера из исходного изображения.'],adjust:['Коррекция изображения','Настраивайте яркость, контраст, насыщенность и чёрно-белый режим.']};
 const advancedIds=new Set(['transform','watermark','batch','metadata','favicon']);
 function closeMenus(){document.querySelectorAll('.nav-group.open').forEach(g=>{g.classList.remove('open');g.querySelector('.nav-group-toggle')?.setAttribute('aria-expanded','false')})}
 function refreshGroups(active){document.querySelectorAll('.nav-group').forEach(g=>{const ids=(g.dataset.groupIds||'').split(',');const selected=(!!active&&ids.includes(active))||[...g.querySelectorAll('.nav-dropdown-item')].some(b=>b.classList.contains('active'));g.classList.toggle('active',!!selected)})}
@@ -16,6 +16,22 @@ const hero=document.getElementById('hero-cta');if(hero)hero.addEventListener('cl
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-group'))closeMenus()});const observer=new MutationObserver(buildGroups);if(nav)observer.observe(nav,{childList:true});[0,150,500].forEach(d=>setTimeout(buildGroups,d));window.safelightActivate=activate;activate('home');
 function loadScript(src,onload){const script=document.createElement('script');script.src=src;script.onerror=()=>console.error('Safelight: failed to load',src);if(onload)script.onload=onload;document.body.appendChild(script)}
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
+function ensureHeicUi(){
+  const input=document.getElementById('fileInput');
+  if(input){
+    const required=['.heic','.heif','image/heic','image/heif'];
+    const parts=(input.accept||'').split(',').map(v=>v.trim()).filter(Boolean);
+    const seen=new Set(parts.map(v=>v.toLowerCase()));
+    required.forEach(v=>{if(!seen.has(v))parts.push(v)});
+    input.accept=parts.join(',');
+  }
+  const format=document.getElementById('v-format');
+  if(format){
+    let option=format.querySelector('option[value="heic"]');
+    if(!option){option=document.createElement('option');option.value='heic';format.appendChild(option)}
+    option.textContent='HEIC (.heic)';
+  }
+}
 loadStyle('css/visual-polish.css?v=4');loadScript('js/visual-polish.js?v=4');
-loadScript('js/advanced.js?v=10',()=>{loadStyle('css/app-shell-fixes.css?v=2');loadStyle('css/live-editor.css?v=3');loadStyle('css/direct-manipulation.css?v=2');loadStyle('css/editor-polish.css?v=2');loadStyle('css/palette-tools.css?v=1');loadScript('js/ui-shell.js?v=2',()=>{loadScript('js/hardening.js?v=4',()=>{loadScript('js/source-cleanup.js?v=2',()=>{loadScript('js/live-editor.js?v=4',()=>{loadScript('js/direct-manipulation.js?v=3',()=>{loadScript('js/editor-polish.js?v=2',()=>{loadScript('js/privacy-effects-fix.js?v=1');loadScript('js/palette-tools.js?v=1')})})})})})})});
+loadScript('js/advanced.js?v=10',()=>{loadStyle('css/app-shell-fixes.css?v=2');loadStyle('css/live-editor.css?v=3');loadStyle('css/direct-manipulation.css?v=2');loadStyle('css/editor-polish.css?v=2');loadStyle('css/palette-tools.css?v=1');loadScript('js/ui-shell.js?v=2',()=>{ensureHeicUi();setTimeout(ensureHeicUi,250);loadScript('js/hardening.js?v=5',()=>{loadScript('js/source-cleanup.js?v=2',()=>{loadScript('js/live-editor.js?v=4',()=>{loadScript('js/direct-manipulation.js?v=3',()=>{loadScript('js/editor-polish.js?v=2',()=>{loadScript('js/privacy-effects-fix.js?v=1');loadScript('js/palette-tools.js?v=1')})})})})})})});
 })();
