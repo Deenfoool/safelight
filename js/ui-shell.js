@@ -6,7 +6,7 @@
 
   const css = document.createElement("link");
   css.rel = "stylesheet";
-  css.href = "css/app-shell.css?v=1";
+  css.href = "css/app-shell.css?v=2";
   document.head.appendChild(css);
 
   const TOOL_INFO = {
@@ -56,17 +56,6 @@
 
     fileInput.multiple = true;
     fileInput.setAttribute("accept", "image/*,application/pdf,.pdf,.heic,.heif,image/heic,image/heif");
-
-    const convertFormat = document.getElementById("v-format");
-    if (convertFormat) {
-      let heic = convertFormat.querySelector('option[value="heic"]');
-      if (!heic) {
-        heic = document.createElement("option");
-        heic.value = "heic";
-        convertFormat.appendChild(heic);
-      }
-      heic.textContent = "HEIC (.heic)";
-    }
 
     const shell = document.createElement("div");
     shell.className = "sl-app";
@@ -118,8 +107,6 @@
     syncInspector();
     syncFileMeta(shell, filemeta);
 
-    document.getElementById("v-format")?.addEventListener("change", syncExportLabel);
-
     window.addEventListener("safelight:toolchange", () => setTimeout(() => {
       syncInspector();
       syncExportAvailability();
@@ -139,7 +126,6 @@
     }).observe(preview, { attributes: true, attributeFilter: ["src"] });
 
     syncExportAvailability();
-    syncExportLabel();
   }
 
   function buildSidebar(shell) {
@@ -175,19 +161,6 @@
     return panel ? panel.id.replace("panel-", "") : null;
   }
 
-  function syncExportLabel() {
-    const button = document.getElementById("sl-export");
-    const label = button?.querySelector("span");
-    if (!label) return;
-    if (currentTool() !== "convert") {
-      label.textContent = "Экспорт";
-      return;
-    }
-    const fmt = document.getElementById("v-format")?.value || "jpeg";
-    const names = { png: "PNG", jpeg: "JPEG", webp: "WebP", heic: "HEIC", pdf: "PDF" };
-    label.textContent = "Экспорт " + (names[fmt] || fmt.toUpperCase());
-  }
-
   function syncInspector() {
     const tool = currentTool() || "compress";
     const info = TOOL_INFO[tool] || ["Инструмент", "Локальная обработка изображения."];
@@ -196,7 +169,6 @@
     if (title) title.textContent = info[0];
     if (desc) desc.textContent = info[1];
     document.querySelectorAll(".sl-sidebar .sl-tool").forEach((button) => button.classList.toggle("active", button.dataset.page === tool));
-    syncExportLabel();
   }
 
   function wireToolbar(shell) {
@@ -204,7 +176,6 @@
     shell.querySelector(".sl-brand").addEventListener("click", () => window.safelightActivate("home"));
     shell.querySelector("#sl-add-images").addEventListener("click", () => fileInput?.click());
     shell.querySelector("#sl-reset").addEventListener("click", resetCurrentTool);
-    shell.querySelector("#sl-export").addEventListener("click", exportCurrentTool);
   }
 
   function resetCurrentTool() {
@@ -229,111 +200,7 @@
       window.safelightTransformState.h = false;
       window.safelightTransformState.v = false;
     }
-    window.safelightCompare?.hide();
     syncExportAvailability();
-    syncExportLabel();
-  }
-
-  function waitForResult(result, download, timeout) {
-    return new Promise((resolve) => {
-      if (!result || !download) return resolve(false);
-      if (result.classList.contains("show")) {
-        download.click();
-        return resolve(true);
-      }
-      let done = false;
-      const finish = (ok) => {
-        if (done) return;
-        done = true;
-        observer.disconnect();
-        clearTimeout(timer);
-        if (ok) download.click();
-        resolve(ok);
-      };
-      const observer = new MutationObserver(() => {
-        if (result.classList.contains("show")) setTimeout(() => finish(true), 40);
-      });
-      observer.observe(result, { attributes: true, attributeFilter: ["class"] });
-      const timer = setTimeout(() => finish(false), timeout || 5000);
-    });
-  }
-
-  async function runAndDownload(runId, resultId, downloadId, timeout) {
-    const run = document.getElementById(runId);
-    const result = document.getElementById(resultId);
-    const download = document.getElementById(downloadId);
-    if (!run || !result || !download) return false;
-    if (result.classList.contains("show")) {
-      download.click();
-      return true;
-    }
-    const waiter = waitForResult(result, download, timeout || 7000);
-    run.click();
-    return waiter;
-  }
-
-  async function watermarkExport() {
-    const status = document.getElementById("wm-status");
-    const run = document.getElementById("wm-run");
-    const download = document.getElementById("wm-download");
-    if (!status || !run || !download) return false;
-    if (status.textContent.includes("Готово")) {
-      download.click();
-      return true;
-    }
-    return new Promise((resolve) => {
-      const observer = new MutationObserver(() => {
-        if (status.textContent.includes("Готово")) {
-          observer.disconnect();
-          clearTimeout(timer);
-          setTimeout(() => download.click(), 30);
-          resolve(true);
-        }
-      });
-      observer.observe(status, { childList: true, characterData: true, subtree: true });
-      const timer = setTimeout(() => {
-        observer.disconnect();
-        resolve(false);
-      }, 7000);
-      run.click();
-    });
-  }
-
-  async function exportCurrentTool() {
-    const tool = currentTool();
-    if (!tool) return;
-    let ok = true;
-    if (tool === "compress") ok = await runAndDownload("c-run", "c-result", "c-download");
-    else if (tool === "convert") {
-      const fmt = document.getElementById("v-format")?.value;
-      ok = await runAndDownload("v-run", "v-result", "v-download", fmt === "heic" ? 120000 : 15000);
-    }
-    else if (tool === "resize") ok = await runAndDownload("r-run", "r-result", "r-download");
-    else if (tool === "crop") ok = await runAndDownload("cr-run", "cr-result", "cr-download");
-    else if (tool === "adjust") ok = await runAndDownload("a-run", "a-result", "a-download");
-    else if (tool === "watermark") ok = await watermarkExport();
-    else if (tool === "transform") {
-      const status = document.getElementById("tr-status");
-      const download = document.getElementById("tr-download");
-      if (status?.textContent.includes("Предпросмотр обновлён") && download) download.click();
-      else {
-        showHint("Сначала примените поворот или отражение.");
-        ok = false;
-      }
-    } else if (tool === "slice") document.getElementById("s-run")?.click();
-    else if (tool === "batch") document.getElementById("b-run")?.click();
-    else if (tool === "metadata") document.getElementById("meta-clean")?.click();
-    else if (tool === "favicon") document.getElementById("f-run")?.click();
-    if (!ok) showHint("Не удалось подготовить файл к экспорту.");
-  }
-
-  function showHint(text) {
-    const hint = document.getElementById("sl-export-hint");
-    if (!hint) return;
-    hint.textContent = text;
-    hint.classList.add("show");
-    clearTimeout(showHint.timer);
-    showHint.timer = setTimeout(() => hint.classList.remove("show"), 2600);
   }
 
   function syncExportAvailability() {
