@@ -117,21 +117,57 @@
     const size = Math.max(8, Math.min(1000, Number($("wm-size")?.value) || 48));
     const text = ($("wm-text")?.value || "Safelight").trim() || "Safelight";
     const opacity = Math.max(1, Math.min(100, Number($("wm-opacity")?.value) || 45)) / 100;
-    const position = $("wm-pos")?.value || "br", pad = size * 0.55;
+    const direct = window.safelightDirectState?.watermark?.();
     ctx.font = `600 ${size}px system-ui,Arial,sans-serif`; ctx.fillStyle = `rgba(255,255,255,${opacity})`; ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = Math.max(2, size / 10);
+
+    if (direct?.fill) {
+      const metrics = ctx.measureText(text);
+      const stepX = Math.max(metrics.width + size * 2.4, size * 7);
+      const stepY = size * 3.4;
+      const diagonal = Math.hypot(out.width, out.height);
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.translate(out.width / 2, out.height / 2);
+      ctx.rotate(-Math.PI / 6);
+      for (let y = -diagonal; y <= diagonal; y += stepY) {
+        for (let x = -diagonal; x <= diagonal; x += stepX) ctx.fillText(text, x, y);
+      }
+      ctx.restore();
+      return out;
+    }
+
+    if (direct) {
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, direct.x * out.width, direct.y * out.height);
+      return out;
+    }
+
+    const position = $("wm-pos")?.value || "br", pad = size * 0.55;
     const metrics = ctx.measureText(text); let x = pad, y = size + pad;
     if (position.includes("r")) x = out.width - metrics.width - pad;
     if (position === "center") { x = (out.width - metrics.width) / 2; y = (out.height + size) / 2; }
     if (position === "br" || position === "bl") y = out.height - pad;
     x = Math.max(0, Math.min(out.width - metrics.width, x)); y = Math.max(size, Math.min(out.height, y)); ctx.fillText(text, x, y); return out;
   }
-  function sliceCanvas() {
-    const out = document.createElement("canvas"); drawSource(out, sourceImage.naturalWidth, sourceImage.naturalHeight, false); const ctx = out.getContext("2d");
+  function gridBoundaries() {
     let rows = Math.max(1, Math.min(20, Number($("s-rows")?.value) || 1)), cols = Math.max(1, Math.min(20, Number($("s-cols")?.value) || 1));
     if (window.sliceMode === "horizontal") cols = 1; if (window.sliceMode === "vertical") rows = 1;
+    return {
+      x: Array.from({ length: cols + 1 }, (_, index) => index / cols),
+      y: Array.from({ length: rows + 1 }, (_, index) => index / rows)
+    };
+  }
+  function sliceBoundaries() {
+    return window.safelightDirectState?.sliceBoundaries?.() || gridBoundaries();
+  }
+  function sliceCanvas() {
+    const out = document.createElement("canvas"); drawSource(out, sourceImage.naturalWidth, sourceImage.naturalHeight, false); const ctx = out.getContext("2d");
+    const boundaries = sliceBoundaries();
     ctx.save(); ctx.strokeStyle = "rgba(163,230,53,.95)"; ctx.lineWidth = Math.max(1, Math.round(Math.min(out.width, out.height) / 700)); ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = 2;
-    for (let c = 1; c < cols; c++) { const x = (out.width * c) / cols; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, out.height); ctx.stroke(); }
-    for (let r = 1; r < rows; r++) { const y = (out.height * r) / rows; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(out.width, y); ctx.stroke(); }
+    boundaries.x.slice(1, -1).forEach((value) => { const x = out.width * value; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, out.height); ctx.stroke(); });
+    boundaries.y.slice(1, -1).forEach((value) => { const y = out.height * value; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(out.width, y); ctx.stroke(); });
     ctx.restore(); return out;
   }
   async function batchCanvas() {
@@ -255,19 +291,20 @@
     const blob = await canvasBlob(canvas, mimeFor(format), format === "png" ? undefined : qualityForTool(currentTool()));
     download(blob, baseName() + "-safelight." + extFor(format));
   }
-  function gridCounts() {
-    let rows = Math.max(1, Math.min(20, Number($("s-rows")?.value) || 1)), cols = Math.max(1, Math.min(20, Number($("s-cols")?.value) || 1));
-    if (window.sliceMode === "horizontal") cols = 1; if (window.sliceMode === "vertical") rows = 1; return { rows, cols };
-  }
   async function exportSlice(format) {
-    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился"); const { rows, cols } = gridCounts(), zip = new JSZip();
+    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился");
+    const boundaries = sliceBoundaries();
     const width = sourceImage.naturalWidth, height = sourceImage.naturalHeight;
     const quality = Math.max(0.01, Math.min(1, (Number($("s-quality")?.value) || 90) / 100));
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-      const x0 = Math.round((c * width) / cols), x1 = Math.round(((c + 1) * width) / cols), y0 = Math.round((r * height) / rows), y1 = Math.round(((r + 1) * height) / rows);
-      const tile = document.createElement("canvas"); tile.width = Math.max(1, x1 - x0); tile.height = Math.max(1, y1 - y0);
-      tile.getContext("2d").drawImage(sourceImage, x0, y0, tile.width, tile.height, 0, 0, tile.width, tile.height);
-      zip.file(`${baseName()}-${r + 1}-${c + 1}.${extFor(format)}`, await canvasBlob(tile, mimeFor(format), format === "png" ? undefined : quality));
+    const zip = new JSZip();
+    for (let row = 0; row < boundaries.y.length - 1; row++) {
+      for (let col = 0; col < boundaries.x.length - 1; col++) {
+        const x0 = Math.round(boundaries.x[col] * width), x1 = Math.round(boundaries.x[col + 1] * width);
+        const y0 = Math.round(boundaries.y[row] * height), y1 = Math.round(boundaries.y[row + 1] * height);
+        const tile = document.createElement("canvas"); tile.width = Math.max(1, x1 - x0); tile.height = Math.max(1, y1 - y0);
+        tile.getContext("2d").drawImage(sourceImage, x0, y0, tile.width, tile.height, 0, 0, tile.width, tile.height);
+        zip.file(`${baseName()}-${row + 1}-${col + 1}.${extFor(format)}`, await canvasBlob(tile, mimeFor(format), format === "png" ? undefined : quality));
+      }
     }
     download(await zip.generateAsync({ type: "blob" }), baseName() + "-tiles.zip");
   }
@@ -318,6 +355,7 @@
     inspector.addEventListener("change", (event) => { if (ownsCurrentTool() && event.target.matches("input,select,textarea")) scheduleRender(0); }, true);
     inspector.addEventListener("click", (event) => { if (ownsCurrentTool() && event.target.closest("[data-tr],#s-mode button")) setTimeout(() => scheduleRender(0), 0); });
     window.addEventListener("safelight:toolchange", () => setTimeout(() => { if (ownsCurrentTool()) scheduleRender(0); }, 0));
+    window.addEventListener("safelight:direct-state", () => { if (ownsCurrentTool()) scheduleRender(0); });
   }
   function watchSource() {
     const preview = $("previewImg"); if (!preview) return;
