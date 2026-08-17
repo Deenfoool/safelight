@@ -1,8 +1,7 @@
 /* Safelight top-level navigation */
 body.page-home #workspace,body.page-home #about{display:none}body.page-home #hero{display:block}body.page-tool #hero,body.page-tool #about{display:none}body.page-tool #workspace{display:block;padding-top:42px}
-/* Home uses a crisp icon + live text instead of the padded logo-and-text bitmap. */
+/* Home logo is composed from the standalone icon plus live text. */
 body.page-home>nav .logo.sl-image-logo{height:60px;display:inline-flex;align-items:center;gap:11px;color:var(--text);font:800 22px/1 var(--sans);letter-spacing:-.035em;overflow:visible}
-body.page-home>nav .logo.sl-image-logo img{display:none!important}
 body.page-home>nav .logo.sl-image-logo::before{content:"";width:36px;height:36px;flex:none;background:url('../assets/images/logo.png') center/contain no-repeat;filter:drop-shadow(0 0 12px rgba(74,222,128,.22))}
 body.page-home>nav .logo.sl-image-logo::after{content:"Safelight";display:block;color:#f4f4f5;text-shadow:0 1px 14px rgba(255,255,255,.04)}
 .top-nav-links{display:flex;align-items:center;gap:5px;overflow:visible;scrollbar-width:none}.top-nav-links::-webkit-scrollbar{display:none}.top-nav-link{appearance:none;border:1px solid transparent;background:transparent;color:var(--text-dim);font:600 12px var(--sans);padding:8px 10px;border-radius:7px;cursor:pointer;transition:all .2s ease;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}.top-nav-link:hover{color:var(--text);background:var(--bg-hover)}.top-nav-link.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(74,222,128,.25)}
