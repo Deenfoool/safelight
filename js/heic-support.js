@@ -6,7 +6,14 @@ window.safelightHeicSupportLoaded=true;
 const $=id=>document.getElementById(id);
 const HEIC_MIMES=new Set(['image/heic','image/heif','image/heic-sequence','image/heif-sequence']);
 const HEIC_ACCEPT='.heic,.heif,image/heic,image/heif';
+const WORKER_URL='js/heic-codec-worker.js?v=1';
 let heicBlob=null;
+let worker=null;
+let workerFailed=false;
+let requestId=0;
+const pending=new Map();
+let redispatching=false;
+let originalUiInfo=null;
 
 function isHeicFile(file){
   if(!file)return false;
@@ -38,13 +45,99 @@ function download(blob,name){
   setTimeout(()=>URL.revokeObjectURL(url),4000);
 }
 
-function normalizeHeicFile(file){
-  if(!file||file.type||typeof File==='undefined')return file;
-  try{return new File([file],file.name,{type:'image/heic',lastModified:file.lastModified});}
-  catch(_){return file;}
+function setStatus(text){
+  const status=$('v-status');
+  if(status)status.textContent=text||'';
+  const terminal=$('t-status');
+  if(terminal&&text)terminal.textContent=text;
 }
 
-function canvasToHeic(canvas,quality){
+function ensureAccept(input){
+  if(!input)return;
+  const current=input.accept||'';
+  if(current.toLowerCase().includes('.heic'))return;
+  input.accept=(current?current+',':'')+HEIC_ACCEPT;
+}
+
+function createCodecWorker(){
+  if(worker)return worker;
+  if(workerFailed)throw new Error('local-codec-unavailable');
+  try{
+    worker=new Worker(WORKER_URL);
+    worker.addEventListener('message',event=>{
+      const msg=event.data||{};
+      const task=pending.get(msg.id);
+      if(!task)return;
+      pending.delete(msg.id);
+      clearTimeout(task.timer);
+      if(msg.ok)task.resolve(msg);
+      else task.reject(new Error(msg.error||'HEIC codec error'));
+    });
+    worker.addEventListener('error',event=>{
+      workerFailed=true;
+      const error=new Error(event?.message||'local-codec-unavailable');
+      for(const task of pending.values()){
+        clearTimeout(task.timer);
+        task.reject(error);
+      }
+      pending.clear();
+      try{worker.terminate();}catch(_){}
+      worker=null;
+    });
+    return worker;
+  }catch(error){
+    workerFailed=true;
+    throw error;
+  }
+}
+
+function codecRequest(op,payload,transfer){
+  return new Promise((resolve,reject)=>{
+    let w;
+    try{w=createCodecWorker();}catch(error){reject(error);return;}
+    const id=++requestId;
+    const timer=setTimeout(()=>{
+      pending.delete(id);
+      reject(new Error('HEIC codec timeout'));
+    },120000);
+    pending.set(id,{resolve,reject,timer});
+    try{w.postMessage({id,op,...payload},transfer||[]);}
+    catch(error){
+      clearTimeout(timer);
+      pending.delete(id);
+      reject(error);
+    }
+  });
+}
+
+async function decodeHeicFile(file){
+  const source=await file.arrayBuffer();
+  const result=await codecRequest('decode',{buffer:source},[source]);
+  const rgba=new Uint8ClampedArray(result.buffer);
+  const imageData=new ImageData(rgba,result.width,result.height);
+  const canvas=document.createElement('canvas');
+  canvas.width=result.width;
+  canvas.height=result.height;
+  const ctx=canvas.getContext('2d',{alpha:true});
+  ctx.putImageData(imageData,0,0);
+  const blob=await new Promise((resolve,reject)=>{
+    canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG bridge failed')),'image/png');
+  });
+  const name=baseName(file.name)+'.png';
+  return new File([blob],name,{type:'image/png',lastModified:file.lastModified||Date.now()});
+}
+
+async function canvasToHeic(canvas){
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
+  // Copy because the worker takes ownership of the transferred ArrayBuffer.
+  const rgba=new Uint8Array(image.data);
+  const buffer=rgba.buffer;
+  const result=await codecRequest('encode',{buffer,width:canvas.width,height:canvas.height},[buffer]);
+  return new Blob([result.buffer],{type:'image/heic'});
+}
+
+function nativeCanvasToHeic(canvas,quality){
   return new Promise((resolve,reject)=>{
     canvas.toBlob(blob=>{
       if(!blob){reject(new Error('encode-failed'));return;}
@@ -58,11 +151,64 @@ function canvasToHeic(canvas,quality){
   });
 }
 
-function ensureAccept(input){
-  if(!input)return;
-  const current=input.accept||'';
-  if(current.toLowerCase().includes('.heic'))return;
-  input.accept=(current?current+',':'')+HEIC_ACCEPT;
+async function encodeHeic(canvas,quality){
+  try{return await canvasToHeic(canvas);}
+  catch(wasmError){
+    // Keep older browsers usable until/if the local vendor file is unavailable.
+    try{return await nativeCanvasToHeic(canvas,quality);}
+    catch(nativeError){
+      nativeError.wasmError=wasmError;
+      throw nativeError;
+    }
+  }
+}
+
+function restoreOriginalUiInfo(){
+  if(!originalUiInfo)return;
+  const info=originalUiInfo;
+  const apply=()=>{
+    if($('meta-name'))$('meta-name').textContent=info.name;
+    if($('meta-size'))$('meta-size').textContent=formatBytes(info.size);
+    if($('meta-type'))$('meta-type').textContent=info.type;
+    if($('ro-size'))$('ro-size').textContent=formatBytes(info.size);
+    if($('ro-format'))$('ro-format').textContent='HEIC';
+    if($('t-name'))$('t-name').textContent=info.name;
+    if($('t-name2'))$('t-name2').textContent=info.name;
+  };
+  apply();
+  requestAnimationFrame(apply);
+  setTimeout(apply,80);
+  setTimeout(apply,300);
+}
+
+async function decodeFileList(files){
+  const list=[...files];
+  const firstHeic=list.find(isHeicFile);
+  if(firstHeic){
+    originalUiInfo={
+      name:firstHeic.name||'image.heic',
+      size:firstHeic.size||0,
+      type:(firstHeic.type||'image/heic').replace(/^image\//i,'').toUpperCase()
+    };
+  }
+  const converted=[];
+  for(const file of list){
+    if(!isHeicFile(file)){converted.push(file);continue;}
+    setStatus('Декодирую HEIC локально через WASM…');
+    converted.push(await decodeHeicFile(file));
+  }
+  return converted;
+}
+
+function assignFilesAndDispatch(input,files){
+  if(typeof DataTransfer==='undefined')throw new Error('DataTransfer unavailable');
+  const dt=new DataTransfer();
+  files.forEach(file=>dt.items.add(file));
+  redispatching=true;
+  input.files=dt.files;
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+  redispatching=false;
+  restoreOriginalUiInfo();
 }
 
 function prepareInput(){
@@ -71,36 +217,56 @@ function prepareInput(){
   if(!input)return;
   ensureAccept(input);
 
-  // The PDF bridge rewrites accept after startup, so preserve HEIC whenever that happens.
   new MutationObserver(()=>ensureAccept(input)).observe(input,{attributes:true,attributeFilter:['accept']});
 
-  // Some operating systems expose HEIC files with an empty MIME type.
-  // Normalize that case before the main Safelight upload listener reads the FileList.
   input.addEventListener('change',event=>{
-    const file=event.target.files&&event.target.files[0];
-    if(!file||!isHeicFile(file)||file.type||typeof DataTransfer==='undefined')return;
-    try{
-      const dt=new DataTransfer();
-      dt.items.add(normalizeHeicFile(file));
-      event.target.files=dt.files;
-    }catch(_){/* The main loader will still try the original file. */}
+    if(redispatching)return;
+    const files=[...(event.target.files||[])];
+    if(!files.some(isHeicFile))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    document.body.dataset.safelightHeicInput='1';
+    decodeFileList(files).then(decoded=>{
+      assignFilesAndDispatch(input,decoded);
+      setStatus('HEIC декодирован локально. Файл не отправлялся на сервер.');
+    }).catch(error=>{
+      // If the vendored WASM is not present yet, pass the original HEIC to the
+      // existing browser decoder as a compatibility fallback.
+      try{
+        originalUiInfo=null;
+        assignFilesAndDispatch(input,files);
+        setStatus('Локальный HEIC-кодек недоступен; пробую системный декодер браузера.');
+      }catch(_){
+        setStatus('Не удалось открыть HEIC: локальный кодек недоступен.');
+      }
+      console.warn('[Safelight HEIC decode]',error);
+    }).finally(()=>{
+      setTimeout(()=>delete document.body.dataset.safelightHeicInput,5000);
+    });
   },true);
 
   if(dropzone){
     dropzone.addEventListener('drop',event=>{
-      const file=event.dataTransfer?.files?.[0];
-      if(!file||!isHeicFile(file)||file.type||typeof DataTransfer==='undefined')return;
+      const files=[...(event.dataTransfer?.files||[])];
+      if(!files.some(isHeicFile))return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      try{
-        const dt=new DataTransfer();
-        dt.items.add(normalizeHeicFile(file));
-        input.files=dt.files;
-        input.dispatchEvent(new Event('change',{bubbles:true}));
-        input.value='';
-      }catch(_){
-        alert('Не удалось открыть HEIC-файл в этом браузере.');
-      }
+      document.body.dataset.safelightHeicInput='1';
+      decodeFileList(files).then(decoded=>{
+        assignFilesAndDispatch(input,decoded);
+        setStatus('HEIC декодирован локально. Файл не отправлялся на сервер.');
+      }).catch(error=>{
+        try{
+          originalUiInfo=null;
+          assignFilesAndDispatch(input,files);
+          setStatus('Локальный HEIC-кодек недоступен; пробую системный декодер браузера.');
+        }catch(_){
+          setStatus('Не удалось открыть HEIC: локальный кодек недоступен.');
+        }
+        console.warn('[Safelight HEIC drop]',error);
+      }).finally(()=>{
+        setTimeout(()=>delete document.body.dataset.safelightHeicInput,5000);
+      });
     },true);
   }
 }
@@ -109,6 +275,7 @@ function prepareConverter(){
   const format=$('v-format');
   const run=$('v-run');
   const downloadButton=$('v-download');
+  const qualityRow=$('v-quality-row');
   if(!format||!run||!downloadButton)return;
 
   if(!format.querySelector('option[value="heic"]')){
@@ -119,9 +286,14 @@ function prepareConverter(){
   }
 
   const desc=$('panel-convert')?.querySelector('.desc');
-  if(desc)desc.textContent='Конвертируйте PNG, JPEG, WebP и HEIC локально в браузере.';
+  if(desc)desc.textContent='Конвертируйте PNG, JPEG, WebP и HEIC локально в браузере. HEIC обрабатывается локальным WASM-кодеком.';
 
-  format.addEventListener('change',()=>{heicBlob=null;});
+  const syncFormatUi=()=>{
+    heicBlob=null;
+    if(qualityRow)qualityRow.style.display=format.value==='heic'?'none':'';
+  };
+  format.addEventListener('change',syncFormatUi);
+  syncFormatUi();
 
   run.addEventListener('click',async event=>{
     if(format.value!=='heic')return;
@@ -140,7 +312,7 @@ function prepareConverter(){
     }
 
     run.disabled=true;
-    if(status)status.textContent='Кодирую HEIC локально…';
+    if(status)status.textContent='Кодирую настоящий HEIC локально через WASM…';
 
     try{
       const canvas=document.createElement('canvas');
@@ -149,23 +321,24 @@ function prepareConverter(){
       const ctx=canvas.getContext('2d');
       ctx.drawImage(preview,0,0,canvas.width,canvas.height);
       const quality=Math.max(0.01,Math.min(1,Number($('v-quality')?.value||92)/100));
-      heicBlob=await canvasToHeic(canvas,quality);
+      heicBlob=await encodeHeic(canvas,quality);
 
-      const sourceName=$('meta-name')?.textContent||'image';
+      const sourceName=$('meta-name')?.textContent||originalUiInfo?.name||'image';
       const sourceSizeText=$('meta-size')?.textContent||'—';
       const sourceType=($('meta-type')?.textContent||'').replace(/^image\//i,'').toUpperCase()||'IMAGE';
       if($('v-before'))$('v-before').textContent=sourceType+' · '+sourceSizeText;
       if($('v-after'))$('v-after').textContent='HEIC · '+formatBytes(heicBlob.size);
       result?.classList.add('show');
-      if(status)status.textContent='Готово. HEIC создан локально.';
+      if(status)status.textContent='Готово. Настоящий HEIC создан локально.';
       downloadButton.dataset.heicName=baseName(sourceName)+'-converted.heic';
     }catch(error){
       heicBlob=null;
       if(status){
         status.textContent=error?.message==='heic-unsupported'
-          ?'Этот браузер не поддерживает локальное кодирование HEIC. Файл не был подменён другим форматом.'
-          :'Не удалось создать HEIC в этом браузере.';
+          ?'Локальный WASM-кодек не найден, а браузер не умеет кодировать HEIC.'
+          :'Не удалось создать HEIC локально.';
       }
+      console.warn('[Safelight HEIC encode]',error?.wasmError||error);
     }finally{
       run.disabled=false;
     }
@@ -183,24 +356,10 @@ function prepareConverter(){
   },true);
 }
 
-function installHeicDecodeHint(){
-  const input=$('fileInput');
-  if(!input)return;
-  input.addEventListener('change',event=>{
-    const file=event.target.files&&event.target.files[0];
-    if(!isHeicFile(file))return;
-    // The core loader uses the browser's native image decoder. The marker is kept
-    // only briefly so other UI layers can identify a HEIC decoding attempt.
-    document.body.dataset.safelightHeicInput='1';
-    setTimeout(()=>delete document.body.dataset.safelightHeicInput,5000);
-  },true);
-}
-
 function boot(){
   if(!$('fileInput')||!$('v-format')){setTimeout(boot,60);return;}
   prepareInput();
   prepareConverter();
-  installHeicDecodeHint();
 }
 
 boot();
