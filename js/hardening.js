@@ -164,7 +164,7 @@
     const run = document.getElementById("v-run");
     const target = format?.value || "jpeg";
     if (run) run.disabled = true;
-    setStatus("Конвертирую…");
+    setStatus(target === "heic" ? "Кодирую HEIC локально через WASM…" : "Конвертирую…");
     hidePdfPagePreview();
     window.safelightCompare?.hide();
 
@@ -173,7 +173,7 @@
 
       if (target === "pdf") {
         if (isPdfSource()) {
-          setStatus("Исходник уже PDF. Выберите PNG, JPEG или WebP.");
+          setStatus("Исходник уже PDF. Выберите PNG, JPEG, WebP или HEIC.");
           return;
         }
         if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
@@ -213,10 +213,21 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       ctx.drawImage(im, 0, 0);
+
+      const from = isPdfSource() ? "PDF · страница 1" : (currentType().replace("image/", "") || "SOURCE").toUpperCase();
+
+      if (target === "heic") {
+        const encoder = window.safelightHeicCodec?.encodeCanvas;
+        if (typeof encoder !== "function") throw new Error("Локальный HEIC WASM-кодек не загрузился");
+        const blob = await encoder(canvas);
+        setConverterResult(blob, "heic", from, "HEIC · " + formatBytes(blob.size));
+        setStatus("Готово. Настоящий HEIC (.heic) создан локально.");
+        return;
+      }
+
       const quality = target === "png" ? undefined : Number(document.getElementById("v-quality")?.value || 92) / 100;
       const blob = await canvasBlob(canvas, mimeFor(target), quality);
       const ext = target === "jpeg" ? "jpg" : target;
-      const from = isPdfSource() ? "PDF · страница 1" : (currentType().replace("image/", "") || "SOURCE").toUpperCase();
       setConverterResult(blob, ext, from, target.toUpperCase() + " · " + formatBytes(blob.size));
       setStatus(isPdfSource() ? "Готово. Конвертирована первая страница PDF." : "Готово.");
       setTimeout(() => window.safelightCompare?.refresh(), 30);
@@ -250,7 +261,7 @@
 
   function updateQualityVisibility() {
     if (!qualityRow || !format) return;
-    qualityRow.style.display = format.value === "png" || format.value === "pdf" ? "none" : "flex";
+    qualityRow.style.display = format.value === "png" || format.value === "pdf" || format.value === "heic" ? "none" : "flex";
   }
 
   format?.addEventListener("change", () => {
@@ -293,7 +304,7 @@
             "a-run": "a-status",
           };
           const out = document.getElementById(map[blocked.id]);
-          if (out) out.textContent = "PDF поддерживается здесь через вкладку «Конвертация». Для других операций сначала преобразуйте страницу в PNG/JPEG/WebP.";
+          if (out) out.textContent = "PDF поддерживается здесь через вкладку «Конвертация». Для других операций сначала преобразуйте страницу в PNG/JPEG/WebP/HEIC.";
         }
       }
     },
