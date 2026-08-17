@@ -12,7 +12,7 @@
   const TOOL_INFO = {
     compress: ["Сжатие", "Уменьшайте вес изображения и контролируйте качество результата."],
     slice: ["Нарезка", "Разделяйте изображение на сетку или полосы и экспортируйте ZIP."],
-    convert: ["Конвертация", "PNG, JPEG, WebP и PDF без отправки файла на сервер."],
+    convert: ["Конвертация", "PNG, JPEG, WebP, HEIC и PDF без отправки файла на сервер."],
     resize: ["Размер", "Изменяйте разрешение с сохранением пропорций или вручную."],
     crop: ["Обрезка", "Получайте фрагмент нужного размера из исходного изображения."],
     adjust: ["Коррекция", "Яркость, контраст, насыщенность и чёрно-белый режим."],
@@ -55,7 +55,18 @@
     if (!stage || !readout || !preview || !fileInput) return;
 
     fileInput.multiple = true;
-    fileInput.setAttribute("accept", "image/*,application/pdf,.pdf");
+    fileInput.setAttribute("accept", "image/*,application/pdf,.pdf,.heic,.heif,image/heic,image/heif");
+
+    const convertFormat = document.getElementById("v-format");
+    if (convertFormat) {
+      let heic = convertFormat.querySelector('option[value="heic"]');
+      if (!heic) {
+        heic = document.createElement("option");
+        heic.value = "heic";
+        convertFormat.appendChild(heic);
+      }
+      heic.textContent = "HEIC (.heic)";
+    }
 
     const shell = document.createElement("div");
     shell.className = "sl-app";
@@ -107,6 +118,8 @@
     syncInspector();
     syncFileMeta(shell, filemeta);
 
+    document.getElementById("v-format")?.addEventListener("change", syncExportLabel);
+
     window.addEventListener("safelight:toolchange", () => setTimeout(() => {
       syncInspector();
       syncExportAvailability();
@@ -126,6 +139,7 @@
     }).observe(preview, { attributes: true, attributeFilter: ["src"] });
 
     syncExportAvailability();
+    syncExportLabel();
   }
 
   function buildSidebar(shell) {
@@ -161,6 +175,19 @@
     return panel ? panel.id.replace("panel-", "") : null;
   }
 
+  function syncExportLabel() {
+    const button = document.getElementById("sl-export");
+    const label = button?.querySelector("span");
+    if (!label) return;
+    if (currentTool() !== "convert") {
+      label.textContent = "Экспорт";
+      return;
+    }
+    const fmt = document.getElementById("v-format")?.value || "jpeg";
+    const names = { png: "PNG", jpeg: "JPEG", webp: "WebP", heic: "HEIC", pdf: "PDF" };
+    label.textContent = "Экспорт " + (names[fmt] || fmt.toUpperCase());
+  }
+
   function syncInspector() {
     const tool = currentTool() || "compress";
     const info = TOOL_INFO[tool] || ["Инструмент", "Локальная обработка изображения."];
@@ -169,6 +196,7 @@
     if (title) title.textContent = info[0];
     if (desc) desc.textContent = info[1];
     document.querySelectorAll(".sl-sidebar .sl-tool").forEach((button) => button.classList.toggle("active", button.dataset.page === tool));
+    syncExportLabel();
   }
 
   function wireToolbar(shell) {
@@ -203,6 +231,7 @@
     }
     window.safelightCompare?.hide();
     syncExportAvailability();
+    syncExportLabel();
   }
 
   function waitForResult(result, download, timeout) {
@@ -229,7 +258,7 @@
     });
   }
 
-  async function runAndDownload(runId, resultId, downloadId) {
+  async function runAndDownload(runId, resultId, downloadId, timeout) {
     const run = document.getElementById(runId);
     const result = document.getElementById(resultId);
     const download = document.getElementById(downloadId);
@@ -238,7 +267,7 @@
       download.click();
       return true;
     }
-    const waiter = waitForResult(result, download, 7000);
+    const waiter = waitForResult(result, download, timeout || 7000);
     run.click();
     return waiter;
   }
@@ -275,7 +304,10 @@
     if (!tool) return;
     let ok = true;
     if (tool === "compress") ok = await runAndDownload("c-run", "c-result", "c-download");
-    else if (tool === "convert") ok = await runAndDownload("v-run", "v-result", "v-download");
+    else if (tool === "convert") {
+      const fmt = document.getElementById("v-format")?.value;
+      ok = await runAndDownload("v-run", "v-result", "v-download", fmt === "heic" ? 120000 : 15000);
+    }
     else if (tool === "resize") ok = await runAndDownload("r-run", "r-result", "r-download");
     else if (tool === "crop") ok = await runAndDownload("cr-run", "cr-result", "cr-download");
     else if (tool === "adjust") ok = await runAndDownload("a-run", "a-result", "a-download");
@@ -324,7 +356,7 @@
     let selected = null;
 
     function addFiles(list) {
-      const incoming = [...(list || [])].filter((file) => file.type.startsWith("image/") || file.type === "application/pdf" || /\.pdf$/i.test(file.name));
+      const incoming = [...(list || [])].filter((file) => file.type.startsWith("image/") || file.type === "application/pdf" || /\.(pdf|heic|heif)$/i.test(file.name));
       incoming.forEach((file) => {
         const key = fileKey(file);
         if (!files.has(key)) files.set(key, file);
@@ -336,7 +368,7 @@
     function getThumb(file) {
       const key = fileKey(file);
       if (urls.has(key)) return urls.get(key);
-      if (!file.type.startsWith("image/")) return null;
+      if (!file.type.startsWith("image/") || /\.(heic|heif)$/i.test(file.name)) return null;
       const url = URL.createObjectURL(file);
       urls.set(key, url);
       return url;
@@ -375,7 +407,7 @@
         item.title = file.name;
         const src = getThumb(file);
         if (src) item.innerHTML = '<img src="' + src + '" alt=""><span class="sl-name"></span>';
-        else item.innerHTML = '<div class="sl-pdf-thumb">PDF</div><span class="sl-name"></span>';
+        else item.innerHTML = '<div class="sl-pdf-thumb">' + (/\.(heic|heif)$/i.test(file.name) ? 'HEIC' : 'PDF') + '</div><span class="sl-name"></span>';
         item.querySelector(".sl-name").textContent = file.name;
         item.addEventListener("click", () => selectFile(file));
         tray.appendChild(item);
@@ -400,7 +432,7 @@
     stage.addEventListener("drop", (event) => {
       event.preventDefault();
       stage.classList.remove("drag");
-      const dropped = [...(event.dataTransfer?.files || [])].filter((file) => file.type.startsWith("image/") || file.type === "application/pdf" || /\.pdf$/i.test(file.name));
+      const dropped = [...(event.dataTransfer?.files || [])].filter((file) => file.type.startsWith("image/") || file.type === "application/pdf" || /\.(pdf|heic|heif)$/i.test(file.name));
       addFiles(dropped);
       if (dropped[0]) selectFile(dropped[0]);
     });
