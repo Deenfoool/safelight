@@ -14,13 +14,13 @@ Compress, convert, resize, crop, blur, inspect metadata, extract palettes and mo
 
 Most online image tools ask you to upload a file before doing something as simple as converting it to WebP or removing metadata.
 
-Safelight takes a different approach: **your image stays on your device**. Processing happens locally with browser APIs and Canvas.
+Safelight takes a different approach: **your image stays on your device**. Processing happens locally with browser APIs, Canvas and bundled WebAssembly codecs.
 
 - No account
 - No backend upload
 - No tracking-dependent workflow
 - Works as an installable PWA
-- Core runtime is bundled locally — no Google Fonts or CDN dependency
+- Core runtime is bundled locally — no Google Fonts or CDN dependency at runtime
 - Original files stay untouched until you explicitly export a result
 
 ## Try it
@@ -34,8 +34,9 @@ Drop in an image and start editing immediately. There is no signup screen and no
 ### Image editing
 - Compress PNG, JPEG and WebP
 - Convert between PNG / JPEG / WebP / HEIC
-- Open `.heic` / `.heif` files when the browser or operating system exposes a native HEIC decoder
-- Export HEIC only when the browser provides a real HEIC encoder; Safelight verifies the resulting MIME type and never renames a fallback PNG to `.heic`
+- Decode `.heic` / `.heif` locally through the bundled `elheif` WebAssembly codec
+- Encode PNG / JPEG / WebP back to a real HEIC file locally through WebAssembly
+- Keep the browser's native HEIC codec only as a compatibility fallback if the local codec cannot start
 - Export images to PDF
 - Render the first page of supported PDFs to an image
 - Resize and crop
@@ -64,15 +65,15 @@ Safelight does not send the image you open to a Safelight backend.
 
 Image operations are performed locally in the browser. Metadata inspection, palette analysis, blur regions and other working state remain on the device while you use the app.
 
-The application also ships its ZIP/PDF runtime inside the repository and uses local system fonts instead of Google Fonts.
+The application ships its ZIP/PDF runtime and HEIC WebAssembly runtime inside the repository and uses local system fonts instead of Google Fonts.
 
-HEIC is capability-detected instead of faked. Import works only if the current browser/OS can decode HEIC locally, and HEIC export is enabled through the same local browser codec path only when the browser actually returns an `image/heic` or `image/heif` blob.
+HEIC import and export no longer depend on the browser exposing a native HEIC codec. Safelight loads `vendor/elheif/elheif-wasm.js` inside a dedicated Web Worker, decodes HEIC/HEIF into RGBA pixels locally and can encode RGBA pixels back into a real HEIC container. Native browser HEIC support remains only as a fallback path.
 
 > Note: the built-in PDF renderer is intentionally lightweight and optimized for the first page and image-oriented PDFs. Complex PDFs with unusual fonts or heavy vector content may render in a simplified form.
 
 ## Install as an app
 
-Safelight is a PWA. After opening it in a supported browser, you can install it and use the cached core interface offline.
+Safelight is a PWA. After opening it in a supported browser, you can install it and use the cached core interface offline. The bundled HEIC worker and codec are included in the application cache.
 
 ## Run locally
 
@@ -91,11 +92,13 @@ Then open `http://localhost:8080`.
 - Vanilla JavaScript
 - HTML5 / CSS3
 - Canvas API
+- Web Workers
+- WebAssembly
 - Service Worker
 - Web App Manifest
 - Local ZIP runtime
 - Local PDF runtime
-- Native browser image codecs, including capability-detected HEIC
+- `elheif` HEIC codec (`libheif` + `libde265` + `kvazaar` build)
 
 ## Project status
 
@@ -104,8 +107,9 @@ Safelight currently includes:
 - [x] Compression
 - [x] Slicing
 - [x] Format conversion
-- [x] HEIC / HEIF file selection and native-codec conversion path
-- [x] Verified HEIC export without fake file extensions
+- [x] HEIC / HEIF selection and local WASM decoding
+- [x] Real HEIC export through local WASM
+- [x] Native HEIC fallback path
 - [x] PDF conversion
 - [x] Resize / crop
 - [x] Color adjustment
@@ -130,4 +134,4 @@ Contributions and practical feedback are welcome.
 
 ## License
 
-[MIT](LICENSE)
+Safelight itself is released under the [MIT License](LICENSE). The bundled HEIC codec contains third-party components with their own licenses.
