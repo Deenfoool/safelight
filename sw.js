@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-17-9";
+const CACHE = "safelight-shell-v2026-08-17-10";
 const CORE = [
   "./",
   "./index.html",
@@ -42,8 +42,7 @@ const CORE = [
   "./assets/images/favicon-180.png",
   "./assets/images/favicon-192.png",
   "./assets/images/favicon-512.png",
-  "./assets/images/logo.png",
-  "./assets/images/logo-and-text.png"
+  "./assets/images/logo.png"
 ];
 
 self.addEventListener("install", (event) => {
