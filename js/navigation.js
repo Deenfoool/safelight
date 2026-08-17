@@ -17,7 +17,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.nav-group'))closeMe
 function loadScript(src,onload){const script=document.createElement('script');script.src=src;script.onerror=()=>console.error('Safelight: failed to load',src);if(onload)script.onload=onload;document.body.appendChild(script)}
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
 loadStyle('css/visual-polish.css?v=4');loadScript('js/visual-polish.js?v=4');
-loadScript('js/advanced.js?v=10',()=>{
+loadScript('js/advanced.js?v=11',()=>{
   loadStyle('css/live-editor.css?v=4');
   loadStyle('css/direct-manipulation.css?v=2');
   loadStyle('css/editor-polish.css?v=2');
