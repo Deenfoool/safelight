@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-16-1";
+const CACHE = "safelight-shell-v2026-08-17-1";
 const CORE = [
   "./",
   "./index.html",
@@ -21,8 +21,10 @@ const CORE = [
   "./vendor/pdf.min.js",
   "./vendor/pdf.worker.min.js",
   "./vendor/jspdf.umd.min.js",
+  "./vendor/elheif/elheif-wasm.js",
   "./js/app.js",
   "./js/heic-support.js",
+  "./js/heic-codec-worker.js",
   "./js/navigation.js",
   "./js/visual-polish.js",
   "./js/advanced.js",
