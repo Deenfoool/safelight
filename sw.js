@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-17-7";
+const CACHE = "safelight-shell-v2026-08-17-8";
 const CORE = [
   "./",
   "./index.html",
@@ -8,7 +8,6 @@ const CORE = [
   "./css/navigation.css",
   "./css/visual-polish.css",
   "./css/app-shell.css",
-  "./css/app-shell-fixes.css",
   "./css/live-editor.css",
   "./css/direct-manipulation.css",
   "./css/editor-polish.css",
@@ -16,7 +15,6 @@ const CORE = [
   "./css/privacy-effects.css",
   "./css/palette-tools.css",
   "./css/pwa.css",
-  "./css/surface-fix.css",
   "./vendor/jszip.min.js",
   "./vendor/pdf.min.js",
   "./vendor/pdf.worker.min.js",
@@ -29,7 +27,6 @@ const CORE = [
   "./js/visual-polish.js",
   "./js/advanced.js",
   "./js/ui-shell.js",
-  "./js/hardening.js",
   "./js/source-cleanup.js",
   "./js/live-editor.js",
   "./js/direct-manipulation.js",
@@ -37,10 +34,8 @@ const CORE = [
   "./js/metadata-tools.js",
   "./js/metadata-export-bridge.js",
   "./js/privacy-effects.js",
-  "./js/privacy-effects-fix.js",
   "./js/palette-tools.js",
   "./js/pwa.js",
-  "./js/surface-fix.js",
   "./assets/images/favicon-16.png",
   "./assets/images/favicon-32.png",
   "./assets/images/favicon-48.png",
