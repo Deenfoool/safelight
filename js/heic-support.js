@@ -54,10 +54,12 @@ function setStatus(text){
 
 function ensureAccept(input){
   if(!input)return;
-  const parts=(input.accept||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const current=input.accept||'';
+  const parts=current.split(',').map(x=>x.trim()).filter(Boolean);
   const seen=new Set(parts.map(x=>x.toLowerCase()));
   HEIC_ACCEPT.forEach(value=>{if(!seen.has(value))parts.push(value);});
-  input.accept=parts.join(',');
+  const next=parts.join(',');
+  if(current!==next)input.accept=next;
 }
 
 function ensureHeicOption(){
