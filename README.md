@@ -36,7 +36,6 @@ Drop in an image and start editing immediately. There is no signup screen and no
 - Convert between PNG / JPEG / WebP / HEIC
 - Decode `.heic` / `.heif` locally through the bundled `elheif` WebAssembly codec
 - Encode PNG / JPEG / WebP back to a real HEIC file locally through WebAssembly
-- Keep the browser's native HEIC codec only as a compatibility fallback if the local codec cannot start
 - Export images to PDF
 - Render the first page of supported PDFs to an image
 - Resize and crop
@@ -67,7 +66,7 @@ Image operations are performed locally in the browser. Metadata inspection, pale
 
 The application ships its ZIP/PDF runtime and HEIC WebAssembly runtime inside the repository and uses local system fonts instead of Google Fonts.
 
-HEIC import and export no longer depend on the browser exposing a native HEIC codec. Safelight loads `vendor/elheif/elheif-wasm.js` inside a dedicated Web Worker, decodes HEIC/HEIF into RGBA pixels locally and can encode RGBA pixels back into a real HEIC container. Native browser HEIC support remains only as a fallback path.
+HEIC import and export do not depend on the browser exposing a native HEIC codec. Safelight loads `vendor/elheif/elheif-wasm.js` inside a dedicated Web Worker, decodes HEIC/HEIF into RGBA pixels locally and can encode RGBA pixels back into a real HEIC container.
 
 > Note: the built-in PDF renderer is intentionally lightweight and optimized for the first page and image-oriented PDFs. Complex PDFs with unusual fonts or heavy vector content may render in a simplified form.
 
@@ -109,7 +108,6 @@ Safelight currently includes:
 - [x] Format conversion
 - [x] HEIC / HEIF selection and local WASM decoding
 - [x] Real HEIC export through local WASM
-- [x] Native HEIC fallback path
 - [x] PDF conversion
 - [x] Resize / crop
 - [x] Color adjustment
