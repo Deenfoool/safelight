@@ -19,12 +19,6 @@
   }
 
   function applyBranding(app){
-    const homeLogo=document.querySelector('body>nav .logo');
-    if(homeLogo&&!homeLogo.classList.contains('sl-image-logo')){
-      homeLogo.classList.add('sl-image-logo');
-      homeLogo.innerHTML='<img src="assets/images/logo-and-text.png" alt="Safelight">';
-    }
-
     app.querySelector('.sl-topbar .sl-add')?.remove();
 
     const brand=app.querySelector('.sl-brand');
