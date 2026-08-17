@@ -13,14 +13,6 @@
     return (bytes / 1048576).toFixed(2) + " MB";
   }
 
-  function resetResultPanels() {
-    ["c-result", "v-result", "r-result", "cr-result", "a-result"].forEach((id) => $(id)?.classList.remove("show"));
-    ["c-status", "v-status", "r-status", "cr-status", "a-status", "s-status"].forEach((id) => {
-      const el = $(id);
-      if (el) el.textContent = "";
-    });
-  }
-
   const dropzone = $("dropzone");
   const fileInput = $("fileInput");
   const filemeta = $("filemeta");
@@ -90,7 +82,6 @@
       $("t-dims").textContent = imgW + "x" + imgH + " px, " + (file.type.replace("image/", "") || "—").toUpperCase();
       $("t-size").textContent = formatBytes(file.size);
 
-      resetResultPanels();
       $("r-width").value = imgW;
       $("r-height").value = imgH;
       $("cr-width").value = imgW;
