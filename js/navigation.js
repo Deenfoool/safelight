@@ -23,8 +23,8 @@ loadScript('js/advanced.js?v=11',()=>{
   loadStyle('css/editor-polish.css?v=2');
   loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
-      loadScript('js/live-editor.js?v=6',()=>{
-        loadScript('js/direct-manipulation.js?v=3',()=>{
+      loadScript('js/live-editor.js?v=7',()=>{
+        loadScript('js/direct-manipulation.js?v=4',()=>{
           loadScript('js/editor-polish.js?v=4');
         });
       });
