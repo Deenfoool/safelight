@@ -1,0 +1,42 @@
+name: Vendor local HEIC codec
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vendor-elheif.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository without third-party actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --depth=1 "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Download and verify elheif 0.1.0 single-file WASM bundle
+        run: |
+          cd repo
+          mkdir -p vendor/elheif
+          curl --fail --location --retry 3 --output vendor/elheif/elheif-wasm.js "https://unpkg.com/elheif@0.1.0/pkg/elheif-wasm.js"
+          echo "a2e7c699be9a0025c121a52698968375ef6e472c04d4832d58db0179391e1fe3  vendor/elheif/elheif-wasm.js" | sha256sum --check --strict
+      - name: Commit vendored codec
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd repo
+          git add vendor/elheif/elheif-wasm.js
+          if git diff --cached --quiet; then
+            echo "Codec already vendored"
+            exit 0
+          fi
+          git commit -m "Vendor elheif WASM codec"
+          git push origin HEAD:main
