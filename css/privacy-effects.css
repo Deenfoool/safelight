@@ -27,6 +27,12 @@
 .sl-pe-resize{position:absolute;right:-7px;bottom:-7px;width:13px;height:13px;border:2px solid #09090b;border-radius:3px;background:#a3e635;cursor:nwse-resize;box-shadow:0 0 0 1px rgba(163,230,53,.38)}
 .sl-pe-area.pixelate .sl-pe-resize{background:#60a5fa;box-shadow:0 0 0 1px rgba(96,165,250,.4)}
 
+/* Privacy owns the live surface while this tool is active. */
+body.sl-privacy-active .sl-app #previewWrap>#previewImg{display:none!important}
+body.sl-privacy-active .sl-app #previewWrap #sl-live-canvas{display:block!important}
+body.sl-privacy-active .sl-app #previewWrap .af,
+body.sl-privacy-active .sl-app #previewWrap #gridOverlay{display:none!important}
+
 @media(max-width:760px){
   .sl-pe-actions{grid-template-columns:1fr}
   .sl-pe-label{display:none}
