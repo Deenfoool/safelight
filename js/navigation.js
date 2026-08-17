@@ -25,7 +25,7 @@ loadScript('js/advanced.js?v=11',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=5',()=>{
         loadScript('js/direct-manipulation.js?v=3',()=>{
-          loadScript('js/editor-polish.js?v=3');
+          loadScript('js/editor-polish.js?v=4');
         });
       });
     });
