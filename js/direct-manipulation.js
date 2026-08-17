@@ -25,44 +25,6 @@
     return !!(image && image.src);
   }
 
-  function imageFrom(src) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Не удалось открыть исходное изображение"));
-      image.src = src;
-    });
-  }
-
-  function canvasBlob(canvas, type, quality) {
-    return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Не удалось подготовить файл")), type, quality));
-  }
-
-  function mimeFor(format) {
-    if (format === "png") return "image/png";
-    if (format === "webp") return "image/webp";
-    return "image/jpeg";
-  }
-
-  function extFor(format) {
-    return format === "jpeg" ? "jpg" : format;
-  }
-
-  function baseName() {
-    return (($("meta-name")?.textContent || "safelight").trim().replace(/\.[^.]+$/, "") || "safelight");
-  }
-
-  function download(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-  }
-
   function getOverlay() {
     const wrap = $("previewWrap");
     if (!wrap) return null;
@@ -353,76 +315,7 @@
     return true;
   }
 
-  async function ensureJsPdf() {
-    return !!window.jspdf?.jsPDF;
-  }
-
-  async function exportCanvas(canvas, format, suffix) {
-    if (format === "pdf") {
-      if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
-      const { jsPDF } = window.jspdf;
-      const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
-      const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
-      const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin = 10;
-      const scale = Math.min((pageW - margin * 2) / canvas.width, (pageH - margin * 2) / canvas.height);
-      const width = canvas.width * scale, height = canvas.height * scale;
-      doc.addImage(canvas.toDataURL("image/jpeg", 0.94), "JPEG", (pageW - width) / 2, (pageH - height) / 2, width, height, undefined, "FAST");
-      download(doc.output("blob"), baseName() + suffix + ".pdf");
-      return;
-    }
-    let output = canvas;
-    if (format === "jpeg") {
-      output = document.createElement("canvas");
-      output.width = canvas.width; output.height = canvas.height;
-      const ctx = output.getContext("2d");
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, output.width, output.height); ctx.drawImage(canvas, 0, 0);
-    }
-    download(await canvasBlob(output, mimeFor(format), format === "png" ? undefined : 0.92), baseName() + suffix + "." + extFor(format));
-  }
-
-  function drawWatermark(ctx, width, height) {
-    const size = Math.max(8, Math.min(1000, Number($("wm-size")?.value) || 48));
-    const text = watermarkText();
-    const opacity = watermarkOpacity();
-    ctx.save();
-    ctx.font = `600 ${size}px system-ui,Arial,sans-serif`;
-    ctx.fillStyle = `rgba(255,255,255,${opacity})`;
-    ctx.shadowColor = "rgba(0,0,0,.55)";
-    ctx.shadowBlur = Math.max(2, size / 10);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    if (!watermarkState.fill) {
-      ctx.fillText(text, watermarkState.x * width, watermarkState.y * height);
-      ctx.restore();
-      return;
-    }
-
-    const metrics = ctx.measureText(text);
-    const stepX = Math.max(metrics.width + size * 2.4, size * 7);
-    const stepY = size * 3.4;
-    const diagonal = Math.hypot(width, height);
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate(-Math.PI / 6);
-    for (let y = -diagonal; y <= diagonal; y += stepY) {
-      for (let x = -diagonal; x <= diagonal; x += stepX) {
-        ctx.fillText(text, x, y);
-      }
-    }
-    ctx.restore();
-  }
-
-  async function exportWatermark(format) {
-    const image = await imageFrom(sourceImageElement().src);
-    const canvas = document.createElement("canvas");
-    canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(image, 0, 0);
-    drawWatermark(ctx, canvas.width, canvas.height);
-    await exportCanvas(canvas, format, "-watermark");
-  }
-
-  function sliceBoundaries() {
+  function getSliceBoundaries() {
     ensureSliceState(false);
     return {
       x: [0, ...sliceState.vertical, 1],
@@ -430,55 +323,12 @@
     };
   }
 
-  async function exportSlice(format) {
-    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился");
-    const image = await imageFrom(sourceImageElement().src);
-    const { x, y } = sliceBoundaries();
-    const zip = new JSZip();
-    for (let row = 0; row < y.length - 1; row++) {
-      for (let col = 0; col < x.length - 1; col++) {
-        const x0 = Math.round(x[col] * image.naturalWidth), x1 = Math.round(x[col + 1] * image.naturalWidth);
-        const y0 = Math.round(y[row] * image.naturalHeight), y1 = Math.round(y[row + 1] * image.naturalHeight);
-        const tile = document.createElement("canvas");
-        tile.width = Math.max(1, x1 - x0); tile.height = Math.max(1, y1 - y0);
-        tile.getContext("2d").drawImage(image, x0, y0, tile.width, tile.height, 0, 0, tile.width, tile.height);
-        const blob = await canvasBlob(tile, mimeFor(format), format === "png" ? undefined : 0.92);
-        zip.file(`${baseName()}-${row + 1}-${col + 1}.${extFor(format)}`, blob);
-      }
-    }
-    download(await zip.generateAsync({ type: "blob" }), baseName() + "-tiles.zip");
-  }
-
-  function showHint(text) {
-    const hint = $("sl-export-hint");
-    if (!hint) return;
-    hint.textContent = text;
-    hint.classList.add("show");
-    clearTimeout(showHint.timer);
-    showHint.timer = setTimeout(() => hint.classList.remove("show"), 2800);
-  }
-
-  function interceptSpecialExports() {
-    document.addEventListener("click", async (event) => {
-      const option = event.target.closest(".sl-export-option[data-export]");
-      if (!option) return;
-      const tool = currentTool();
-      if (tool !== "slice" && tool !== "watermark") return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      option.closest(".sl-export-wrap")?.classList.remove("open");
-      try {
-        if (!sourceReady()) throw new Error("Сначала загрузите изображение");
-        const value = option.dataset.export;
-        if (tool === "slice") await exportSlice(value.replace(/^slice-/, ""));
-        else await exportWatermark(value);
-        showHint("Экспорт готов.");
-      } catch (error) {
-        console.error("Safelight direct export:", error);
-        showHint(error.message || "Не удалось экспортировать файл");
-      }
-    }, true);
+  function getWatermarkState() {
+    return {
+      x: watermarkState.x,
+      y: watermarkState.y,
+      fill: watermarkState.fill
+    };
   }
 
   function bindInspector() {
@@ -496,6 +346,11 @@
     });
   }
 
+  window.safelightDirectState = Object.freeze({
+    sliceBoundaries: getSliceBoundaries,
+    watermark: getWatermarkState
+  });
+
   function boot() {
     if (!document.querySelector(".sl-app") || !document.querySelector(".sl-export-wrap") || !$("previewWrap")) {
       setTimeout(boot, 50);
@@ -504,7 +359,6 @@
     installWatermarkMode();
     polishTransform();
     moveExportIntoInspector();
-    interceptSpecialExports();
     bindInspector();
 
     document.addEventListener("pointermove", onPointerMove, { passive: true });
