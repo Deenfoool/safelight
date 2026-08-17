@@ -18,12 +18,12 @@ function loadScript(src,onload){const script=document.createElement('script');sc
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
 loadStyle('css/visual-polish.css?v=4');loadScript('js/visual-polish.js?v=4');
 loadScript('js/advanced.js?v=11',()=>{
-  loadStyle('css/live-editor.css?v=4');
+  loadStyle('css/live-editor.css?v=5');
   loadStyle('css/direct-manipulation.css?v=2');
   loadStyle('css/editor-polish.css?v=2');
   loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
-      loadScript('js/live-editor.js?v=5',()=>{
+      loadScript('js/live-editor.js?v=6',()=>{
         loadScript('js/direct-manipulation.js?v=3',()=>{
           loadScript('js/editor-polish.js?v=4');
         });
