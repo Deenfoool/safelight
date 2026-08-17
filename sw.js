@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-17-8";
+const CACHE = "safelight-shell-v2026-08-17-9";
 const CORE = [
   "./",
   "./index.html",
@@ -70,7 +70,6 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  // Safelight runtime is self-contained. Do not cache or proxy third-party requests.
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
