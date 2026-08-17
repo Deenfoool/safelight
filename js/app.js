@@ -19,7 +19,6 @@
   const stageEmpty = $("stageEmpty");
   const previewWrap = $("previewWrap");
   const previewImg = $("previewImg");
-  const gridOverlay = $("gridOverlay");
   const readout = $("readout");
 
   ["dragover", "dragenter"].forEach((eventName) => {
@@ -28,6 +27,7 @@
       dropzone.classList.add("drag");
     });
   });
+
   ["dragleave", "drop"].forEach((eventName) => {
     dropzone.addEventListener(eventName, (event) => {
       event.preventDefault();
@@ -89,7 +89,6 @@
 
       document.querySelectorAll(".af").forEach((el) => el.classList.remove("show"));
       requestAnimationFrame(() => setTimeout(() => document.querySelectorAll(".af").forEach((el) => el.classList.add("show")), 60));
-      renderGridOverlay();
     };
 
     image.onerror = function () {
@@ -100,32 +99,6 @@
     image.src = sourceUrl;
   }
 
-  function currentGrid() {
-    let rows = Math.max(1, Math.min(20, Number($("s-rows").value) || 1));
-    let cols = Math.max(1, Math.min(20, Number($("s-cols").value) || 1));
-    if (window.sliceMode === "horizontal") cols = 1;
-    if (window.sliceMode === "vertical") rows = 1;
-    return { rows, cols };
-  }
-
-  function renderGridOverlay() {
-    gridOverlay.innerHTML = "";
-    if (!imgW) return;
-    const { rows, cols } = currentGrid();
-    for (let col = 1; col < cols; col++) {
-      const line = document.createElement("div");
-      line.className = "grid-line v";
-      line.style.left = (col / cols) * 100 + "%";
-      gridOverlay.appendChild(line);
-    }
-    for (let row = 1; row < rows; row++) {
-      const line = document.createElement("div");
-      line.className = "grid-line h";
-      line.style.top = (row / rows) * 100 + "%";
-      gridOverlay.appendChild(line);
-    }
-  }
-
   $("s-mode").querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => {
       $("s-mode").querySelectorAll("button").forEach((item) => item.classList.remove("active"));
@@ -133,11 +106,9 @@
       window.sliceMode = button.dataset.mode;
       $("s-rows-field").style.display = window.sliceMode === "vertical" ? "none" : "flex";
       $("s-cols-field").style.display = window.sliceMode === "horizontal" ? "none" : "flex";
-      renderGridOverlay();
     });
   });
 
-  [$("s-rows"), $("s-cols")].forEach((control) => control.addEventListener("input", renderGridOverlay));
   $("s-quality").addEventListener("input", () => $("s-quality-val").textContent = $("s-quality").value + "%");
   $("c-quality").addEventListener("input", () => $("c-quality-val").textContent = $("c-quality").value + "%");
   $("v-quality").addEventListener("input", () => $("v-quality-val").textContent = $("v-quality").value + "%");
@@ -148,6 +119,7 @@
       $("r-height").value = Math.max(1, Math.round((width * imgH) / imgW));
     }
   }
+
   $("r-width").addEventListener("input", syncResizeHeight);
   $("r-lock").addEventListener("change", syncResizeHeight);
 
