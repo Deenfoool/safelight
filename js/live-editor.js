@@ -163,7 +163,8 @@
   }
   async function renderNow() {
     const token = ++renderToken, tool = currentTool();
-    if (!IMAGE_TOOLS.has(tool) || !sourceReady()) { clearLiveCanvas(); return; }
+    if (!IMAGE_TOOLS.has(tool)) return;
+    if (!sourceReady()) { clearLiveCanvas(); return; }
     try {
       const built = await buildToolCanvas(tool); if (!built || token !== renderToken) return;
       const live = getLiveCanvas(); live.width = built.width; live.height = built.height;
@@ -192,10 +193,18 @@
     if (tool === "favicon") return [{ value: "favicon-zip", label: "Favicon пакет", meta: "ZIP" }];
     if (tool === "slice") return [{ value: "slice-webp", label: "Нарезка WebP", meta: "ZIP" }, { value: "slice-jpeg", label: "Нарезка JPEG", meta: "ZIP" }, { value: "slice-png", label: "Нарезка PNG", meta: "ZIP" }];
     if (tool === "batch") return [{ value: "batch-webp", label: "Все в WebP", meta: "ZIP" }, { value: "batch-jpeg", label: "Все в JPEG", meta: "ZIP" }, { value: "batch-png", label: "Все в PNG", meta: "ZIP" }];
-    return [{ value: "webp", label: "WebP", meta: "оптимально" }, { value: "jpeg", label: "JPEG", meta: "совместимо" }, { value: "png", label: "PNG", meta: "без потерь" }, { value: "pdf", label: "PDF", meta: "документ" }];
+    const items = [{ value: "webp", label: "WebP", meta: "оптимально" }, { value: "jpeg", label: "JPEG", meta: "совместимо" }, { value: "png", label: "PNG", meta: "без потерь" }];
+    if (tool === "convert") items.push({ value: "heic", label: "HEIC", meta: "HEVC" });
+    items.push({ value: "pdf", label: "PDF", meta: "документ" });
+    return items;
+  }
+  function normalizeExportLabel(button) {
+    const label = button?.querySelector("span");
+    if (label) label.textContent = "Экспорт";
   }
   function installExportMenu() {
     const button = $("sl-export"); if (!button || button.dataset.liveExport === "1") return; button.dataset.liveExport = "1";
+    normalizeExportLabel(button);
     button.innerHTML = button.innerHTML.replace("</span>", '</span><span class="sl-export-caret">⌄</span>');
     const wrap = document.createElement("div"); wrap.className = "sl-export-wrap"; button.parentNode.insertBefore(wrap, button); wrap.appendChild(button);
     const menu = document.createElement("div"); menu.className = "sl-export-menu"; wrap.appendChild(menu);
@@ -203,10 +212,10 @@
       const items = exportMenuItems(currentTool());
       menu.innerHTML = '<div class="sl-export-menu-title">Экспорт результата</div>' + items.map((item) => `<button class="sl-export-option" type="button" data-export="${item.value}"><span>${item.label}</span><span>${item.meta}</span></button>`).join("") + '<div class="sl-export-sep"></div><div class="sl-export-menu-note">Файл создаётся локально. Оригинал не изменяется.</div>';
     }
-    button.addEventListener("click", (event) => { event.preventDefault(); event.stopImmediatePropagation(); if (button.disabled) return; renderMenu(); wrap.classList.toggle("open"); }, true);
+    button.addEventListener("click", (event) => { event.preventDefault(); event.stopImmediatePropagation(); if (button.disabled) return; normalizeExportLabel(button); renderMenu(); wrap.classList.toggle("open"); }, true);
     menu.addEventListener("click", async (event) => { const option = event.target.closest("[data-export]"); if (!option) return; event.preventDefault(); wrap.classList.remove("open"); await exportCurrent(option.dataset.export); });
     document.addEventListener("click", (event) => { if (!event.target.closest(".sl-export-wrap")) wrap.classList.remove("open"); });
-    window.addEventListener("safelight:toolchange", () => wrap.classList.remove("open"));
+    window.addEventListener("safelight:toolchange", () => { wrap.classList.remove("open"); setTimeout(() => normalizeExportLabel(button), 0); });
   }
   async function ensureJsPdf() {
     if (window.jspdf?.jsPDF) return true;
@@ -214,6 +223,13 @@
   }
   async function exportImage(format) {
     if (!lastCanvas) await renderNow(); if (!lastCanvas) throw new Error("Нет изображения для экспорта");
+    if (format === "heic") {
+      const encoder = window.safelightHeicCodec?.encodeCanvas;
+      if (typeof encoder !== "function") throw new Error("Локальный HEIC WASM-кодек не загрузился");
+      const blob = await encoder(lastCanvas);
+      download(blob, baseName() + "-safelight.heic");
+      return;
+    }
     if (format === "pdf") {
       if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
       const { jsPDF } = window.jspdf, orientation = lastCanvas.width > lastCanvas.height ? "landscape" : "portrait";
@@ -282,10 +298,11 @@
   }
   function bindControls() {
     const inspector = document.querySelector(".sl-inspector"); if (!inspector) return;
-    inspector.addEventListener("input", (event) => { if (event.target.matches("input,select,textarea")) scheduleRender(); }, true);
-    inspector.addEventListener("change", (event) => { if (event.target.matches("input,select,textarea")) scheduleRender(0); }, true);
-    inspector.addEventListener("click", (event) => { if (event.target.closest("[data-tr],#s-mode button")) setTimeout(() => scheduleRender(0), 0); });
-    window.addEventListener("safelight:toolchange", () => setTimeout(() => { markFormatFields(); scheduleRender(0); }, 0));
+    const ownsCurrentTool = () => IMAGE_TOOLS.has(currentTool());
+    inspector.addEventListener("input", (event) => { if (ownsCurrentTool() && event.target.matches("input,select,textarea")) scheduleRender(); }, true);
+    inspector.addEventListener("change", (event) => { if (ownsCurrentTool() && event.target.matches("input,select,textarea")) scheduleRender(0); }, true);
+    inspector.addEventListener("click", (event) => { if (ownsCurrentTool() && event.target.closest("[data-tr],#s-mode button")) setTimeout(() => scheduleRender(0), 0); });
+    window.addEventListener("safelight:toolchange", () => setTimeout(() => { markFormatFields(); if (ownsCurrentTool()) scheduleRender(0); }, 0));
   }
   function watchSource() {
     const preview = $("previewImg"); if (!preview) return;
