@@ -3,21 +3,6 @@
   if(window.safelightEditorPolishLoaded)return;
   window.safelightEditorPolishLoaded=true;
 
-  function installFavicons(){
-    const defs=[
-      ['icon','16x16','assets/images/favicon-16.png'],
-      ['icon','32x32','assets/images/favicon-32.png'],
-      ['icon','48x48','assets/images/favicon-48.png'],
-      ['apple-touch-icon','180x180','assets/images/favicon-180.png']
-    ];
-    document.querySelectorAll('link[data-safelight-icon]').forEach(el=>el.remove());
-    defs.forEach(([rel,sizes,href])=>{
-      const link=document.createElement('link');
-      link.rel=rel;link.sizes=sizes;link.href=href;link.dataset.safelightIcon='1';
-      document.head.appendChild(link);
-    });
-  }
-
   function applyBranding(app){
     app.querySelector('.sl-topbar .sl-add')?.remove();
 
@@ -111,7 +96,6 @@
   }
 
   function boot(){
-    installFavicons();
     const app=document.querySelector('.sl-app');
     if(!app){setTimeout(boot,40);return;}
     applyBranding(app);
