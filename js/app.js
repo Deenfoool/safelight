@@ -54,6 +54,8 @@
   });
 
   function handleFile(file) {
+    const isPdf = (file.type || "").toLowerCase() === "application/pdf" || /\.pdf$/i.test(file.name || "");
+    if (isPdf) return;
     if (!file.type.startsWith("image/")) {
       alert("Пожалуйста, выберите файл изображения.");
       return;
@@ -145,17 +147,8 @@
   });
 
   [$("s-rows"), $("s-cols")].forEach((control) => control.addEventListener("input", renderGridOverlay));
-
-  $("s-format").addEventListener("change", () => {
-    $("s-quality-row").style.display = $("s-format").value === "png" ? "none" : "flex";
-  });
   $("s-quality").addEventListener("input", () => $("s-quality-val").textContent = $("s-quality").value + "%");
-
-  $("c-format").addEventListener("change", () => {
-    $("c-quality").disabled = $("c-format").value === "png";
-  });
   $("c-quality").addEventListener("input", () => $("c-quality-val").textContent = $("c-quality").value + "%");
-
   $("v-quality").addEventListener("input", () => $("v-quality-val").textContent = $("v-quality").value + "%");
 
   function syncResizeHeight() {
