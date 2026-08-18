@@ -10,9 +10,9 @@ const WORKER_URL='js/heic-codec-worker.js?v=1';
 let worker=null;
 let workerFailed=false;
 let requestId=0;
-const pending=new Map();
+let inputEpoch=0;
 let redispatching=false;
-let originalUiInfo=null;
+const pending=new Map();
 
 function isHeicFile(file){
   if(!file)return false;
@@ -44,7 +44,7 @@ function ensureAccept(input){
   const current=input.accept||'';
   const parts=current.split(',').map(value=>value.trim()).filter(Boolean);
   const seen=new Set(parts.map(value=>value.toLowerCase()));
-  HEIC_ACCEPT.split(',').forEach(value=>{if(!seen.has(value))parts.push(value);});
+  HEIC_ACCEPT.split(',').forEach(value=>{if(!seen.has(value))parts.push(value)});
   const next=parts.join(',');
   if(next!==current)input.accept=next;
 }
@@ -71,7 +71,7 @@ function createCodecWorker(){
         task.reject(error);
       }
       pending.clear();
-      try{worker.terminate();}catch(_){}
+      try{worker.terminate()}catch(_){}
       worker=null;
     });
     return worker;
@@ -84,15 +84,14 @@ function createCodecWorker(){
 function codecRequest(op,payload,transfer){
   return new Promise((resolve,reject)=>{
     let activeWorker;
-    try{activeWorker=createCodecWorker();}catch(error){reject(error);return;}
+    try{activeWorker=createCodecWorker()}catch(error){reject(error);return}
     const id=++requestId;
     const timer=setTimeout(()=>{
       pending.delete(id);
       reject(new Error('HEIC codec timeout'));
     },120000);
     pending.set(id,{resolve,reject,timer});
-    try{activeWorker.postMessage({id,op,...payload},transfer||[]);}
-    catch(error){
+    try{activeWorker.postMessage({id,op,...payload},transfer||[])}catch(error){
       clearTimeout(timer);
       pending.delete(id);
       reject(error);
@@ -109,9 +108,7 @@ async function decodeHeicFile(file){
   canvas.width=result.width;
   canvas.height=result.height;
   canvas.getContext('2d',{alpha:true}).putImageData(imageData,0,0);
-  const blob=await new Promise((resolve,reject)=>{
-    canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG bridge failed')),'image/png');
-  });
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG bridge failed')),'image/png'));
   return new File([blob],baseName(file.name)+'.png',{type:'image/png',lastModified:file.lastModified||Date.now()});
 }
 
@@ -123,10 +120,20 @@ async function encodeCanvas(canvas){
   return new Blob([result.buffer],{type:'image/heic'});
 }
 
-function restoreOriginalUiInfo(){
-  if(!originalUiInfo)return;
-  const info=originalUiInfo;
+function originalInfo(files){
+  const first=[...files].find(isHeicFile);
+  if(!first)return null;
+  return{
+    name:first.name||'image.heic',
+    size:first.size||0,
+    type:(first.type||'image/heic').replace(/^image\//i,'').toUpperCase()
+  };
+}
+
+function restoreOriginalUiInfo(info,epoch){
+  if(!info||epoch!==inputEpoch)return;
   const apply=()=>{
+    if(epoch!==inputEpoch)return;
     if($('meta-name'))$('meta-name').textContent=info.name;
     if($('meta-size'))$('meta-size').textContent=formatBytes(info.size);
     if($('meta-type'))$('meta-type').textContent=info.type;
@@ -141,49 +148,58 @@ function restoreOriginalUiInfo(){
   setTimeout(apply,300);
 }
 
-async function decodeFileList(files){
-  const list=[...files];
-  const firstHeic=list.find(isHeicFile);
-  if(firstHeic){
-    originalUiInfo={
-      name:firstHeic.name||'image.heic',
-      size:firstHeic.size||0,
-      type:(firstHeic.type||'image/heic').replace(/^image\//i,'').toUpperCase()
-    };
-  }
+async function decodeFileList(files,epoch){
   const converted=[];
-  for(const file of list){
-    if(!isHeicFile(file)){converted.push(file);continue;}
+  for(const file of files){
+    if(epoch!==inputEpoch)return null;
+    if(!isHeicFile(file)){converted.push(file);continue}
     setStatus('Декодирую HEIC локально через WASM…');
-    converted.push(await decodeHeicFile(file));
+    const decoded=await decodeHeicFile(file);
+    if(epoch!==inputEpoch)return null;
+    converted.push(decoded);
   }
   return converted;
 }
 
-function assignFilesAndDispatch(input,files){
+function assignFilesAndDispatch(input,files,info,epoch){
+  if(epoch!==inputEpoch)return false;
   if(typeof DataTransfer==='undefined')throw new Error('DataTransfer unavailable');
   const transfer=new DataTransfer();
   files.forEach(file=>transfer.items.add(file));
   redispatching=true;
-  input.files=transfer.files;
-  input.dispatchEvent(new Event('change',{bubbles:true}));
-  redispatching=false;
-  restoreOriginalUiInfo();
+  try{
+    input.files=transfer.files;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  }finally{
+    redispatching=false;
+  }
+  if(epoch!==inputEpoch)return false;
+  restoreOriginalUiInfo(info,epoch);
+  return true;
 }
 
-function processHeicFiles(input,files,source){
+function processHeicFiles(input,files,source,epoch){
   if(!files.some(isHeicFile))return false;
+  const info=originalInfo(files);
   document.body.dataset.safelightHeicInput='1';
-  decodeFileList(files).then(decoded=>{
-    assignFilesAndDispatch(input,decoded);
-    setStatus('HEIC декодирован локально через WASM.');
+  decodeFileList(files,epoch).then(decoded=>{
+    if(!decoded||epoch!==inputEpoch)return;
+    if(assignFilesAndDispatch(input,decoded,info,epoch))setStatus('HEIC декодирован локально через WASM.');
   }).catch(error=>{
+    if(epoch!==inputEpoch)return;
     setStatus('Не удалось открыть HEIC локальным WASM-кодеком.');
     console.warn('[Safelight HEIC '+source+']',error);
   }).finally(()=>{
-    setTimeout(()=>delete document.body.dataset.safelightHeicInput,5000);
+    if(epoch!==inputEpoch)return;
+    setTimeout(()=>{if(epoch===inputEpoch)delete document.body.dataset.safelightHeicInput},5000);
   });
   return true;
+}
+
+function beginSourceIntent(){
+  const epoch=++inputEpoch;
+  window.dispatchEvent(new CustomEvent('safelight:source-intent',{detail:{epoch}}));
+  return epoch;
 }
 
 function prepareInput(){
@@ -195,29 +211,41 @@ function prepareInput(){
 
   input.addEventListener('change',event=>{
     if(redispatching)return;
+    const epoch=beginSourceIntent();
     const files=[...(event.target.files||[])];
-    if(!files.some(isHeicFile))return;
+    if(!files.some(isHeicFile)){
+      delete document.body.dataset.safelightHeicInput;
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
-    processHeicFiles(input,files,'input');
+    processHeicFiles(input,files,'input',epoch);
   },true);
 
   dropzone?.addEventListener('drop',event=>{
+    const epoch=beginSourceIntent();
     const files=[...(event.dataTransfer?.files||[])];
-    if(!files.some(isHeicFile))return;
+    if(!files.some(isHeicFile)){
+      delete document.body.dataset.safelightHeicInput;
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
-    processHeicFiles(input,files,'dropzone');
+    processHeicFiles(input,files,'dropzone',epoch);
   },true);
 
   if(stage&&!stage.dataset.heicDropReady){
     stage.dataset.heicDropReady='1';
     stage.addEventListener('drop',event=>{
+      const epoch=beginSourceIntent();
       const files=[...(event.dataTransfer?.files||[])];
-      if(!files.some(isHeicFile))return;
+      if(!files.some(isHeicFile)){
+        delete document.body.dataset.safelightHeicInput;
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
-      processHeicFiles(input,files,'stage');
+      processHeicFiles(input,files,'stage',epoch);
     },true);
   }
 }
@@ -309,7 +337,7 @@ function patchExportMenu(){
 function watchExportMenu(){
   const attach=()=>{
     const menu=document.querySelector('.sl-export-menu');
-    if(!menu){setTimeout(attach,80);return;}
+    if(!menu){setTimeout(attach,80);return}
     if(menu.dataset.heicWatch==='1')return;
     menu.dataset.heicWatch='1';
     new MutationObserver(()=>patchExportMenu()).observe(menu,{childList:true,subtree:false});
@@ -450,12 +478,12 @@ function bindSpecialHeicExport(){
     Promise.resolve(exportSpecialHeic(value,tool)).then(()=>showExportHint('HEIC экспорт готов.')).catch(error=>{
       console.error('Safelight HEIC export:',error);
       showExportHint(error.message||'Не удалось экспортировать HEIC');
-    }).finally(()=>{if(button)button.disabled=false;});
+    }).finally(()=>{if(button)button.disabled=false});
   },true);
 }
 
 function boot(){
-  if(!$('fileInput')){setTimeout(boot,60);return;}
+  if(!$('fileInput')){setTimeout(boot,60);return}
   prepareInput();
 }
 
