@@ -32,8 +32,13 @@
     select:['select','Выбор'],arrow:['arrow','Стрелка'],line:['line','Линия'],rect:['rect','Рамка'],ellipse:['ellipse','Круг'],marker:['marker','Маркер'],text:['text','Текст'],number:['number','Номер']
   };
 
+  const ANN_ACTIONS=[
+    ['ann-duplicate','duplicate','Дублировать'],['ann-delete','trash','Удалить'],['ann-layer-up','layerUp','Выше'],['ann-layer-down','layerDown','Ниже'],
+    ['ann-undo','undo','Отменить'],['ann-redo','redo','Повторить'],['ann-clear','clear','Очистить всё']
+  ];
+
   const TEXT_ICONS={
-    'Дублировать':'duplicate','Удалить':'trash','Выше':'layerUp','Ниже':'layerDown','↶ Отменить':'undo','Отменить':'undo','↷ Повторить':'redo','Повторить':'redo','Очистить всё':'clear',
+    'Дублировать':'duplicate','Удалить':'trash','Выше':'layerUp','Ниже':'layerDown','Отменить':'undo','Повторить':'redo','Очистить всё':'clear',
     'Во весь кадр':'expand','По центру':'center','Центр':'center','Сбросить':'reset','Как пользоваться':'help','Понятно':'check','Добавить':'plus','Копировать':'copy'
   };
 
@@ -50,15 +55,19 @@
     button.classList.add('sl-ui-has-icon');
   }
 
+  function setIconLabel(button,name,label){
+    if(!button||!ICONS[name])return;
+    if(button.dataset.slUiIcon===name&&button.querySelector('.sl-ui-icon'))return;
+    button.innerHTML=svg(name)+'<span>'+label+'</span>';
+    button.dataset.slUiIcon=name;
+    button.classList.add('sl-ui-has-icon');
+  }
+
   function enhanceAnnotations(){
     document.querySelectorAll('#panel-annotation [data-ann-tool]').forEach(button=>{
-      const item=ANN[button.dataset.annTool];if(!item)return;
-      if(button.dataset.slUiIcon===item[0])return;
-      button.innerHTML=svg(item[0])+'<span>'+item[1]+'</span>';
-      button.dataset.slUiIcon=item[0];
-      button.classList.add('sl-ui-has-icon');
+      const item=ANN[button.dataset.annTool];if(item)setIconLabel(button,item[0],item[1]);
     });
-    [['ann-duplicate','duplicate'],['ann-delete','trash'],['ann-layer-up','layerUp'],['ann-layer-down','layerDown'],['ann-undo','undo'],['ann-redo','redo'],['ann-clear','clear']].forEach(([id,name])=>addIcon(document.getElementById(id),name));
+    ANN_ACTIONS.forEach(([id,name,label])=>setIconLabel(document.getElementById(id),name,label));
   }
 
   function enhanceKnownButtons(){
@@ -97,6 +106,7 @@
 
   document.addEventListener('pointerdown',event=>{
     const button=event.target.closest('.sl-app button');if(!button||button.disabled)return;
+    if(button.matches('[class*="handle"],[class*="knob"]'))return;
     restartClass(button,'sl-ui-pop',280);
   },true);
 
