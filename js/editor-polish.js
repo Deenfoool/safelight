@@ -3,7 +3,7 @@
   if(window.safelightEditorPolishLoaded)return;
   window.safelightEditorPolishLoaded=true;
 
-  const FAVICON_PREVIEW_SIZES=[16,32,180];
+  const FAVICON_PREVIEW_SIZES=[180,128,64,32,16];
 
   function applyBranding(app){
     app.querySelector('.sl-topbar .sl-add')?.remove();
@@ -44,7 +44,8 @@
       dpr=Math.min(window.devicePixelRatio||1,2);
       canvas.width=Math.max(1,Math.floor(width*dpr));
       canvas.height=Math.max(1,Math.floor(height*dpr));
-      canvas.style.width=width+'px';canvas.style.height=height+'px';
+      canvas.style.width=width+'px';
+      canvas.style.height=height+'px';
       ctx.setTransform(dpr,0,0,dpr,0,0);
     }
 
@@ -67,7 +68,8 @@
             const p=point(col,row,t);
             if(col===-1)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
           }
-          ctx.strokeStyle='rgba(163,230,53,0.14)';ctx.stroke();
+          ctx.strokeStyle='rgba(163,230,53,0.14)';
+          ctx.stroke();
         }
         for(let col=-1;col<cols;col++){
           ctx.beginPath();
@@ -75,7 +77,8 @@
             const p=point(col,row,t);
             if(row===-1)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
           }
-          ctx.strokeStyle='rgba(163,230,53,0.14)';ctx.stroke();
+          ctx.strokeStyle='rgba(163,230,53,0.14)';
+          ctx.stroke();
         }
         [[width*.18,height*.24],[width*.72,height*.38],[width*.47,height*.78]].forEach(([sx,sy],i)=>{
           const pulse=(Math.sin(t*.0011+i*2.2)+1)*.5;
@@ -83,14 +86,16 @@
           const glow=ctx.createRadialGradient(sx,sy,0,sx,sy,radius);
           glow.addColorStop(0,'rgba(163,230,53,0.060)');
           glow.addColorStop(1,'rgba(163,230,53,0)');
-          ctx.fillStyle=glow;ctx.fillRect(sx-radius,sy-radius,radius*2,radius*2);
+          ctx.fillStyle=glow;
+          ctx.fillRect(sx-radius,sy-radius,radius*2,radius*2);
         });
       }
       raf=requestAnimationFrame(draw);
     }
 
     resize();
-    const ro=new ResizeObserver(resize);ro.observe(app);
+    const ro=new ResizeObserver(resize);
+    ro.observe(app);
     window.addEventListener('resize',resize,{passive:true});
     window.addEventListener('safelight:toolchange',()=>setTimeout(resize,0));
     raf=requestAnimationFrame(draw);
@@ -102,17 +107,20 @@
     const style=document.createElement('style');
     style.id='sl-favicon-preview-styles';
     style.textContent=`
-      .sl-favicon-preview{display:none;width:min(900px,calc(100% - 36px));grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
+      .sl-favicon-preview{display:none;width:min(1040px,calc(100% - 34px));padding:34px 42px 26px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:#f7f7f8;box-shadow:0 24px 70px rgba(0,0,0,.24);overflow-x:auto}
       .sl-app .preview-wrap.sl-favicon-preview-ready>#previewImg,.sl-app .preview-wrap.sl-favicon-preview-ready>#sl-live-canvas{display:none!important}
-      .sl-app .preview-wrap.sl-favicon-preview-ready>.sl-favicon-preview{display:grid}
-      .sl-favicon-card{min-width:0;min-height:250px;padding:14px 14px 18px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:linear-gradient(180deg,rgba(20,20,24,.90),rgba(12,12,15,.82));box-shadow:0 18px 45px rgba(0,0,0,.22);display:flex;flex-direction:column}
-      .sl-favicon-size{color:#d4d4d8;font:700 11px/1 var(--mono);letter-spacing:.04em;text-align:left}
-      .sl-favicon-surface{flex:1;min-height:190px;margin-top:12px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:linear-gradient(45deg,#151518 25%,transparent 25%,transparent 75%,#151518 75%),linear-gradient(45deg,#151518 25%,#0f0f12 25%,#0f0f12 75%,#151518 75%);background-position:0 0,8px 8px;background-size:16px 16px;display:grid;place-items:center;overflow:hidden}
-      .sl-favicon-surface canvas{display:block;background:#fff;box-shadow:0 12px 34px rgba(0,0,0,.34);max-width:none!important;max-height:none!important;border-radius:2px}
-      .sl-favicon-card[data-size="16"] canvas{width:112px;height:112px;image-rendering:pixelated}
-      .sl-favicon-card[data-size="32"] canvas{width:144px;height:144px;image-rendering:pixelated}
-      .sl-favicon-card[data-size="180"] canvas{width:180px;height:180px}
-      @media(max-width:900px){.sl-favicon-preview{width:min(640px,calc(100% - 28px));grid-template-columns:1fr}.sl-favicon-card{min-height:220px}.sl-favicon-surface{min-height:160px}.sl-favicon-card[data-size="16"] canvas{width:96px;height:96px}.sl-favicon-card[data-size="32"] canvas{width:128px;height:128px}.sl-favicon-card[data-size="180"] canvas{width:160px;height:160px}}
+      .sl-app .preview-wrap.sl-favicon-preview-ready>.sl-favicon-preview{display:block}
+      .sl-favicon-lineup{min-width:700px;display:flex;align-items:flex-end;justify-content:space-between;gap:34px}
+      .sl-favicon-item{min-width:72px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:none}
+      .sl-favicon-icon-slot{height:190px;display:flex;align-items:flex-end;justify-content:center}
+      .sl-favicon-icon-slot canvas{display:block;max-width:none!important;max-height:none!important;background:#fff;border-radius:10%;box-shadow:0 10px 28px rgba(15,23,42,.12)}
+      .sl-favicon-size{margin-top:18px;color:#0f2748;font:500 15px/1 var(--sans);white-space:nowrap;text-align:center}
+      .sl-favicon-item[data-size="180"] canvas{width:180px;height:180px}
+      .sl-favicon-item[data-size="128"] canvas{width:128px;height:128px}
+      .sl-favicon-item[data-size="64"] canvas{width:64px;height:64px}
+      .sl-favicon-item[data-size="32"] canvas{width:32px;height:32px}
+      .sl-favicon-item[data-size="16"] canvas{width:16px;height:16px}
+      @media(max-width:900px){.sl-favicon-preview{padding:26px 24px 22px}.sl-favicon-lineup{gap:28px}.sl-favicon-size{font-size:13px}}
     `;
     document.head.appendChild(style);
   }
@@ -130,7 +138,7 @@
     gallery.id='sl-favicon-preview';
     gallery.className='sl-favicon-preview';
     gallery.setAttribute('aria-label','Предпросмотр размеров favicon');
-    gallery.innerHTML=FAVICON_PREVIEW_SIZES.map(size=>`<div class="sl-favicon-card" data-size="${size}"><div class="sl-favicon-size">${size} × ${size}</div><div class="sl-favicon-surface"><canvas width="${size}" height="${size}" aria-label="Favicon ${size} на ${size}"></canvas></div></div>`).join('');
+    gallery.innerHTML='<div class="sl-favicon-lineup">'+FAVICON_PREVIEW_SIZES.map(size=>`<div class="sl-favicon-item" data-size="${size}"><div class="sl-favicon-icon-slot"><canvas width="${size}" height="${size}" aria-label="Favicon ${size} на ${size}"></canvas></div><div class="sl-favicon-size">${size}×${size}</div></div>`).join('')+'</div>';
     wrap.appendChild(gallery);
     return gallery;
   }
@@ -166,13 +174,13 @@
       const gallery=ensureFaviconPreview();
       if(!gallery)return;
       FAVICON_PREVIEW_SIZES.forEach(size=>{
-        const canvas=gallery.querySelector(`.sl-favicon-card[data-size="${size}"] canvas`);
+        const canvas=gallery.querySelector(`.sl-favicon-item[data-size="${size}"] canvas`);
         if(canvas)drawFaviconPreview(canvas,size,image);
       });
       wrap.classList.add('sl-favicon-preview-ready');
       const dims=document.getElementById('ro-dims');
       const format=document.getElementById('ro-format');
-      if(dims)dims.textContent='16 × 16 · 32 × 32 · 180 × 180 px';
+      if(dims)dims.textContent='180 · 128 · 64 · 32 · 16 px';
       if(format)format.textContent='ICON';
     };
 
