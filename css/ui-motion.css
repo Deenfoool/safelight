@@ -1,8 +1,8 @@
 /* Safelight UI motion + icon polish */
-.sl-app button:not(:disabled){
+.sl-app button:not(:disabled):not([class*="handle"]):not([class*="knob"]){
   transition:transform .16s cubic-bezier(.2,.8,.2,1),border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .18s ease,filter .18s ease;
 }
-.sl-app button:not(:disabled):active{transform:translateY(1px) scale(.985)}
+.sl-app button:not(:disabled):not([class*="handle"]):not([class*="knob"]):active{transform:translateY(1px) scale(.985)}
 .sl-app button:focus-visible{outline:0;box-shadow:0 0 0 2px rgba(74,222,128,.18),0 0 0 4px rgba(74,222,128,.06)}
 
 .sl-ui-icon{width:15px;height:15px;flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transform-origin:center;transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s ease,opacity .2s ease}
