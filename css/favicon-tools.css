@@ -10,6 +10,7 @@
 .fav-pan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fav-pan-grid .slider-row,.fav-controls>.slider-row{margin:0}
 .fav-color-field{opacity:.42;pointer-events:none;transition:.16s}.fav-bg-color-on .fav-color-field{opacity:1;pointer-events:auto}
+.fav-bg-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:-5px}.fav-bg-presets .btn{padding:7px 8px;font-size:9.5px}
 .fav-radius-row{display:none}.fav-radius-on .fav-radius-row{display:flex}
 .fav-optimize{margin:0!important}
 .fav-drag-note,.fav-package-note{padding:10px 11px;border:1px solid rgba(163,230,53,.12);border-radius:8px;background:rgba(163,230,53,.035);color:#777780;font:500 9.5px/1.55 var(--sans)}
