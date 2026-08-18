@@ -28,7 +28,7 @@ loadScript('js/advanced.js?v=11',()=>{
   loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
-        loadScript('js/crop-tools.js?v=1',()=>{
+        loadScript('js/crop-tools.js?v=2',()=>{
           loadScript('js/adjust-tools.js?v=1',()=>{
             loadScript('js/canvas-tools.js?v=2',()=>{
               loadScript('js/favicon-tools.js?v=1',()=>{
