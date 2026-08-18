@@ -72,44 +72,5 @@
     window.addEventListener('beforeunload',()=>cancelAnimationFrame(raf),{once:true});
   }
 
-  function replaceTerminal(){
-    const old=document.querySelector('#hero .terminal');
-    if(!old||document.querySelector('.home-local-card'))return;
-    const card=document.createElement('div');
-    card.className='home-local-card';
-    card.innerHTML=`
-      <div class="hlc-top">
-        <div class="hlc-mark"><svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5"/></svg></div>
-        <strong>Локальная обработка</strong>
-        <span>всё происходит в браузере</span>
-        <span class="hlc-badge">0 uploads</span>
-      </div>
-      <div class="hlc-flow">
-        <div class="hlc-node">
-          <div class="hlc-label">ИСХОДНИК</div>
-          <strong id="t-name">image</strong>
-          <span id="t-size">—</span>
-        </div>
-        <div class="hlc-center">
-          <div class="hlc-shield">
-            <svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5"/></svg>
-            <b>LOCAL</b>
-          </div>
-        </div>
-        <div class="hlc-node">
-          <div class="hlc-label">РЕЗУЛЬТАТ</div>
-          <strong id="t-status">ожидаю загрузку файла_</strong>
-          <span id="t-dims">—</span>
-        </div>
-      </div>
-      <div class="hlc-tools">
-        <span class="hlc-active">Compress</span><span>Convert</span><span>Resize</span><span>Crop</span><span>PDF</span><span>ZIP</span>
-        <span class="hlc-filecopy">active: <b id="t-name2">image</b></span>
-      </div>
-      <div class="hlc-footer"><i></i><span><b>Файл не покидает устройство.</b> Safelight обрабатывает данные локально и отдаёт результат только вам.</span></div>`;
-    old.replaceWith(card);
-  }
-
   buildAmbient();
-  replaceTerminal();
 })();
