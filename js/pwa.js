@@ -26,6 +26,23 @@
     });
   }
 
+  function installCustomScrollbars() {
+    const current = [...document.querySelectorAll('link[rel="stylesheet"]')].find((link) => /css\/scrollbars\.css(?:\?|$)/.test(link.getAttribute("href") || ""));
+    if (current) current.href = "css/scrollbars.css?v=2";
+    else {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "css/scrollbars.css?v=2";
+      document.head.appendChild(link);
+    }
+
+    if (window.safelightCustomScrollbarsLoaded || document.querySelector('script[src*="custom-scrollbars.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "js/custom-scrollbars.js?v=1";
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+
   function standalone() {
     return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
   }
@@ -66,6 +83,7 @@
   }
 
   installManifest();
+  installCustomScrollbars();
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
