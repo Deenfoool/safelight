@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-18-30";
+const CACHE = "safelight-shell-v2026-08-18-31";
 const CORE = [
   "./",
   "./index.html",
@@ -18,6 +18,7 @@ const CORE = [
   "./css/apply-tools.css",
   "./css/inspector-motion.css",
   "./css/scrollbars.css",
+  "./css/annotation-tools.css",
   "./css/metadata-tools.css",
   "./css/privacy-effects.css",
   "./css/palette-tools.css",
@@ -40,6 +41,7 @@ const CORE = [
   "./js/crop-tools.js",
   "./js/adjust-tools.js",
   "./js/canvas-tools.js",
+  "./js/annotation-tools.js",
   "./js/favicon-tools.js",
   "./js/favicon-background.js",
   "./js/direct-manipulation.js",
