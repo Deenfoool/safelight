@@ -3,6 +3,7 @@
 
   let imgW = 0;
   let imgH = 0;
+  let sourceLoadToken = 0;
   window.sliceMode = "grid";
 
   const $ = (id) => document.getElementById(id);
@@ -61,11 +62,14 @@
       return;
     }
 
+    const token = ++sourceLoadToken;
     const sourceUrl = URL.createObjectURL(file);
     const image = new Image();
 
     image.onload = function () {
       URL.revokeObjectURL(sourceUrl);
+      if (token !== sourceLoadToken) return;
+
       imgW = image.naturalWidth;
       imgH = image.naturalHeight;
 
@@ -99,6 +103,7 @@
 
     image.onerror = function () {
       URL.revokeObjectURL(sourceUrl);
+      if (token !== sourceLoadToken) return;
       alert("Не удалось загрузить изображение.");
     };
 
