@@ -30,6 +30,10 @@
   const previewImg = $("previewImg");
   const readout = $("readout");
 
+  window.addEventListener("safelight:source-intent", () => {
+    sourceLoadToken++;
+  });
+
   ["dragover", "dragenter"].forEach((eventName) => {
     dropzone.addEventListener(eventName, (event) => {
       event.preventDefault();
