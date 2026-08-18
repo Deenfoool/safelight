@@ -36,7 +36,7 @@ loadScript('js/advanced.js?v=11',()=>{
           loadScript('js/adjust-tools.js?v=1',()=>{
             loadScript('js/canvas-tools.js?v=2',()=>{
               loadScript('js/annotation-tools.js?v=1',()=>{
-                loadScript('js/annotation-preview-mode.js?v=1',()=>{
+                loadScript('js/annotation-preview-mode.js?v=2',()=>{
                   loadScript('js/annotation-ui.js?v=1',()=>{
                     loadScript('js/favicon-tools.js?v=1',()=>{
                       loadScript('js/favicon-background.js?v=1',()=>{
