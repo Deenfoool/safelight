@@ -13,6 +13,14 @@
     return (bytes / 1048576).toFixed(2) + " MB";
   }
 
+  function syncDimensionControls(width, height) {
+    if ($("r-width")) $("r-width").value = width;
+    if ($("r-height")) $("r-height").value = height;
+    // Старый crop UI может быть уже физически удалён новым crop-tools.js.
+    if ($("cr-width")) $("cr-width").value = width;
+    if ($("cr-height")) $("cr-height").value = height;
+  }
+
   const dropzone = $("dropzone");
   const fileInput = $("fileInput");
   const filemeta = $("filemeta");
@@ -82,10 +90,8 @@
       $("t-dims").textContent = imgW + "x" + imgH + " px, " + (file.type.replace("image/", "") || "—").toUpperCase();
       $("t-size").textContent = formatBytes(file.size);
 
-      $("r-width").value = imgW;
-      $("r-height").value = imgH;
-      $("cr-width").value = imgW;
-      $("cr-height").value = imgH;
+      syncDimensionControls(imgW, imgH);
+      window.dispatchEvent(new CustomEvent("safelight:source-file", { detail: { width: imgW, height: imgH, size: file.size, type: file.type, name: file.name } }));
 
       document.querySelectorAll(".af").forEach((el) => el.classList.remove("show"));
       requestAnimationFrame(() => setTimeout(() => document.querySelectorAll(".af").forEach((el) => el.classList.add("show")), 60));
@@ -98,6 +104,16 @@
 
     image.src = sourceUrl;
   }
+
+  window.addEventListener("safelight:working-source", (event) => {
+    const width = Math.max(1, Math.round(Number(event.detail?.width) || previewImg.naturalWidth || imgW || 1));
+    const height = Math.max(1, Math.round(Number(event.detail?.height) || previewImg.naturalHeight || imgH || 1));
+    imgW = width;
+    imgH = height;
+    syncDimensionControls(width, height);
+    if ($("t-status")) $("t-status").textContent = event.detail?.undo ? "рабочая версия восстановлена" : "изменения применены к рабочей версии";
+    if ($("t-dims")) $("t-dims").textContent = width + "x" + height + " px";
+  });
 
   $("s-mode").querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -123,10 +139,10 @@
   $("r-width").addEventListener("input", syncResizeHeight);
   $("r-lock").addEventListener("change", syncResizeHeight);
 
-  [$("a-bright"), $("a-contrast"), $("a-sat")].forEach((control, index) => {
+  [$("a-bright"), $("a-contrast"), $("a-sat")].filter(Boolean).forEach((control, index) => {
     control.addEventListener("input", () => {
       const id = index === 0 ? "a-bright-val" : index === 1 ? "a-contrast-val" : "a-sat-val";
-      $(id).textContent = control.value;
+      if ($(id)) $(id).textContent = control.value;
     });
   });
 })();
