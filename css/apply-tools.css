@@ -1,0 +1,11 @@
+/* Apply current result to the working source */
+.sl-apply{height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 15px;border:1px solid rgba(163,230,53,.42);border-radius:8px;background:rgba(163,230,53,.08);color:#d9f99d;font:700 12.5px var(--sans);cursor:pointer;white-space:nowrap;transition:.15s}
+.sl-apply:hover{background:rgba(163,230,53,.14);border-color:rgba(163,230,53,.65);color:#ecfccb}
+.sl-apply:disabled{opacity:.32;cursor:not-allowed;background:rgba(255,255,255,.025);border-color:#303036;color:#777780}
+.sl-apply svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sl-undo-apply[hidden]{display:none!important}
+.sl-undo-apply{border:1px solid #303036!important;background:#141417!important;padding:0 10px!important}
+.sl-undo-apply:hover{border-color:#46464d!important}
+.sl-undo-apply svg{stroke-width:1.8}
+@media(max-width:1180px){.sl-apply span{display:none}.sl-apply{width:40px;padding:0;justify-content:center}}
+@media(max-width:940px){.sl-undo-apply span{display:none}}
