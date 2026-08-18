@@ -1,0 +1,80 @@
+/* Safelight custom scrollbars */
+:root{
+  scrollbar-width:thin;
+  scrollbar-color:#3fbf73 #0d0d10;
+}
+
+*{
+  scrollbar-width:thin;
+  scrollbar-color:#3a9f64 #111114;
+}
+
+*::-webkit-scrollbar{
+  width:10px;
+  height:10px;
+}
+
+*::-webkit-scrollbar-track{
+  background:#0d0d10;
+  border-radius:999px;
+}
+
+*::-webkit-scrollbar-thumb{
+  min-height:44px;
+  border:2px solid #0d0d10;
+  border-radius:999px;
+  background:linear-gradient(180deg,#2f8f59 0%,#46c777 100%);
+  background-clip:padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover{
+  border-width:1px;
+  background:linear-gradient(180deg,#42b86f 0%,#58e08b 100%);
+  box-shadow:inset 0 0 0 1px rgba(126,255,170,.12),0 0 10px rgba(74,222,128,.16);
+}
+
+*::-webkit-scrollbar-thumb:active{
+  background:#63e693;
+}
+
+*::-webkit-scrollbar-corner{
+  background:#0d0d10;
+}
+
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button{
+  width:0;
+  height:0;
+  display:none;
+  background:transparent;
+}
+
+/* Editor surfaces use the same compact rail. */
+.sl-inspector,
+.sl-sidebar,
+.sl-filmstrip,
+.sl-export-menu,
+.sl-nav-dropdown{
+  scrollbar-width:thin;
+  scrollbar-color:#3fbf73 #101013;
+}
+
+.sl-inspector::-webkit-scrollbar-track,
+.sl-sidebar::-webkit-scrollbar-track,
+.sl-filmstrip::-webkit-scrollbar-track,
+.sl-export-menu::-webkit-scrollbar-track,
+.sl-nav-dropdown::-webkit-scrollbar-track{
+  background:#101013;
+}
+
+.sl-inspector::-webkit-scrollbar-thumb,
+.sl-sidebar::-webkit-scrollbar-thumb,
+.sl-filmstrip::-webkit-scrollbar-thumb,
+.sl-export-menu::-webkit-scrollbar-thumb,
+.sl-nav-dropdown::-webkit-scrollbar-thumb{
+  border-color:#101013;
+}
+
+@media(pointer:coarse){
+  *::-webkit-scrollbar{width:12px;height:12px}
+}
