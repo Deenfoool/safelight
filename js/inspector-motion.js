@@ -3,17 +3,36 @@
   if(window.safelightInspectorMotionLoaded)return;
   window.safelightInspectorMotionLoaded=true;
 
-  let timer=0;
+  let fallbackTimer=0;
+  let activeInspector=null;
+  let activeHandler=null;
+
+  function clearActive(){
+    clearTimeout(fallbackTimer);
+    if(activeInspector&&activeHandler)activeInspector.removeEventListener('animationend',activeHandler);
+    if(activeInspector)activeInspector.classList.remove('sl-inspector-entering');
+    activeInspector=null;
+    activeHandler=null;
+  }
+
   function animateInspector(page){
-    if(page==='home')return;
+    if(page==='home'){clearActive();return}
     const inspector=document.querySelector('.sl-app .sl-inspector');
     if(!inspector)return;
-    clearTimeout(timer);
+
+    clearActive();
     inspector.classList.remove('sl-inspector-entering');
     void inspector.offsetWidth;
+
     requestAnimationFrame(()=>{
       inspector.classList.add('sl-inspector-entering');
-      timer=setTimeout(()=>inspector.classList.remove('sl-inspector-entering'),340);
+      activeInspector=inspector;
+      activeHandler=event=>{
+        if(event.target!==inspector||event.animationName!=='slInspectorEnter')return;
+        clearActive();
+      };
+      inspector.addEventListener('animationend',activeHandler);
+      fallbackTimer=setTimeout(clearActive,700);
     });
   }
 
