@@ -1,0 +1,62 @@
+/* Safelight UI motion + icon polish */
+.sl-app button:not(:disabled){
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .18s ease,filter .18s ease;
+}
+.sl-app button:not(:disabled):active{transform:translateY(1px) scale(.985)}
+.sl-app button:focus-visible{outline:0;box-shadow:0 0 0 2px rgba(74,222,128,.18),0 0 0 4px rgba(74,222,128,.06)}
+
+.sl-ui-icon{width:15px;height:15px;flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transform-origin:center;transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s ease,opacity .2s ease}
+.sl-ui-has-icon{display:inline-flex!important;align-items:center;justify-content:center;gap:7px}
+
+/* Global button tap feedback. */
+.sl-app button.sl-ui-pop{animation:slUiButtonPop .25s cubic-bezier(.2,.85,.25,1)}
+@keyframes slUiButtonPop{0%{transform:scale(1)}42%{transform:scale(.965)}100%{transform:scale(1)}}
+
+/* Sidebar tools feel alive but stay restrained. */
+.sl-sidebar .sl-tool .nav-icon{transition:transform .22s cubic-bezier(.2,.85,.25,1),color .18s ease,filter .18s ease}
+.sl-sidebar .sl-tool:hover .nav-icon{transform:translateX(2px) scale(1.07)}
+.sl-sidebar .sl-tool.active .nav-icon{color:#63e693;filter:drop-shadow(0 0 6px rgba(74,222,128,.22))}
+.sl-sidebar .sl-tool.sl-ui-tool-pulse .nav-icon{animation:slUiToolIcon .34s cubic-bezier(.16,.85,.28,1)}
+@keyframes slUiToolIcon{0%{transform:translateX(-3px) scale(.86);opacity:.45}65%{transform:translateX(1px) scale(1.1);opacity:1}100%{transform:none;opacity:1}}
+
+/* Inspector content gets a short secondary entrance after the whole rail slides in. */
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card{animation:slUiPanelEnter .31s cubic-bezier(.18,.82,.24,1) both}
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*{animation:slUiPanelItem .31s cubic-bezier(.18,.82,.24,1) both}
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*:nth-child(2){animation-delay:.025s}
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*:nth-child(3){animation-delay:.05s}
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*:nth-child(4){animation-delay:.075s}
+#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*:nth-child(n+5){animation-delay:.095s}
+@keyframes slUiPanelEnter{from{opacity:.72;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes slUiPanelItem{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* Top toolbar icon personalities. */
+#sl-reset:hover svg{transform:rotate(-24deg) scale(1.05)}
+#sl-export:hover svg{transform:translateY(-2px);filter:drop-shadow(0 3px 5px rgba(163,230,53,.18))}
+#sl-apply:hover svg{transform:scale(1.13);filter:drop-shadow(0 0 6px rgba(74,222,128,.28))}
+#sl-undo-apply:hover svg{transform:rotate(-12deg) translateX(-1px)}
+.sl-brand:hover .sl-brand-logo{transform:scale(1.035);filter:drop-shadow(0 0 12px rgba(163,230,53,.2))}
+.sl-brand .sl-brand-logo{transition:transform .2s ease,filter .2s ease}
+
+/* Annotation and compact action icons. */
+.sl-ann-tools button .sl-ui-icon{width:16px;height:16px}
+.sl-ann-tools button:hover .sl-ui-icon{transform:scale(1.11)}
+.sl-ann-tools button.active .sl-ui-icon{filter:drop-shadow(0 0 5px rgba(74,222,128,.24))}
+.sl-ann-object-actions button .sl-ui-icon,.sl-ann-history-actions button .sl-ui-icon,.sl-crop-actions button .sl-ui-icon{width:14px;height:14px}
+.sl-ann-object-actions button:hover .sl-ui-icon,.sl-ann-history-actions button:hover .sl-ui-icon,.sl-crop-actions button:hover .sl-ui-icon{transform:translateY(-1px) scale(1.06)}
+.sl-ann-object-actions .danger:hover .sl-ui-icon,.sl-ann-history-actions .danger:hover .sl-ui-icon{transform:scale(1.08) rotate(-4deg)}
+
+/* Sliders react more clearly while dragging. */
+.sl-app input[type="range"]::-webkit-slider-thumb{transition:transform .14s ease,box-shadow .16s ease,filter .16s ease}
+.sl-app input[type="range"]:active::-webkit-slider-thumb{transform:scale(1.16);box-shadow:0 0 0 5px rgba(74,222,128,.10),0 0 12px rgba(74,222,128,.14);filter:brightness(1.08)}
+.sl-app input[type="range"]::-moz-range-thumb{transition:transform .14s ease,box-shadow .16s ease,filter .16s ease}
+.sl-app input[type="range"]:active::-moz-range-thumb{transform:scale(1.16);box-shadow:0 0 0 5px rgba(74,222,128,.10),0 0 12px rgba(74,222,128,.14);filter:brightness(1.08)}
+
+/* Filmstrip thumbnails and export menu get subtle depth rather than static hover. */
+.sl-filmstrip .sl-thumb:not(:disabled):hover{transform:translateY(-2px)}
+.sl-export-option:not(:disabled):hover{transform:translateX(2px)}
+.sl-crop-actions button:not(:disabled):hover,.sl-ann-object-actions button:not(:disabled):hover,.sl-ann-history-actions button:not(:disabled):hover{transform:translateY(-1px)}
+
+@media(prefers-reduced-motion:reduce){
+  .sl-app button,.sl-ui-icon,.sl-sidebar .sl-tool .nav-icon,.sl-brand .sl-brand-logo,.sl-app input[type="range"]::-webkit-slider-thumb{transition:none!important}
+  .sl-app button.sl-ui-pop,.sl-sidebar .sl-tool.sl-ui-tool-pulse .nav-icon,#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card,#sl-inspector-panels .panel.sl-ui-panel-enter>.panel-card>*{animation:none!important}
+}
