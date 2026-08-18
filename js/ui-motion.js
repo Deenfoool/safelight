@@ -47,10 +47,10 @@
     return '<svg class="sl-ui-icon" viewBox="0 0 24 24" aria-hidden="true">'+body+'</svg>';
   }
 
-  function hasOwnIcon(button){return [...button.children].some(node=>node.classList?.contains('sl-ui-icon'))}
+  function hasAnyIcon(button){return !!button.querySelector('svg')}
 
   function addIcon(button,name){
-    if(!button||!ICONS[name]||hasOwnIcon(button))return;
+    if(!button||!ICONS[name]||hasAnyIcon(button))return;
     button.insertAdjacentHTML('afterbegin',svg(name));
     button.classList.add('sl-ui-has-icon');
   }
