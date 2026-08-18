@@ -1,4 +1,4 @@
-/* Safelight custom scrollbars */
+/* Safelight scrollbars: native fallback + browser-independent editor rails */
 :root{
   scrollbar-width:thin;
   scrollbar-color:#3fbf73 #0d0d10;
@@ -33,48 +33,57 @@
   box-shadow:inset 0 0 0 1px rgba(126,255,170,.12),0 0 10px rgba(74,222,128,.16);
 }
 
-*::-webkit-scrollbar-thumb:active{
-  background:#63e693;
+*::-webkit-scrollbar-thumb:active{background:#63e693}
+*::-webkit-scrollbar-corner{background:#0d0d10}
+*::-webkit-scrollbar-button,*::-webkit-scrollbar-button:single-button{width:0;height:0;display:none;background:transparent}
+
+/* These editor surfaces use our own HTML/JS rail instead of the OS scrollbar. */
+.sl-custom-scroll-target{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.sl-custom-scroll-target::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
 }
 
-*::-webkit-scrollbar-corner{
-  background:#0d0d10;
-}
-
-*::-webkit-scrollbar-button,
-*::-webkit-scrollbar-button:single-button{
-  width:0;
-  height:0;
+.sl-cscroll{
+  position:fixed;
+  z-index:90;
   display:none;
-  background:transparent;
+  border-radius:999px;
+  background:rgba(31,31,36,.72);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);
+  opacity:.78;
+  transition:opacity .16s ease,background .16s ease;
+  pointer-events:auto;
+  user-select:none;
+  touch-action:none;
 }
-
-/* Editor surfaces use the same compact rail. */
-.sl-inspector,
-.sl-sidebar,
-.sl-filmstrip,
-.sl-export-menu,
-.sl-nav-dropdown{
-  scrollbar-width:thin;
-  scrollbar-color:#3fbf73 #101013;
+.sl-cscroll.show{display:block}
+.sl-cscroll:hover,.sl-cscroll-dragging .sl-cscroll{opacity:1;background:rgba(37,39,42,.96)}
+.sl-cscroll-thumb{
+  position:absolute;
+  left:0;
+  top:0;
+  border-radius:999px;
+  background:linear-gradient(180deg,#35a963,#58df88);
+  box-shadow:0 0 0 1px rgba(98,230,147,.14),0 2px 9px rgba(0,0,0,.35);
+  cursor:grab;
+  transition:filter .14s ease,box-shadow .14s ease;
+  will-change:transform;
 }
-
-.sl-inspector::-webkit-scrollbar-track,
-.sl-sidebar::-webkit-scrollbar-track,
-.sl-filmstrip::-webkit-scrollbar-track,
-.sl-export-menu::-webkit-scrollbar-track,
-.sl-nav-dropdown::-webkit-scrollbar-track{
-  background:#101013;
+.sl-cscroll-thumb:hover{
+  filter:brightness(1.12);
+  box-shadow:0 0 0 1px rgba(128,255,174,.28),0 0 11px rgba(74,222,128,.19),0 2px 9px rgba(0,0,0,.38);
 }
-
-.sl-inspector::-webkit-scrollbar-thumb,
-.sl-sidebar::-webkit-scrollbar-thumb,
-.sl-filmstrip::-webkit-scrollbar-thumb,
-.sl-export-menu::-webkit-scrollbar-thumb,
-.sl-nav-dropdown::-webkit-scrollbar-thumb{
-  border-color:#101013;
-}
+.sl-cscroll-dragging .sl-cscroll-thumb{cursor:grabbing;filter:brightness(1.18)}
+.sl-cscroll-y .sl-cscroll-thumb{min-height:42px}
+.sl-cscroll-x .sl-cscroll-thumb{min-width:52px;background:linear-gradient(90deg,#35a963,#58df88)}
 
 @media(pointer:coarse){
   *::-webkit-scrollbar{width:12px;height:12px}
+  .sl-cscroll-y{width:10px!important}
+  .sl-cscroll-x{height:10px!important}
 }
