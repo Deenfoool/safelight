@@ -1,0 +1,10 @@
+/* Right inspector entrance motion */
+.sl-app .sl-inspector{transform:translateX(0);opacity:1}
+.sl-app .sl-inspector.sl-inspector-entering{animation:slInspectorEnter .28s cubic-bezier(.22,.78,.24,1) both;will-change:transform,opacity}
+@keyframes slInspectorEnter{
+  from{transform:translateX(34px);opacity:.18}
+  to{transform:translateX(0);opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+  .sl-app .sl-inspector.sl-inspector-entering{animation:none!important}
+}
