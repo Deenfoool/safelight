@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-18-19";
+const CACHE = "safelight-shell-v2026-08-18-20";
 const CORE = [
   "./",
   "./index.html",
@@ -75,12 +75,25 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: "no-cache" })
         .then((response) => {
           if (cacheable(response)) caches.open(CACHE).then((cache) => cache.put("./index.html", response.clone()));
           return response;
         })
         .catch(async () => (await caches.match("./index.html")) || (await caches.match("./")))
+    );
+    return;
+  }
+
+  const isCode = request.destination === "script" || request.destination === "style" || /\.(?:js|css)$/i.test(url.pathname);
+  if (isCode) {
+    event.respondWith(
+      fetch(request, { cache: "no-cache" })
+        .then((response) => {
+          if (cacheable(response)) caches.open(CACHE).then((cache) => cache.put(request, response.clone()));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match(url.pathname.replace(self.location.pathname, "./"))))
     );
     return;
   }
