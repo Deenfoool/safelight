@@ -23,14 +23,17 @@ loadScript('js/advanced.js?v=11',()=>{
   loadStyle('css/editor-polish.css?v=2');
   loadStyle('css/favicon-tools.css?v=2');
   loadStyle('css/adjust-tools.css?v=1');
+  loadStyle('css/canvas-tools.css?v=1');
   loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
         loadScript('js/adjust-tools.js?v=1',()=>{
-          loadScript('js/favicon-tools.js?v=1',()=>{
-            loadScript('js/favicon-background.js?v=1',()=>{
-              loadScript('js/direct-manipulation.js?v=4',()=>{
-                loadScript('js/editor-polish.js?v=5');
+          loadScript('js/canvas-tools.js?v=1',()=>{
+            loadScript('js/favicon-tools.js?v=1',()=>{
+              loadScript('js/favicon-background.js?v=1',()=>{
+                loadScript('js/direct-manipulation.js?v=4',()=>{
+                  loadScript('js/editor-polish.js?v=5');
+                });
               });
             });
           });
