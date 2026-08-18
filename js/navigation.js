@@ -33,18 +33,20 @@ loadScript('js/advanced.js?v=11',()=>{
     loadScript('js/inspector-motion.js?v=3');
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
-        loadScript('js/crop-tools.js?v=2',()=>{
-          loadScript('js/adjust-tools.js?v=1',()=>{
-            loadScript('js/canvas-tools.js?v=2',()=>{
-              loadScript('js/annotation-tools.js?v=1',()=>{
-                loadScript('js/annotation-preview-mode.js?v=2',()=>{
-                  loadScript('js/annotation-ui.js?v=1',()=>{
-                    loadScript('js/favicon-tools.js?v=1',()=>{
-                      loadScript('js/favicon-background.js?v=1',()=>{
-                        loadScript('js/direct-manipulation.js?v=4',()=>{
-                          loadScript('js/editor-polish.js?v=5',()=>{
-                            loadScript('js/apply-tools.js?v=3',()=>{
-                              loadScript('js/ui-motion.js?v=2');
+        loadScript('js/preview-render-guard.js?v=1',()=>{
+          loadScript('js/crop-tools.js?v=2',()=>{
+            loadScript('js/adjust-tools.js?v=1',()=>{
+              loadScript('js/canvas-tools.js?v=2',()=>{
+                loadScript('js/annotation-tools.js?v=1',()=>{
+                  loadScript('js/annotation-preview-mode.js?v=2',()=>{
+                    loadScript('js/annotation-ui.js?v=1',()=>{
+                      loadScript('js/favicon-tools.js?v=1',()=>{
+                        loadScript('js/favicon-background.js?v=1',()=>{
+                          loadScript('js/direct-manipulation.js?v=4',()=>{
+                            loadScript('js/editor-polish.js?v=5',()=>{
+                              loadScript('js/apply-tools.js?v=3',()=>{
+                                loadScript('js/ui-motion.js?v=2');
+                              });
                             });
                           });
                         });
