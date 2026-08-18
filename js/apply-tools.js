@@ -4,7 +4,7 @@
   window.safelightApplyToolsLoaded=true;
 
   const $=id=>document.getElementById(id);
-  const SUPPORTED=new Set(['resize','crop','adjust','transform','watermark','canvas']);
+  const SUPPORTED=new Set(['resize','crop','adjust','transform','watermark','canvas','privacy']);
   let undoSnapshot=null;
   let currentAppliedUrl=null;
   let busy=false;
@@ -39,6 +39,10 @@
     if(tool==='crop')return cropCanvas();
     if(tool==='adjust'&&typeof window.safelightAdjustTools?.render==='function'){const canvas=await window.safelightAdjustTools.render();if(canvas)return copyCanvas(canvas)}
     if(tool==='canvas'&&typeof window.safelightCanvasTools?.render==='function'){const canvas=await window.safelightCanvasTools.render();if(canvas)return copyCanvas(canvas)}
+    if(tool==='privacy'){
+      const live=$('sl-live-canvas'),wrap=$('previewWrap');if(live&&live.width&&live.height&&wrap?.classList.contains('sl-live-ready'))return copyCanvas(live);
+      throw new Error('Предпросмотр размытия ещё не готов');
+    }
     await waitForLive(tool);
     const live=$('sl-live-canvas'),wrap=$('previewWrap');if(live&&live.width&&live.height&&wrap?.classList.contains('sl-live-ready')&&(lastLiveTool===tool||!lastLiveTool))return copyCanvas(live);
     throw new Error('Предпросмотр результата ещё не готов');
@@ -54,6 +58,7 @@
     if(tool==='resize'){if($('r-width'))$('r-width').value=width;if($('r-height'))$('r-height').value=height;['r-width','r-height'].forEach(id=>$(id)?.dispatchEvent(new Event('input',{bubbles:true})));return}
     if(tool==='transform'&&window.safelightTransformState){window.safelightTransformState.angle=0;window.safelightTransformState.h=false;window.safelightTransformState.v=false;window.dispatchEvent(new CustomEvent('safelight:direct-state'));return}
     if(tool==='watermark'){setTimeout(()=>window.safelightActivate?.('convert'),40);return}
+    if(tool==='privacy'){$('sl-reset')?.click();return}
     if(tool==='adjust'){
       const defaults={'a-exposure':0,'a-bright':0,'a-contrast':0,'a-highlights':0,'a-shadows':0,'a-temp':0,'a-tint':0,'a-sat':0,'a-gamma':1,'a-sharp':0,'a-blur':0,'a-vignette':0,'a-sepia':0};
       Object.entries(defaults).forEach(([id,value])=>{const el=$(id);if(el){el.value=String(value);el.dispatchEvent(new Event('input',{bubbles:true}))}});if($('a-gray')){$('a-gray').checked=false;$('a-gray').dispatchEvent(new Event('change',{bubbles:true}))}return;
