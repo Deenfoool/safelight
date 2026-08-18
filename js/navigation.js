@@ -3,7 +3,7 @@
 const nav=document.querySelector('.top-nav-links');
 const panels={compress:document.getElementById('panel-compress'),slice:document.getElementById('panel-slice'),convert:document.getElementById('panel-convert'),resize:document.getElementById('panel-resize'),crop:document.getElementById('panel-crop'),adjust:document.getElementById('panel-adjust')};
 const title=document.querySelector('#workspace .page-title h1'),description=document.querySelector('#workspace .page-title p');
-const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP, HEIC и PDF локально в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Получайте фрагмент нужного размера из исходного изображения.'],adjust:['Коррекция изображения','Настраивайте яркость, контраст, насыщенность и чёрно-белый режим.']};
+const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP, HEIC и PDF локально в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Получайте фрагмент нужного размера из исходного изображения.'],adjust:['Расширенная коррекция','Экспозиция, света, тени, баланс белого, гамма, резкость и эффекты.']};
 const advancedIds=new Set(['transform','watermark','batch','metadata','favicon']);
 function closeMenus(){document.querySelectorAll('.nav-group.open').forEach(g=>{g.classList.remove('open');g.querySelector('.nav-group-toggle')?.setAttribute('aria-expanded','false')})}
 function refreshGroups(active){document.querySelectorAll('.nav-group').forEach(g=>{const ids=(g.dataset.groupIds||'').split(',');const selected=(!!active&&ids.includes(active))||[...g.querySelectorAll('.nav-dropdown-item')].some(b=>b.classList.contains('active'));g.classList.toggle('active',!!selected)})}
@@ -22,13 +22,16 @@ loadScript('js/advanced.js?v=11',()=>{
   loadStyle('css/direct-manipulation.css?v=2');
   loadStyle('css/editor-polish.css?v=2');
   loadStyle('css/favicon-tools.css?v=2');
+  loadStyle('css/adjust-tools.css?v=1');
   loadScript('js/ui-shell.js?v=4',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
-        loadScript('js/favicon-tools.js?v=1',()=>{
-          loadScript('js/favicon-background.js?v=1',()=>{
-            loadScript('js/direct-manipulation.js?v=4',()=>{
-              loadScript('js/editor-polish.js?v=5');
+        loadScript('js/adjust-tools.js?v=1',()=>{
+          loadScript('js/favicon-tools.js?v=1',()=>{
+            loadScript('js/favicon-background.js?v=1',()=>{
+              loadScript('js/direct-manipulation.js?v=4',()=>{
+                loadScript('js/editor-polish.js?v=5');
+              });
             });
           });
         });
