@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-18-39";
+const CACHE = "safelight-shell-v2026-08-18-40";
 const CORE = [
   "./",
   "./index.html",
