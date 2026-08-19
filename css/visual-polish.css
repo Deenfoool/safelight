@@ -13,6 +13,11 @@ body>nav{background:rgba(9,9,11,.70)!important;backdrop-filter:blur(14px)}
 .hero{position:relative}.hero:before{content:"";position:absolute;width:560px;height:560px;left:-230px;top:-30px;background:radial-gradient(circle,rgba(163,230,53,.07) 0,transparent 68%);filter:blur(12px);pointer-events:none;z-index:-1}
 #about,footer{background:transparent}
 
+/* Homepage external links */
+.hero .cta-row .home-external-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:122px}
+.hero .cta-row .home-external-link svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .16s ease}
+.hero .cta-row .home-external-link:hover svg{transform:translate(2px,-2px)}
+
 /* Home visual replacing the terminal */
 .home-local-card{max-width:680px;margin:0 auto;text-align:left;border:1px solid #28282d;border-radius:14px;background:rgba(14,14,17,.82);box-shadow:0 30px 80px rgba(0,0,0,.48);overflow:hidden;backdrop-filter:blur(12px)}
 .hlc-top{height:48px;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #25252a;background:rgba(23,23,26,.68)}
@@ -37,5 +42,5 @@ body.page-tool{background:transparent!important}
 .sl-inspector{background:rgba(16,16,19,.78)!important}
 .sl-filmstrip{background:rgba(13,13,16,.75)!important}
 
-@media(max-width:640px){#sl-grid-bg{opacity:.80}.home-local-card{border-radius:11px}.hlc-flow{grid-template-columns:1fr;padding:18px}.hlc-center{height:82px}.hlc-center:before,.hlc-center:after{display:none}.hlc-node{min-height:88px}.hlc-tools{padding:0 18px 15px}.hlc-filecopy{margin-left:0!important;width:100%;max-width:none}.hlc-footer{padding:11px 18px}}
-@media(prefers-reduced-motion:reduce){#sl-grid-bg{display:none}}
+@media(max-width:640px){#sl-grid-bg{opacity:.80}.home-local-card{border-radius:11px}.hlc-flow{grid-template-columns:1fr;padding:18px}.hlc-center{height:82px}.hlc-center:before,.hlc-center:after{display:none}.hlc-node{min-height:88px}.hlc-tools{padding:0 18px 15px}.hlc-filecopy{margin-left:0!important;width:100%;max-width:none}.hlc-footer{padding:11px 18px}.hero .cta-row .home-external-link{min-width:0;flex:1 1 130px;max-width:180px}}
+@media(prefers-reduced-motion:reduce){#sl-grid-bg{display:none}.hero .cta-row .home-external-link svg{transition:none}}
