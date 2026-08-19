@@ -45,7 +45,7 @@
   const transform = card(
     "transform",
     "ТРАНСФОРМАЦИЯ",
-    "Поворачивайте и отражайте изображение локально.",
+    "Поворачивайте и отражайте изображение прямо в браузере.",
     '<div class="transform-actions">' +
       '<button type="button" class="btn ghost" data-tr="ccw">↶ 90°</button>' +
       '<button type="button" class="btn ghost" data-tr="cw">↷ 90°</button>' +
@@ -68,7 +68,7 @@
   card(
     "watermark",
     "ВОДЯНОЙ ЗНАК",
-    "Добавляйте текстовый watermark прямо в браузере.",
+    "Добавляйте текстовый watermark прямо поверх изображения.",
     '<div class="field-row">' +
       '<div class="field wm-wide"><label>Текст</label><input id="wm-text" value="Safelight"></div>' +
       '<div class="field"><label>Размер</label><input id="wm-size" type="number" min="8" max="1000" value="48"></div>' +
@@ -92,7 +92,7 @@
     if (bar) bar.style.width = "0%";
   });
 
-  card("metadata", "МЕТАДАННЫЕ", "Проверяйте информацию о файле и очищайте её локально.", '<div class="meta-box" id="meta-box">Загрузите изображение.</div>');
+  card("metadata", "МЕТАДАННЫЕ", "Проверяйте информацию о файле и очищайте её перед экспортом.", '<div class="meta-box" id="meta-box">Загрузите изображение.</div>');
   card("favicon", "FAVICON GENERATOR", "Создавайте набор иконок для сайта из одного изображения.", "");
 
   function setAdvanced(id) {
@@ -102,7 +102,7 @@
     document.querySelectorAll(".panel").forEach((panel) => panel.classList.toggle("active", panel.id === "panel-" + id));
     const titles = {
       transform: ["Трансформация", "Поворот и отражение изображений."],
-      watermark: ["Водяной знак", "Добавляйте текстовый watermark локально."],
+      watermark: ["Водяной знак", "Добавляйте текстовый watermark прямо поверх изображения."],
       batch: ["Массовая обработка", "Обрабатывайте множество изображений одним действием."],
       metadata: ["Метаданные", "Проверяйте и очищайте данные изображения."],
       favicon: ["Favicon Generator", "Создавайте набор иконок для сайта."]
@@ -140,7 +140,7 @@
     }
 
     async function renderPdfPage(file) {
-      if (!window.pdfjsLib?.getDocument) throw new Error("Локальный PDF-модуль не загрузился");
+      if (!window.pdfjsLib?.getDocument) throw new Error("PDF-модуль не загрузился");
       const data = await file.arrayBuffer();
       const doc = await window.pdfjsLib.getDocument({ data }).promise;
       const page = await doc.getPage(1);
@@ -153,7 +153,7 @@
     }
 
     async function handlePdf(file) {
-      setStatus("Читаю PDF локально…");
+      setStatus("Читаю PDF…");
       try {
         const result = await renderPdfPage(file);
         const preview = document.getElementById("previewImg");
@@ -170,7 +170,7 @@
         document.getElementById("ro-format").textContent = "PDF";
         document.getElementById("t-name").textContent = file.name;
         document.getElementById("t-name2").textContent = file.name;
-        document.getElementById("t-status").textContent = "готово — PDF прочитан локально";
+        document.getElementById("t-status").textContent = "готово — PDF прочитан";
         document.getElementById("t-dims").textContent = result.canvas.width + "x" + result.canvas.height + " px, PDF";
         document.getElementById("t-size").textContent = fmt(file.size);
         setStatus("PDF загружен: " + result.pages + " стр. · обработка без сети");
