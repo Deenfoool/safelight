@@ -53,11 +53,11 @@ loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/adjust-tools.css?v=1');
   loadStyle('css/canvas-tools.css?v=2');
   loadStyle('css/crop-tools.css?v=1');
-  loadStyle('css/apply-tools.css?v=1');
+  loadStyle('css/apply-tools.css?v=2');
   loadStyle('css/inspector-motion.css?v=2');
   loadStyle('css/annotation-tools.css?v=2');
   loadStyle('css/ui-motion.css?v=2');
-  loadScript('js/ui-shell.js?v=5',()=>{
+  loadScript('js/ui-shell.js?v=6',()=>{
     loadScript('js/inspector-motion.js?v=3');
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
@@ -71,7 +71,7 @@ loadScript('js/advanced.js?v=13',()=>{
                       loadScript('js/favicon-background.js?v=1',()=>{
                         loadScript('js/direct-manipulation.js?v=4',()=>{
                           loadScript('js/editor-polish.js?v=5',()=>{
-                            loadScript('js/apply-tools.js?v=3',()=>{
+                            loadScript('js/apply-tools.js?v=4',()=>{
                               loadScript('js/ui-motion.js?v=2');
                             });
                           });
