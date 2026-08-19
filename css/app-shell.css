@@ -33,7 +33,10 @@ body.page-home .sl-app{display:none!important}
 .sl-app .sl-stage-host{min-height:0;overflow:hidden;display:flex}
 .sl-app .sl-stage-host>.stage{min-width:0;min-height:0;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .sl-app .sl-center .preview-wrap{position:relative;width:100%!important;height:100%!important;min-width:0;min-height:0;max-width:100%;max-height:100%;display:flex!important;align-items:center;justify-content:center;overflow:hidden}
-.sl-app .sl-center .preview-wrap>img,.sl-app .sl-center .preview-wrap>.sl-live-canvas{display:block;width:auto!important;height:auto!important;max-width:calc(100% - 28px)!important;max-height:calc(100% - 28px)!important;object-fit:contain;flex:none}
+.sl-app .sl-center .preview-wrap>img,.sl-app .sl-center .preview-wrap>.sl-live-canvas{width:auto!important;height:auto!important;max-width:calc(100% - 28px)!important;max-height:calc(100% - 28px)!important;object-fit:contain;flex:none}
+/* Exactly one preview surface may be visible: source image OR processed canvas. */
+.sl-app .sl-center .preview-wrap>.sl-live-canvas{display:none!important}
+.sl-app .sl-center .preview-wrap.sl-live-ready>.sl-live-canvas{display:block!important}
 .sl-app .slider-row input[type=range]{background:#34343a}
 .sl-app #s-run,.sl-app #b-run,.sl-app #meta-clean,.sl-app #f-run{display:none!important}
 .sl-app #c-download,.sl-app #v-download,.sl-app #r-download,.sl-app #cr-download,.sl-app #a-download,.sl-app #tr-download,.sl-app #wm-download{display:none!important}
