@@ -1,11 +1,11 @@
 /* Direct manipulation layer: movable slice guides, draggable watermark, cleaner transform UI. */
 .sl-direct-overlay{position:absolute;inset:0;z-index:35;pointer-events:none;overflow:visible}
 
-/* For slice/watermark the original image remains the visual base; interactive overlays sit above it. */
-.sl-app .preview-wrap.sl-interactive-slice.sl-live-ready>#previewImg,
-.sl-app .preview-wrap.sl-interactive-watermark.sl-live-ready>#previewImg{display:block!important}
-.sl-app .preview-wrap.sl-interactive-slice .sl-live-canvas,
-.sl-app .preview-wrap.sl-interactive-watermark .sl-live-canvas{display:none!important}
+/* Slice and watermark are source-based interactive tools. Exactly one image surface is visible. */
+body[data-sl-tool="slice"] .sl-app .sl-center .preview-wrap>#previewImg,
+body[data-sl-tool="watermark"] .sl-app .sl-center .preview-wrap>#previewImg{display:block!important;opacity:1!important;visibility:visible!important}
+body[data-sl-tool="slice"] .sl-app .sl-center .preview-wrap>.sl-live-canvas,
+body[data-sl-tool="watermark"] .sl-app .sl-center .preview-wrap>.sl-live-canvas{display:none!important;visibility:hidden!important;pointer-events:none!important}
 .sl-app .preview-wrap.sl-interactive-slice #gridOverlay{display:none!important}
 
 /* Slice guides */
