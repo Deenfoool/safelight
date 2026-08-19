@@ -3,6 +3,32 @@
   if(window.safelightVisualPolishLoaded)return;
   window.safelightVisualPolishLoaded=true;
 
+  function installHomeLinks(){
+    const row=document.querySelector('.hero .cta-row');
+    if(!row||row.querySelector('.home-external-link'))return;
+    const links=[
+      {
+        href:'https://github.com/Deenfoool/safelight',
+        label:'GitHub',
+        path:'M9 18c-4 1.5-4-2-5-2m10 4v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.7-1.4 5.7-6A4.7 4.7 0 0 0 19 5.2 4.4 4.4 0 0 0 18.7 2S17.6 1.7 15 3.2a11 11 0 0 0-6 0C6.4 1.7 5.3 2 5.3 2A4.4 4.4 0 0 0 5 5.2 4.7 4.7 0 0 0 3.8 8.5c0 4.6 2.9 5.7 5.7 6-.4.5-.5 1-.5 2V20'
+      },
+      {
+        href:'https://deenfoool.github.io/portfolio/',
+        label:'Портфолио',
+        path:'M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 7h16v12H4zM4 12h16M10 12v2h4v-2'
+      }
+    ];
+    links.forEach(item=>{
+      const a=document.createElement('a');
+      a.className='btn ghost home-external-link';
+      a.href=item.href;
+      a.target='_blank';
+      a.rel='noopener noreferrer';
+      a.innerHTML='<span>'+item.label+'</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+item.path+'"/></svg>';
+      row.appendChild(a);
+    });
+  }
+
   function buildAmbient(){
     if(!document.getElementById('sl-grid-bg')){
       const canvas=document.createElement('canvas');
@@ -72,5 +98,6 @@
     window.addEventListener('beforeunload',()=>cancelAnimationFrame(raf),{once:true});
   }
 
+  installHomeLinks();
   buildAmbient();
 })();
