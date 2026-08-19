@@ -1,0 +1,43 @@
+/* Background removal mask editor */
+.sl-bg-panel{display:flex;flex-direction:column;gap:12px}
+.sl-bg-panel .desc{margin-bottom:0}
+.sl-bg-mode,.sl-bg-brush-mode,.sl-bg-view{display:grid;gap:6px}
+.sl-bg-mode{grid-template-columns:repeat(3,1fr)}
+.sl-bg-brush-mode{grid-template-columns:1fr 1fr}
+.sl-bg-view{grid-template-columns:repeat(2,1fr)}
+.sl-bg-mode button,.sl-bg-brush-mode button,.sl-bg-view button{min-width:0;padding:8px 7px;border:1px solid #2c2c32;border-radius:7px;background:#17171a;color:#8b8b94;font:600 8.5px/1.2 var(--sans);cursor:pointer;transition:border-color .14s ease,background .14s ease,color .14s ease}
+.sl-bg-mode button:hover,.sl-bg-brush-mode button:hover,.sl-bg-view button:hover{border-color:#3a3a42;color:#d4d4d8}
+.sl-bg-mode button.active,.sl-bg-brush-mode button.active,.sl-bg-view button.active{border-color:rgba(163,230,53,.42);background:rgba(163,230,53,.10);color:#d9f99d}
+.sl-bg-section{border:1px solid #29292f;border-radius:9px;background:rgba(20,20,23,.62);overflow:hidden}
+.sl-bg-section-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left}
+.sl-bg-section-head>span{display:flex;min-width:0;flex-direction:column;gap:3px}.sl-bg-section-head b{color:#d5d5da;font:650 10px/1.2 var(--sans)}.sl-bg-section-head small{color:#6f6f78;font:500 8.5px/1.35 var(--sans)}
+.sl-bg-section-head i{width:7px;height:7px;border-right:1.5px solid #7f7f87;border-bottom:1.5px solid #7f7f87;transform:rotate(45deg);transition:transform .16s ease;flex:0 0 auto}.sl-bg-section.open .sl-bg-section-head i{transform:rotate(225deg)}
+.sl-bg-section-body{padding:0 12px 12px;display:flex;flex-direction:column;gap:10px}.sl-bg-section-body[hidden]{display:none}
+.sl-bg-color-row{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:7px}.sl-bg-color-row input[type=color]{width:38px;height:32px;padding:2px;border:1px solid #303036;border-radius:7px;background:#111114;cursor:pointer}.sl-bg-color-row .btn{padding:8px 10px;font-size:8.5px}.sl-bg-color-row span{color:#96969f;font:600 8.5px/1 var(--mono)}
+.sl-bg-slider{margin:0!important}.sl-bg-wide{width:100%;padding:9px 10px!important;font-size:9px!important}
+.sl-bg-help,.sl-bg-wand-note{margin:0;color:#767680;font:500 9px/1.5 var(--sans)}
+.sl-bg-wand-note{display:flex;flex-direction:column;gap:3px;padding:9px 10px;border:1px solid rgba(163,230,53,.11);border-radius:7px;background:rgba(163,230,53,.035)}.sl-bg-wand-note b{color:#b9c79d;font-size:9px}.sl-bg-wand-note span{color:#727b68;font-size:8.5px;line-height:1.45}
+.sl-bg-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sl-bg-actions .btn{padding:8px 6px;font-size:8.5px}.sl-bg-actions .btn:last-child{grid-column:1/-1}
+.sl-bg-stat{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border:1px solid #29292f;border-radius:7px;background:#111114}.sl-bg-stat span{color:#707079;font:600 8px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}.sl-bg-stat b{color:#d9f99d;font:650 10px/1 var(--mono)}
+#bg-status{min-height:18px;color:#74747d;font-size:9px;line-height:1.45}
+
+body.sl-bg-active .sl-app .preview-wrap>#previewImg{display:block!important;opacity:0!important;visibility:visible!important}
+body.sl-bg-active .sl-app .preview-wrap>#sl-live-canvas{display:none!important}
+body.sl-bg-active .preview-wrap{overflow:visible!important}
+.sl-bg-removal-canvas{display:none;position:absolute;z-index:38;touch-action:none;image-rendering:auto;box-shadow:0 0 0 1px rgba(255,255,255,.04);cursor:default}
+body.sl-bg-active .sl-bg-removal-canvas{display:block}
+.sl-bg-removal-canvas[data-view="transparent"]{background-color:#17171a;background-image:linear-gradient(45deg,#26262b 25%,transparent 25%),linear-gradient(-45deg,#26262b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#26262b 75%),linear-gradient(-45deg,transparent 75%,#26262b 75%);background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0}
+.sl-bg-removal-canvas[data-view="white"]{background:#fff}.sl-bg-removal-canvas[data-view="dark"]{background:#09090b}.sl-bg-removal-canvas[data-view="mask"]{background:#000}
+.sl-bg-removal-canvas.sl-bg-pick-cursor{cursor:crosshair}.sl-bg-removal-canvas.sl-bg-wand-cursor{cursor:cell}.sl-bg-removal-canvas.sl-bg-brush-cursor{cursor:crosshair}
+
+html[data-theme="light"] .sl-bg-mode button,html[data-theme="light"] .sl-bg-brush-mode button,html[data-theme="light"] .sl-bg-view button{border-color:#d9dde2;background:#fff;color:#687078}
+html[data-theme="light"] .sl-bg-mode button:hover,html[data-theme="light"] .sl-bg-brush-mode button:hover,html[data-theme="light"] .sl-bg-view button:hover{border-color:#c8cdd2;background:#f6f7f8;color:#252a2f}
+html[data-theme="light"] .sl-bg-mode button.active,html[data-theme="light"] .sl-bg-brush-mode button.active,html[data-theme="light"] .sl-bg-view button.active{border-color:rgba(31,132,72,.38);background:#e9f6ed;color:#176b39}
+html[data-theme="light"] .sl-bg-section{border-color:#e0e3e6;background:rgba(255,255,255,.72)}
+html[data-theme="light"] .sl-bg-section-head b{color:#30353a}html[data-theme="light"] .sl-bg-section-head small{color:#858c93}html[data-theme="light"] .sl-bg-section-head i{border-color:#777f87}
+html[data-theme="light"] .sl-bg-color-row input[type=color]{border-color:#d9dde2;background:#fff}html[data-theme="light"] .sl-bg-color-row span{color:#687078}
+html[data-theme="light"] .sl-bg-wand-note{border-color:rgba(31,132,72,.14);background:#f1f8f3}html[data-theme="light"] .sl-bg-wand-note b{color:#2c6b43}html[data-theme="light"] .sl-bg-wand-note span{color:#718078}
+html[data-theme="light"] .sl-bg-stat{border-color:#dfe3e7;background:#f7f8f9}html[data-theme="light"] .sl-bg-stat span{color:#777f87}html[data-theme="light"] .sl-bg-stat b{color:#176b39}
+
+@media(max-width:760px){.sl-bg-mode{grid-template-columns:1fr}.sl-bg-actions{grid-template-columns:1fr}.sl-bg-actions .btn:last-child{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){.sl-bg-mode button,.sl-bg-brush-mode button,.sl-bg-view button,.sl-bg-section-head i{transition:none}}
