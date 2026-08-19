@@ -22,7 +22,7 @@
 .sl-watermark-drag.image{padding:5px;background:rgba(9,9,11,.18)}
 .sl-watermark-drag.image img{display:block;height:auto;max-width:none;pointer-events:none;user-select:none}
 .sl-watermark-logo-placeholder{display:block;padding:8px 10px;color:#aaaab2;font:600 9px var(--sans);white-space:nowrap}
-.sl-watermark-fill{isolation:isolate}.sl-watermark-pattern-item{position:absolute;--wm-rotation:0deg;transform:translate(-50%,-50%) rotate(var(--wm-rotation));transform-origin:center;pointer-events:none;user-select:none;white-space:nowrap}.sl-watermark-pattern-item.image{height:auto}.sl-watermark-pattern-item.text{text-shadow:0 2px 8px rgba(0,0,0,.45)}
+.sl-watermark-fill{isolation:isolate}.sl-watermark-fill .sl-watermark-pattern-item{position:absolute;--wm-rotation:0deg;transform:translate(-50%,-50%) rotate(var(--wm-rotation));transform-origin:center;pointer-events:none;user-select:none;white-space:nowrap}.sl-watermark-fill .sl-watermark-pattern-item.image{height:auto}.sl-watermark-fill .sl-watermark-pattern-item.text{text-shadow:0 2px 8px rgba(0,0,0,.45)}
 
 html[data-theme="light"] .sl-wm-type,html[data-theme="light"] .sl-wm-layout{border-color:#d8dce0;background:#f3f5f6}
 html[data-theme="light"] .sl-wm-type button,html[data-theme="light"] .sl-wm-layout button{color:#686d72}html[data-theme="light"] .sl-wm-type button:hover,html[data-theme="light"] .sl-wm-layout button:hover{color:#202428;background:#fff}html[data-theme="light"] .sl-wm-type button.active,html[data-theme="light"] .sl-wm-layout button.active{color:#176b39;background:rgba(53,169,95,.1);box-shadow:inset 0 0 0 1px rgba(53,169,95,.3)}
