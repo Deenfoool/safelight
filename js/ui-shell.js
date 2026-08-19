@@ -17,7 +17,7 @@
     crop: ["Обрезка", "Получайте фрагмент нужного размера из исходного изображения."],
     adjust: ["Коррекция", "Яркость, контраст, насыщенность и чёрно-белый режим."],
     transform: ["Трансформация", "Поворот и отражение исходного изображения."],
-    watermark: ["Водяной знак", "Добавляйте текстовый watermark локально."],
+    watermark: ["Водяной знак", "Добавляйте текстовый watermark прямо поверх изображения."],
     batch: ["Пакетная обработка", "Обрабатывайте несколько файлов с общими настройками."],
     metadata: ["Метаданные", "Проверяйте сведения о файле и очищайте их пересохранением."],
     favicon: ["Favicon", "Создавайте набор иконок для сайта из одного изображения."],
@@ -75,7 +75,7 @@
           <span class="dot">•</span><span id="sl-file-size">—</span>
         </div>
         <div class="sl-top-spacer"></div>
-        <div class="sl-local">${icon("M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5")}<span>Локальная обработка</span><i class="sl-live-dot"></i></div>
+        <div class="sl-local">${icon("M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5")}<span>Без отправки на сервер</span><i class="sl-live-dot"></i></div>
         <button class="sl-tool-action" id="sl-reset" type="button" title="Сбросить настройки текущего инструмента">${icon("M4 7v5h5M5.5 11A7 7 0 1 0 8 5.2")}<span>Сбросить</span></button>
         <button class="sl-export" id="sl-export" type="button">${icon("M12 15V4m0 0L8 8m4-4 4 4M5 13v6h14v-6")}<span>Экспорт</span></button>
       </header>
@@ -163,7 +163,7 @@
 
   function syncInspector() {
     const tool = currentTool() || "compress";
-    const info = TOOL_INFO[tool] || ["Инструмент", "Локальная обработка изображения."];
+    const info = TOOL_INFO[tool] || ["Инструмент", "Обработка изображения в браузере."];
     const title = document.getElementById("sl-inspector-title");
     const desc = document.getElementById("sl-inspector-desc");
     if (title) title.textContent = info[0];
