@@ -168,11 +168,6 @@
         document.getElementById("ro-dims").textContent = result.canvas.width + " × " + result.canvas.height + " px";
         document.getElementById("ro-size").textContent = fmt(file.size);
         document.getElementById("ro-format").textContent = "PDF";
-        document.getElementById("t-name").textContent = file.name;
-        document.getElementById("t-name2").textContent = file.name;
-        document.getElementById("t-status").textContent = "готово — PDF прочитан";
-        document.getElementById("t-dims").textContent = result.canvas.width + "x" + result.canvas.height + " px, PDF";
-        document.getElementById("t-size").textContent = fmt(file.size);
         setStatus("PDF загружен: " + result.pages + " стр. · обработка без сети");
         document.querySelectorAll(".result").forEach((element) => element.classList.remove("show"));
       } catch (error) {
