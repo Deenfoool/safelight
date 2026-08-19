@@ -4,7 +4,7 @@
 
 Compress, convert, resize, crop, blur, inspect metadata, extract palettes and more — without uploading your images to a server.
 
-[**Open Safelight**](https://deenfoool.github.io/safelight/) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [MIT License](LICENSE)
+[**Open Safelight**](https://deenfoool.github.io/safelight/) · [Roadmap](ROADMAP.md) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [MIT License](LICENSE)
 
 ![Safelight interface](portfolio.png)
 
