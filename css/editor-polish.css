@@ -2,7 +2,9 @@
 body.page-tool>#sl-grid-bg{display:none!important}
 body.page-tool .sl-app{position:relative;isolation:isolate;background:#09090b!important}
 #sl-editor-grid{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;opacity:1}
-body.page-tool .sl-topbar,body.page-tool .sl-app-body{position:relative;z-index:1}
+/* Keep editor chrome in separate layers: toolbar dropdowns must always sit above the workspace. */
+body.page-tool .sl-topbar{position:relative;z-index:120;overflow:visible}
+body.page-tool .sl-app-body{position:relative;z-index:1}
 body.page-tool .sl-topbar{background:rgba(9,9,11,.82)!important;backdrop-filter:blur(13px)}
 body.page-tool .sl-app-body{background:rgba(9,9,11,.12)!important}
 
