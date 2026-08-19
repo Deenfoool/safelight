@@ -7,13 +7,22 @@
   const root=document.documentElement;
   const THEMES=new Set(['light','dark']);
 
+  function installLightPolish(){
+    if(document.querySelector('link[data-sl-light-polish]'))return;
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='css/theme-light-polish.css?v=1';
+    link.dataset.slLightPolish='1';
+    document.head.appendChild(link);
+  }
+
   function storedTheme(){
     try{const value=localStorage.getItem(STORAGE_KEY);return THEMES.has(value)?value:null}catch(_){return null}
   }
 
   function updateThemeColor(theme){
     const meta=document.querySelector('meta[name="theme-color"]');
-    if(meta)meta.setAttribute('content',theme==='light'?'#efede7':'#09090b');
+    if(meta)meta.setAttribute('content',theme==='light'?'#f6f7f8':'#09090b');
   }
 
   function syncControls(){
@@ -37,6 +46,7 @@
     window.dispatchEvent(new CustomEvent('safelight:themechange',{detail:{theme:next}}));
   }
 
+  installLightPolish();
   applyTheme(storedTheme()||'dark',false);
 
   function gearIcon(){
