@@ -3,7 +3,7 @@
 const nav=document.querySelector('.top-nav-links');
 const panels={compress:document.getElementById('panel-compress'),slice:document.getElementById('panel-slice'),convert:document.getElementById('panel-convert'),resize:document.getElementById('panel-resize'),crop:document.getElementById('panel-crop'),adjust:document.getElementById('panel-adjust')};
 const title=document.querySelector('#workspace .page-title h1'),description=document.querySelector('#workspace .page-title p');
-const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP, HEIC и PDF прямо в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Тяните края и углы рамки прямо на изображении и сразу видьте будущий кадр.'],adjust:['Расширенная коррекция','Свет, уровни, кривые, цвет, шумоподавление, резкость и эффекты.']};
+const info={compress:['Сжатие изображений','Уменьшайте вес PNG, JPEG и WebP с контролем качества.'],slice:['Нарезка изображений','Разделяйте изображение на сетку или полосы и скачивайте ZIP-архив.'],convert:['Конвертация изображений','Конвертируйте PNG, JPEG, WebP, HEIC и PDF прямо в браузере.'],resize:['Изменение размера','Меняйте разрешение изображения с сохранением пропорций или свободно.'],crop:['Обрезка изображений','Выравнивайте горизонт, используйте композиционные сетки и задавайте кадр точно в пикселях.'],adjust:['Расширенная коррекция','Экспозиция, света, тени, баланс белого, гамма, резкость и эффекты.']};
 const advancedIds=new Set(['transform','watermark','batch','metadata','favicon']);
 function closeMenus(){document.querySelectorAll('.nav-group.open').forEach(g=>{g.classList.remove('open');g.querySelector('.nav-group-toggle')?.setAttribute('aria-expanded','false')})}
 function refreshGroups(active){document.querySelectorAll('.nav-group').forEach(g=>{const ids=(g.dataset.groupIds||'').split(',');const selected=(!!active&&ids.includes(active))||[...g.querySelectorAll('.nav-dropdown-item')].some(b=>b.classList.contains('active'));g.classList.toggle('active',!!selected)})}
@@ -57,7 +57,7 @@ loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/favicon-tools.css?v=3');
   loadStyle('css/adjust-tools.css?v=3');
   loadStyle('css/canvas-tools.css?v=2');
-  loadStyle('css/crop-tools.css?v=1');
+  loadStyle('css/crop-tools.css?v=2');
   loadStyle('css/apply-tools.css?v=2');
   loadStyle('css/inspector-motion.css?v=2');
   loadStyle('css/annotation-tools.css?v=2');
@@ -67,7 +67,7 @@ loadScript('js/advanced.js?v=13',()=>{
     loadScript('js/source-cleanup.js?v=2',()=>{
       loadScript('js/live-editor.js?v=7',()=>{
         loadScript('js/preview-render-guard.js?v=2',()=>{
-          loadScript('js/crop-tools.js?v=2',()=>{
+          loadScript('js/crop-tools.js?v=3',()=>{
             loadScript('js/adjust-tools.js?v=2',()=>{
               loadScript('js/canvas-tools.js?v=2',()=>{
                 loadScript('js/annotation-tools.js?v=1',()=>{
@@ -76,7 +76,7 @@ loadScript('js/advanced.js?v=13',()=>{
                       loadScript('js/favicon-background.js?v=1',()=>{
                         loadScript('js/direct-manipulation.js?v=4',()=>{
                           loadScript('js/editor-polish.js?v=5',()=>{
-                            loadScript('js/apply-tools.js?v=4',()=>{
+                            loadScript('js/apply-tools.js?v=5',()=>{
                               loadScript('js/ui-motion.js?v=2');
                             });
                           });
