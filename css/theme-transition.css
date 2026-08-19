@@ -1,0 +1,44 @@
+/* Telegram-like circular day/night theme transition */
+::view-transition-old(root),
+::view-transition-new(root){
+  animation:none;
+  mix-blend-mode:normal;
+}
+
+html.sl-theme-to-dark::view-transition-old(root){z-index:1}
+html.sl-theme-to-dark::view-transition-new(root){
+  z-index:2;
+  animation:sl-theme-reveal-dark 560ms cubic-bezier(.22,1,.36,1) both;
+}
+
+html.sl-theme-to-light::view-transition-new(root){z-index:1}
+html.sl-theme-to-light::view-transition-old(root){
+  z-index:2;
+  animation:sl-theme-hide-dark 520ms cubic-bezier(.4,0,.2,1) both;
+}
+
+@keyframes sl-theme-reveal-dark{
+  from{clip-path:circle(0 at var(--sl-theme-x) var(--sl-theme-y))}
+  to{clip-path:circle(var(--sl-theme-radius) at var(--sl-theme-x) var(--sl-theme-y))}
+}
+
+@keyframes sl-theme-hide-dark{
+  from{clip-path:circle(var(--sl-theme-radius) at var(--sl-theme-x) var(--sl-theme-y))}
+  to{clip-path:circle(0 at var(--sl-theme-x) var(--sl-theme-y))}
+}
+
+.sl-theme-fallback-layer{
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  pointer-events:none;
+  will-change:clip-path;
+}
+
+html.sl-theme-transitioning .sl-settings-toggle,
+html.sl-theme-transitioning [data-sl-theme-choice]{pointer-events:none}
+
+@media(prefers-reduced-motion:reduce){
+  html.sl-theme-to-dark::view-transition-new(root),
+  html.sl-theme-to-light::view-transition-old(root){animation:none}
+}
