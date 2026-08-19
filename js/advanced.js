@@ -28,7 +28,49 @@
   const transform=card('transform','ТРАНСФОРМАЦИЯ','Поворачивайте и отражайте изображение прямо в браузере.','<div class="transform-actions"><button type="button" class="btn ghost" data-tr="ccw">↶ 90°</button><button type="button" class="btn ghost" data-tr="cw">↷ 90°</button><button type="button" class="btn ghost" data-tr="180">180°</button><button type="button" class="btn ghost" data-tr="h">↔ Горизонталь</button><button type="button" class="btn ghost" data-tr="v">↕ Вертикаль</button></div>');
   transform.querySelectorAll('[data-tr]').forEach(button=>button.addEventListener('click',()=>{const action=button.dataset.tr,state=window.safelightTransformState;if(action==='ccw')state.angle=(state.angle+270)%360;if(action==='cw')state.angle=(state.angle+90)%360;if(action==='180')state.angle=(state.angle+180)%360;if(action==='h')state.h=!state.h;if(action==='v')state.v=!state.v}));
 
-  card('watermark','ВОДЯНОЙ ЗНАК','Добавляйте текстовый watermark прямо поверх изображения.','<div class="field-row"><div class="field wm-wide"><label>Текст</label><input id="wm-text" value="Safelight"></div><div class="field"><label>Размер</label><input id="wm-size" type="number" min="8" max="1000" value="48"></div><div class="field"><label>Прозрачность</label><input id="wm-opacity" type="number" min="1" max="100" value="45"></div><div class="field"><label>Позиция</label><select id="wm-pos"><option value="br">Низ / право</option><option value="bl">Низ / лево</option><option value="tr">Верх / право</option><option value="tl">Верх / лево</option><option value="center">Центр</option></select></div></div>');
+  card('watermark','ВОДЯНОЙ ЗНАК','Текст или логотип с точным оформлением, поворотом и повторяющимся паттерном.',`
+    <div class="sl-wm-type" role="group" aria-label="Тип водяного знака">
+      <button type="button" class="active" data-wm-kind="text">Текст</button>
+      <button type="button" data-wm-kind="image">Логотип</button>
+    </div>
+    <div class="sl-wm-section" data-wm-section="text">
+      <div class="sl-wm-section-title"><span>Текст</span><small>содержание и шрифт</small></div>
+      <div class="field"><label>Надпись</label><input id="wm-text" value="Safelight" maxlength="180"></div>
+      <div class="sl-wm-grid two">
+        <div class="field"><label>Шрифт</label><select id="wm-font"><option value="system">Системный</option><option value="serif">С засечками</option><option value="mono">Моноширинный</option><option value="rounded">Мягкий</option></select></div>
+        <div class="field"><label>Цвет</label><div class="sl-wm-color"><input id="wm-color" type="color" value="#ffffff"><span id="wm-color-value">#ffffff</span></div></div>
+      </div>
+      <div class="slider-row"><div class="top"><span>Размер</span><b id="wm-size-val">48 px</b></div><input id="wm-size" type="range" min="8" max="320" value="48"></div>
+      <div class="sl-wm-outline-row">
+        <div class="field"><label>Обводка</label><input id="wm-outline-color" type="color" value="#000000"></div>
+        <div class="slider-row"><div class="top"><span>Толщина</span><b id="wm-outline-width-val">0 px</b></div><input id="wm-outline-width" type="range" min="0" max="16" value="0" step="0.5"></div>
+      </div>
+    </div>
+    <div class="sl-wm-section sl-wm-logo-section" data-wm-section="image" hidden>
+      <div class="sl-wm-section-title"><span>Логотип</span><small>PNG, WebP, SVG или другое изображение</small></div>
+      <label class="sl-wm-logo-drop"><input id="wm-logo-file" type="file" accept="image/*,.svg"><span><b>Выбрать логотип</b><small id="wm-logo-name">Файл не выбран</small></span></label>
+      <div class="slider-row"><div class="top"><span>Размер логотипа</span><b id="wm-logo-scale-val">18%</b></div><input id="wm-logo-scale" type="range" min="3" max="80" value="18"></div>
+    </div>
+    <div class="sl-wm-section">
+      <div class="sl-wm-section-title"><span>Оформление</span><small>общие параметры</small></div>
+      <div class="slider-row"><div class="top"><span>Прозрачность</span><b id="wm-opacity-val">45%</b></div><input id="wm-opacity" type="range" min="1" max="100" value="45"></div>
+      <div class="slider-row"><div class="top"><span>Поворот</span><b id="wm-rotation-val">0°</b></div><input id="wm-rotation" type="range" min="-180" max="180" value="0"></div>
+    </div>
+    <div class="sl-wm-section">
+      <div class="sl-wm-section-title"><span>Размещение</span><small>один знак или паттерн</small></div>
+      <div class="sl-wm-layout" role="group" aria-label="Режим размещения">
+        <button type="button" class="active" data-wm-layout="single">Один</button>
+        <button type="button" data-wm-layout="pattern">Паттерн</button>
+      </div>
+      <p class="sl-wm-help" data-wm-single-hint>Перетаскивайте знак прямо по изображению.</p>
+      <div class="sl-wm-pattern-controls" hidden>
+        <div class="slider-row"><div class="top"><span>Шаг по X</span><b id="wm-pattern-x-val">28%</b></div><input id="wm-pattern-x" type="range" min="8" max="70" value="28"></div>
+        <div class="slider-row"><div class="top"><span>Шаг по Y</span><b id="wm-pattern-y-val">22%</b></div><input id="wm-pattern-y" type="range" min="8" max="70" value="22"></div>
+        <label class="sl-wm-stagger"><input id="wm-pattern-stagger" type="checkbox" checked><span><b>Смещать соседние ряды</b><small>Создаёт более равномерный диагональный рисунок.</small></span></label>
+      </div>
+    </div>
+    <div class="status-line" id="wm-status">Текстовый водяной знак готов к размещению.</div>
+  `);
   card('background','УДАЛЕНИЕ ФОНА','Цветовой ключ, Magic Wand и ручная маска прозрачности.','');
 
   const batch=card('batch','МАССОВАЯ ОБРАБОТКА','Обрабатывайте много изображений и скачивайте один ZIP.','<label class="batch-drop"><span>Выберите несколько изображений</span><input id="batch-files" type="file" accept="image/*" multiple></label><div class="field-row"><div class="field"><label>Качество</label><input id="b-quality" type="number" min="1" max="100" value="85"></div><div class="field"><label>Макс. ширина</label><input id="b-width" type="number" min="0" value="0"></div></div><div class="batch-progress"><div id="b-bar"></div></div>');
@@ -37,7 +79,7 @@
   card('favicon','FAVICON GENERATOR','Создавайте набор иконок для сайта из одного изображения.','');
 
   const titles={
-    transform:['Трансформация','Поворот и отражение изображений.'],watermark:['Водяной знак','Добавляйте текстовый watermark прямо поверх изображения.'],
+    transform:['Трансформация','Поворот и отражение изображений.'],watermark:['Водяной знак','Текст или логотип с цветом, обводкой, поворотом и повторяющимся паттерном.'],
     background:['Удаление фона','Цветовой ключ, Magic Wand, кисть и Feather для маски прозрачности.'],batch:['Массовая обработка','Обрабатывайте множество изображений одним действием.'],
     metadata:['Метаданные','Проверяйте и очищайте данные изображения.'],favicon:['Favicon Generator','Создавайте набор иконок для сайта.']
   };
