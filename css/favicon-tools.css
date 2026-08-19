@@ -21,14 +21,14 @@
 .sl-favicon-suite{display:none;width:min(1080px,calc(100% - 30px));flex-direction:column;gap:14px}
 .sl-app .preview-wrap.sl-favicon-suite-ready>#previewImg,.sl-app .preview-wrap.sl-favicon-suite-ready>#sl-live-canvas{display:none!important}
 .sl-app .preview-wrap.sl-favicon-suite-ready>.sl-favicon-suite{display:flex}
-.fav-preview-board{padding:32px 38px 24px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:#f8f8f9;box-shadow:0 24px 70px rgba(0,0,0,.24);overflow-x:auto}
+.fav-preview-board{padding:32px 38px 24px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:#0d0d0e;box-shadow:0 24px 70px rgba(0,0,0,.24);overflow-x:auto}
 .fav-preview-lineup{min-width:720px;display:flex;align-items:flex-end;justify-content:space-between;gap:42px}
 .fav-preview-item{min-width:60px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:none}
 .fav-icon-slot{height:190px;display:flex;align-items:flex-end;justify-content:center}
-.fav-icon-slot canvas{display:block;max-width:none!important;max-height:none!important;box-shadow:0 10px 28px rgba(15,23,42,.12);cursor:default}
+.fav-icon-slot canvas{display:block;max-width:none!important;max-height:none!important;box-shadow:0 10px 28px rgba(0,0,0,.28);cursor:default}
 .fav-preview-item[data-size="180"] canvas{width:180px;height:180px;cursor:grab}.fav-preview-item[data-size="180"] canvas:active{cursor:grabbing}
 .fav-preview-item[data-size="128"] canvas{width:128px;height:128px}.fav-preview-item[data-size="64"] canvas{width:64px;height:64px}.fav-preview-item[data-size="32"] canvas{width:32px;height:32px}.fav-preview-item[data-size="16"] canvas{width:16px;height:16px}
-.fav-preview-size{margin-top:18px;color:#0f2748;font:500 15px/1 var(--sans);white-space:nowrap;text-align:center}
+.fav-preview-size{margin-top:18px;color:#a1a1aa;font:500 15px/1 var(--sans);white-space:nowrap;text-align:center}
 
 .fav-contexts{display:grid;grid-template-columns:1.4fr 1fr .8fr;gap:12px}
 .fav-context{min-height:96px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(14,14,17,.84);box-shadow:0 16px 36px rgba(0,0,0,.18)}
