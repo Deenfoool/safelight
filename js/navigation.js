@@ -46,7 +46,9 @@ function loadScript(src,onload){const script=document.createElement('script');sc
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
 loadStyle('css/visual-polish.css?v=5');
 loadStyle('css/theme-settings.css?v=1');
+loadStyle('css/theme-transition.css?v=1');
 loadScript('js/theme-settings.js?v=1');
+loadScript('js/theme-transition.js?v=1');
 loadScript('js/visual-polish.js?v=4');
 loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/live-editor.css?v=5');
