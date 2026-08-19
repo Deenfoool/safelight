@@ -7,7 +7,7 @@
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   const HINT_KEY='safelight:crop-hint-v1';
   const state={x:0,y:0,w:1,h:1,ratio:'free',grid:true};
-  let panel=null,overlay=null,frame=null,tip=null,tipArrow=null,sourceImage=null,sourceSrc='',drag=null,renderRaf=0,exportBusy=false;
+  let panel=null,overlay=null,frame=null,tip=null,tipArrow=null,sourceImage=null,sourceSrc='',sourceToken=0,drag=null,renderRaf=0,exportBusy=false;
 
   function active(){return !!panel?.classList.contains('active')}
   function baseName(){return (($('meta-name')?.textContent||'safelight').trim().replace(/\.[^.]+$/,'')||'safelight')}
@@ -39,8 +39,11 @@
 
   function sourceElement(){return $('previewImg')}
   function loadSource(){
-    const preview=sourceElement(),src=preview?.src||'';if(!src){sourceImage=null;sourceSrc='';return Promise.resolve(null)}if(sourceImage&&sourceSrc===src)return Promise.resolve(sourceImage);
-    return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{sourceImage=image;sourceSrc=src;resetState(false);resolve(image)};image.onerror=()=>reject(new Error('Не удалось открыть изображение'));image.src=src})
+    const preview=sourceElement(),src=preview?.src||'';
+    if(!src){sourceToken++;sourceImage=null;sourceSrc='';return Promise.resolve(null)}
+    if(sourceImage&&sourceSrc===src)return Promise.resolve(sourceImage);
+    const token=++sourceToken;
+    return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>{if(token!==sourceToken||sourceElement()?.src!==src){resolve(null);return}sourceImage=image;sourceSrc=src;resetState(false);resolve(image)};image.onerror=()=>{if(token===sourceToken)reject(new Error('Не удалось открыть изображение'));else resolve(null)};image.src=src})
   }
 
   function ensureOverlay(){
@@ -53,7 +56,7 @@
   function frameRect(rect){return{left:rect.left+state.x*rect.width,top:rect.top+state.y*rect.height,width:state.w*rect.width,height:state.h*rect.height}}
   function scheduleOverlay(){cancelAnimationFrame(renderRaf);renderRaf=requestAnimationFrame(renderOverlay)}
   function renderOverlay(){
-    if(!active()||!sourceImage){if(overlay)overlay.style.display='none';return}ensureOverlay().style.display='block';const rect=targetRect();if(!rect)return;const fr=frameRect(rect);frame.style.left=fr.left+'px';frame.style.top=fr.top+'px';frame.style.width=fr.width+'px';frame.style.height=fr.height+'px';frame.classList.toggle('show-grid',state.grid);
+    if(!active()||!sourceImage)return;ensureOverlay();const rect=targetRect();if(!rect)return;const fr=frameRect(rect);frame.style.left=fr.left+'px';frame.style.top=fr.top+'px';frame.style.width=fr.width+'px';frame.style.height=fr.height+'px';frame.classList.toggle('show-grid',state.grid);
     const shades=overlay.querySelectorAll('.sl-crop-shade'),top=shades[0],right=shades[1],bottom=shades[2],left=shades[3];Object.assign(top.style,{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:Math.max(0,fr.top-rect.top)+'px'});Object.assign(bottom.style,{left:rect.left+'px',top:(fr.top+fr.height)+'px',width:rect.width+'px',height:Math.max(0,rect.top+rect.height-(fr.top+fr.height))+'px'});Object.assign(left.style,{left:rect.left+'px',top:fr.top+'px',width:Math.max(0,fr.left-rect.left)+'px',height:fr.height+'px'});Object.assign(right.style,{left:(fr.left+fr.width)+'px',top:fr.top+'px',width:Math.max(0,rect.left+rect.width-(fr.left+fr.width))+'px',height:fr.height+'px'});updateReadout();positionTip(rect,fr)
   }
   function updateReadout(){if(!sourceImage)return;const w=Math.max(1,Math.round(state.w*sourceImage.naturalWidth)),h=Math.max(1,Math.round(state.h*sourceImage.naturalHeight)),percent=Math.max(1,Math.round(state.w*state.h*100)),text=`${w} × ${h} px`;if($('sl-crop-dims'))$('sl-crop-dims').textContent=text;if($('crop-size-readout'))$('crop-size-readout').textContent=text;if($('crop-percent-readout'))$('crop-percent-readout').textContent=percent+'%';if($('ro-dims')&&active())$('ro-dims').textContent=text;if($('ro-format')&&active())$('ro-format').textContent='CROP'}
@@ -88,8 +91,8 @@
   function centerState(){state.x=(1-state.w)/2;state.y=(1-state.h)/2;scheduleOverlay()}
   function bindPanel(){panel.addEventListener('click',event=>{const ratio=event.target.closest('[data-crop-ratio]');if(ratio){event.preventDefault();applyRatio(ratio.dataset.cropRatio);return}const action=event.target.closest('[data-crop-action]')?.dataset.cropAction;if(!action)return;event.preventDefault();if(action==='full')resetState(true);else if(action==='center')centerState();else if(action==='reset')resetState(false);else if(action==='help')showTip(true)});panel.addEventListener('change',event=>{if(event.target.id==='crop-grid'){state.grid=event.target.checked;scheduleOverlay()}})}
 
-  function activateCrop(){installPanel();document.body.classList.remove('page-home','sl-palette-active','sl-privacy-active');document.body.classList.add('page-tool');setBody(true);document.querySelectorAll('.panel').forEach(item=>item.classList.remove('active'));panel.classList.add('active');document.querySelectorAll('.sl-sidebar .sl-tool,.top-nav-link').forEach(button=>button.classList.toggle('active',button.dataset.page==='crop'));const title=$('sl-inspector-title'),desc=$('sl-inspector-desc');if(title)title.textContent='Обрезка';if(desc)desc.textContent='Тяните края и углы рамки прямо на изображении. Вне рамки — то, что будет удалено.';$('previewWrap')?.classList.remove('sl-live-ready');window.dispatchEvent(new CustomEvent('safelight:toolchange',{detail:{page:'crop-ui'}}));loadSource().then(image=>{if(image){ensureOverlay();scheduleOverlay();setTimeout(()=>showTip(false),360)}}).catch(()=>{})}
-  function leaveCrop(){if(!active())return;setBody(false);if(overlay)overlay.style.display='none'}
+  function activateCrop(){installPanel();document.body.classList.remove('page-home','sl-palette-active','sl-privacy-active');document.body.classList.add('page-tool');setBody(true);document.querySelectorAll('.panel').forEach(item=>item.classList.remove('active'));panel.classList.add('active');document.querySelectorAll('.sl-sidebar .sl-tool,.top-nav-link').forEach(button=>button.classList.toggle('active',button.dataset.page==='crop'));const title=$('sl-inspector-title'),desc=$('sl-inspector-desc');if(title)title.textContent='Обрезка';if(desc)desc.textContent='Тяните края и углы рамки прямо на изображении. Вне рамки — то, что будет удалено.';$('previewWrap')?.classList.remove('sl-live-ready');window.dispatchEvent(new CustomEvent('safelight:toolchange',{detail:{page:'crop-ui'}}));loadSource().then(image=>{if(active()&&image){ensureOverlay();scheduleOverlay();setTimeout(()=>showTip(false),360)}}).catch(()=>{})}
+  function leaveCrop(){cancelAnimationFrame(renderRaf);renderRaf=0;drag=null;setBody(false);hideTip(false);overlay?.style.removeProperty('display')}
 
   function buildCanvas(){if(!sourceImage)throw new Error('Сначала загрузите изображение');const sw=sourceImage.naturalWidth,sh=sourceImage.naturalHeight,x=clamp(Math.round(state.x*sw),0,sw-1),y=clamp(Math.round(state.y*sh),0,sh-1),w=clamp(Math.round(state.w*sw),1,sw-x),h=clamp(Math.round(state.h*sh),1,sh-y),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(sourceImage,x,y,w,h,0,0,w,h);return canvas}
   function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Не удалось подготовить файл')),type,quality))}
@@ -100,7 +103,7 @@
   function bindExport(){document.addEventListener('click',event=>{if(!active())return;if(event.target.closest('#sl-export')){event.preventDefault();event.stopImmediatePropagation();const wrap=document.querySelector('.sl-export-wrap');if(!wrap)return;patchExportMenu();wrap.classList.toggle('open');return}const option=event.target.closest('[data-crop-export]');if(option){event.preventDefault();event.stopImmediatePropagation();document.querySelector('.sl-export-wrap')?.classList.remove('open');exportCrop(option.dataset.cropExport).then(()=>showExportHint('Обрезка экспортирована.')).catch(error=>{console.error(error);showExportHint(error.message||'Не удалось экспортировать обрезку')})}},true)}
 
   function interceptNavigation(){document.addEventListener('click',event=>{const button=event.target.closest('[data-page="crop"]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();activateCrop()},true)}
-  function install(){if(!document.querySelector('.sl-app')||!$('sl-inspector-panels')){setTimeout(install,60);return}installPanel();ensureOverlay();interceptNavigation();bindExport();const preview=sourceElement();if(preview)new MutationObserver(()=>{sourceImage=null;sourceSrc='';loadSource().then(image=>{if(active()&&image){scheduleOverlay();setTimeout(()=>showTip(false),300)}}).catch(()=>{})}).observe(preview,{attributes:true,attributeFilter:['src']});window.addEventListener('resize',scheduleOverlay,{passive:true});window.addEventListener('scroll',scheduleOverlay,{passive:true});window.addEventListener('safelight:toolchange',event=>{if(event.detail?.page==='crop-ui')return;leaveCrop()})}
+  function install(){if(!document.querySelector('.sl-app')||!$('sl-inspector-panels')){setTimeout(install,60);return}installPanel();ensureOverlay();interceptNavigation();bindExport();const preview=sourceElement();if(preview)new MutationObserver(()=>{sourceToken++;sourceImage=null;sourceSrc='';loadSource().then(image=>{if(active()&&image){scheduleOverlay();setTimeout(()=>showTip(false),300)}}).catch(()=>{})}).observe(preview,{attributes:true,attributeFilter:['src']});window.addEventListener('resize',scheduleOverlay,{passive:true});window.addEventListener('scroll',scheduleOverlay,{passive:true});window.addEventListener('safelight:toolchange',event=>{if(event.detail?.page==='crop-ui')return;leaveCrop()})}
 
   window.safelightCropTools=Object.freeze({activate:activateCrop,export:exportCrop,state:()=>({...state}),showHelp:()=>showTip(true)});install();
 })();
