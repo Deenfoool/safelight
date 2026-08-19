@@ -47,7 +47,7 @@ function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.incl
 loadStyle('css/visual-polish.css?v=4');loadScript('js/visual-polish.js?v=4');
 loadScript('js/advanced.js?v=11',()=>{
   loadStyle('css/live-editor.css?v=5');
-  loadStyle('css/direct-manipulation.css?v=2');
+  loadStyle('css/direct-manipulation.css?v=3');
   loadStyle('css/editor-polish.css?v=2');
   loadStyle('css/favicon-tools.css?v=2');
   loadStyle('css/adjust-tools.css?v=1');
