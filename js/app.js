@@ -92,12 +92,6 @@
       $("ro-size").textContent = formatBytes(file.size);
       $("ro-format").textContent = (file.type.replace("image/", "") || "—").toUpperCase();
 
-      $("t-name").textContent = file.name;
-      $("t-name2").textContent = file.name;
-      $("t-status").textContent = "готово — изображение загружено";
-      $("t-dims").textContent = imgW + "x" + imgH + " px, " + (file.type.replace("image/", "") || "—").toUpperCase();
-      $("t-size").textContent = formatBytes(file.size);
-
       syncDimensionControls(imgW, imgH);
       window.dispatchEvent(new CustomEvent("safelight:source-file", { detail: { width: imgW, height: imgH, size: file.size, type: file.type, name: file.name } }));
 
@@ -120,8 +114,6 @@
     imgW = width;
     imgH = height;
     syncDimensionControls(width, height);
-    if ($("t-status")) $("t-status").textContent = event.detail?.undo ? "рабочая версия восстановлена" : "изменения применены к рабочей версии";
-    if ($("t-dims")) $("t-dims").textContent = width + "x" + height + " px";
   });
 
   $("s-mode").querySelectorAll("button").forEach((button) => {
