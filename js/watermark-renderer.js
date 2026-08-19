@@ -4,9 +4,9 @@
   window.safelightWatermarkRendererLoaded=true;
 
   const $=id=>document.getElementById(id);
-  let sourceCache={src:'',image:null};
-  let logoCache={src:'',image:null};
+  let sourceCache={src:'',image:null},logoCache={src:'',image:null},bridgeBusy=false;
 
+  function currentTool(){return document.querySelector('#sl-inspector-panels .panel.active')?.id.replace(/^panel-/,'')||''}
   function imageFrom(src){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Не удалось открыть изображение'));image.src=src})}
   async function cachedImage(cache,src,label){if(!src)throw new Error(label||'Изображение не выбрано');if(cache.src===src&&cache.image?.naturalWidth)return cache.image;const image=await imageFrom(src);cache.src=src;cache.image=image;return image}
   function state(){
@@ -32,9 +32,7 @@
       const pattern=patternSteps(out,ctx,s,logo);let row=0;
       for(let y=pattern.stepY*.5;y<out.height+pattern.stepY*.5;y+=pattern.stepY,row++){
         const offset=s.stagger&&row%2?pattern.stepX*.5:0;
-        for(let x=pattern.stepX*.5-offset;x<out.width+pattern.stepX*.5;x+=pattern.stepX){
-          if(s.kind==='image')drawLogo(ctx,s,logo,x,y,Math.min(pattern.itemWidth,pattern.stepX*.82));else drawText(ctx,s,x,y);
-        }
+        for(let x=pattern.stepX*.5-offset;x<out.width+pattern.stepX*.5;x+=pattern.stepX){if(s.kind==='image')drawLogo(ctx,s,logo,x,y,Math.min(pattern.itemWidth,pattern.stepX*.82));else drawText(ctx,s,x,y)}
       }
       return out;
     }
@@ -43,6 +41,34 @@
     return out
   }
   function invalidate(){sourceCache={src:'',image:null}}
+  function canvasBlob(canvas,type,quality){return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Не удалось подготовить файл')),type,quality))}
+  function baseName(){return(($('meta-name')?.textContent||'safelight').trim().replace(/\.[^.]+$/,'')||'safelight')}
+  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
+  function hint(text){const el=$('sl-export-hint');if(!el)return;el.textContent=text;el.classList.add('show');clearTimeout(hint.timer);hint.timer=setTimeout(()=>el.classList.remove('show'),2800)}
+  function primeLive(canvas){let live=$('sl-live-canvas');const wrap=$('previewWrap');if(!live&&wrap){live=document.createElement('canvas');live.id='sl-live-canvas';live.className='sl-live-canvas';wrap.appendChild(live)}if(!live)throw new Error('Предпросмотр результата недоступен');live.width=canvas.width;live.height=canvas.height;const ctx=live.getContext('2d');ctx.clearRect(0,0,live.width,live.height);ctx.drawImage(canvas,0,0);wrap?.classList.add('sl-live-ready');window.dispatchEvent(new CustomEvent('safelight:live-render',{detail:{tool:'watermark',width:canvas.width,height:canvas.height}}))}
+  async function exportResult(format){
+    let canvas=await render();
+    if(format==='jpeg'){const opaque=document.createElement('canvas');opaque.width=canvas.width;opaque.height=canvas.height;const ctx=opaque.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,opaque.width,opaque.height);ctx.drawImage(canvas,0,0);canvas=opaque;download(await canvasBlob(canvas,'image/jpeg',.94),baseName()+'-watermark.jpg');return}
+    if(format==='webp'){download(await canvasBlob(canvas,'image/webp',.92),baseName()+'-watermark.webp');return}
+    if(format==='png'){download(await canvasBlob(canvas,'image/png'),baseName()+'-watermark.png');return}
+    if(format==='pdf'){
+      if(!window.jspdf?.jsPDF)throw new Error('PDF-модуль не загрузился');const{jsPDF}=window.jspdf,orientation=canvas.width>canvas.height?'landscape':'portrait',doc=new jsPDF({orientation,unit:'mm',format:'a4'}),pageW=doc.internal.pageSize.getWidth(),pageH=doc.internal.pageSize.getHeight(),margin=10,scale=Math.min((pageW-margin*2)/canvas.width,(pageH-margin*2)/canvas.height),w=canvas.width*scale,h=canvas.height*scale;
+      doc.addImage(canvas.toDataURL('image/png'),'PNG',(pageW-w)/2,(pageH-h)/2,w,h,undefined,'FAST');download(doc.output('blob'),baseName()+'-watermark.pdf');return
+    }
+    throw new Error('Неподдерживаемый формат экспорта')
+  }
+  function installBridge(){
+    document.addEventListener('click',event=>{
+      if(currentTool()!=='watermark')return;
+      if(event.target.closest('#sl-apply')){
+        event.preventDefault();event.stopImmediatePropagation();if(bridgeBusy)return;bridgeBusy=true;
+        render().then(canvas=>{primeLive(canvas);return window.safelightApplyTools?.apply?.()}).catch(error=>{console.error('Safelight watermark apply:',error);hint(error.message||'Не удалось применить водяной знак')}).finally(()=>bridgeBusy=false);return
+      }
+      const option=event.target.closest('.sl-export-option[data-export]');if(!option)return;const format=option.dataset.export;if(!['jpeg','webp','png','pdf'].includes(format))return;
+      event.preventDefault();event.stopImmediatePropagation();document.querySelector('.sl-export-wrap')?.classList.remove('open');if(bridgeBusy)return;bridgeBusy=true;
+      exportResult(format).then(()=>hint('Водяной знак экспортирован.')).catch(error=>{console.error('Safelight watermark export:',error);hint(error.message||'Не удалось экспортировать водяной знак')}).finally(()=>bridgeBusy=false)
+    },true)
+  }
   const preview=$('previewImg');if(preview)new MutationObserver(invalidate).observe(preview,{attributes:true,attributeFilter:['src']});
-  window.safelightWatermarkTools=Object.freeze({render,state,hasLogo:()=>!!state().assetUrl});
+  window.safelightWatermarkTools=Object.freeze({render,state,hasLogo:()=>!!state().assetUrl,export:exportResult});installBridge();
 })();
