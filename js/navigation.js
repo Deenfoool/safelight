@@ -49,7 +49,7 @@ loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/live-editor.css?v=5');
   loadStyle('css/direct-manipulation.css?v=3');
   loadStyle('css/editor-polish.css?v=2');
-  loadStyle('css/favicon-tools.css?v=2');
+  loadStyle('css/favicon-tools.css?v=3');
   loadStyle('css/adjust-tools.css?v=1');
   loadStyle('css/canvas-tools.css?v=2');
   loadStyle('css/crop-tools.css?v=1');
