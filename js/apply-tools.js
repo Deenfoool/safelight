@@ -4,8 +4,8 @@
   window.safelightApplyToolsLoaded=true;
 
   const $=id=>document.getElementById(id);
-  const SUPPORTED=new Set(['resize','crop','adjust','transform','watermark','canvas','privacy','annotation']);
-  const TOOL_LABELS={resize:'Размер',crop:'Обрезка',adjust:'Коррекция',transform:'Трансформация',watermark:'Водяной знак',canvas:'Холст',privacy:'Размытие / пикселизация',annotation:'Аннотации'};
+  const SUPPORTED=new Set(['resize','crop','adjust','transform','watermark','canvas','privacy','annotation','background']);
+  const TOOL_LABELS={resize:'Размер',crop:'Обрезка',adjust:'Коррекция',transform:'Трансформация',watermark:'Водяной знак',canvas:'Холст',privacy:'Размытие / пикселизация',annotation:'Аннотации',background:'Удаление фона'};
   const MAX_HISTORY=20;
 
   let history=[];
@@ -53,6 +53,7 @@
     if(tool==='adjust'&&typeof window.safelightAdjustTools?.render==='function'){const canvas=await window.safelightAdjustTools.render();if(canvas)return copyCanvas(canvas)}
     if(tool==='canvas'&&typeof window.safelightCanvasTools?.render==='function'){const canvas=await window.safelightCanvasTools.render();if(canvas)return copyCanvas(canvas)}
     if(tool==='annotation'&&typeof window.safelightAnnotationTools?.render==='function'){const canvas=await window.safelightAnnotationTools.render();if(canvas)return copyCanvas(canvas)}
+    if(tool==='background'&&typeof window.safelightBackgroundRemovalTools?.render==='function'){const canvas=await window.safelightBackgroundRemovalTools.render();if(canvas)return copyCanvas(canvas)}
     if(tool==='privacy'){
       const live=$('sl-live-canvas'),wrap=$('previewWrap');if(live&&live.width&&live.height&&wrap?.classList.contains('sl-live-ready'))return copyCanvas(live);
       throw new Error('Предпросмотр размытия ещё не готов');
@@ -118,7 +119,7 @@
 
   function neutralizeAfterApply(tool,width,height){
     if(tool==='resize'){if($('r-width'))$('r-width').value=width;if($('r-height'))$('r-height').value=height;['r-width','r-height'].forEach(id=>$(id)?.dispatchEvent(new Event('input',{bubbles:true})));return}
-    if(tool==='crop'){return}
+    if(tool==='crop'||tool==='background'){return}
     if(tool==='transform'&&window.safelightTransformState){window.safelightTransformState.angle=0;window.safelightTransformState.h=false;window.safelightTransformState.v=false;window.dispatchEvent(new CustomEvent('safelight:direct-state'));return}
     if(tool==='watermark'){setTimeout(()=>window.safelightActivate?.('convert'),40);return}
     if(tool==='privacy'){$('sl-reset')?.click();return}
@@ -137,6 +138,7 @@
     const tool=currentTool();if(!SUPPORTED.has(tool))return;
     if(tool==='watermark'){window.safelightActivate?.('convert');return}
     if(tool==='annotation'){window.safelightAnnotationTools?.clear?.();return}
+    if(tool==='background'){window.safelightBackgroundRemovalTools?.reset?.();return}
     $('sl-reset')?.click();
     if(tool==='transform'&&window.safelightTransformState){window.safelightTransformState.angle=0;window.safelightTransformState.h=false;window.safelightTransformState.v=false;window.dispatchEvent(new CustomEvent('safelight:direct-state'))}
   }
