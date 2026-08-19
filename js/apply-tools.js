@@ -99,7 +99,13 @@
   }
 
   function pruneRedo(){if(historyIndex<history.length-1)history.splice(historyIndex+1)}
-  function trimHistory(){if(history.length<=MAX_HISTORY)return;const remove=history.length-MAX_HISTORY;history.splice(0,remove);historyIndex=Math.max(0,historyIndex-remove)}
+  function trimHistory(){
+    while(history.length>MAX_HISTORY){
+      const removeIndex=history[0]?.tool==='source'&&history.length>1?1:0;
+      history.splice(removeIndex,1);
+      if(historyIndex>=removeIndex)historyIndex=Math.max(0,historyIndex-1);
+    }
+  }
 
   async function ensureHistoryReady(){
     const preview=$('previewImg');if(!preview?.src)return false;
@@ -176,9 +182,9 @@
     const apple=/Mac|iPhone|iPad|iPod/i.test(navigator.platform||navigator.userAgent||'');
     const undo=$('sl-history-undo'),redo=$('sl-history-redo');if(undo)undo.dataset.tooltip=apple?'Undo · ⌘Z':'Undo · Ctrl+Z';if(redo)redo.dataset.tooltip=apple?'Redo · ⌘⇧Z':'Redo · Ctrl+Shift+Z / Ctrl+Y';
     document.addEventListener('keydown',event=>{
-      if(editableTarget(event.target)||event.altKey)return;const key=(event.key||'').toLowerCase(),modifier=event.ctrlKey||event.metaKey;if(!modifier)return;
-      if(key==='z'){event.preventDefault();if(event.shiftKey)redoHistory();else undoHistory();return}
-      if(key==='y'&&event.ctrlKey&&!event.metaKey){event.preventDefault();redoHistory()}
+      if(editableTarget(event.target)||event.altKey)return;const key=(event.key||'').toLowerCase(),code=event.code||'',modifier=event.ctrlKey||event.metaKey;if(!modifier)return;
+      if(key==='z'||code==='KeyZ'){event.preventDefault();if(event.shiftKey)redoHistory();else undoHistory();return}
+      if((key==='y'||code==='KeyY')&&event.ctrlKey&&!event.metaKey){event.preventDefault();redoHistory()}
     });
   }
 
