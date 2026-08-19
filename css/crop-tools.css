@@ -20,7 +20,9 @@ body.sl-crop-active .sl-app .preview-wrap.sl-live-ready>#previewImg,
 body.sl-crop-active .sl-app .preview-wrap>#previewImg{display:block!important;opacity:1!important;visibility:visible!important}
 body.sl-crop-active .sl-app .preview-wrap>#sl-live-canvas{display:none!important}
 body.sl-crop-active .preview-wrap{overflow:visible!important}
-.sl-crop-overlay{position:absolute;inset:0;z-index:35;pointer-events:none;overflow:visible}
+/* Crop owns this overlay exclusively. Outside crop it cannot be displayed, even by stale inline state. */
+.sl-crop-overlay{display:none!important;position:absolute;inset:0;z-index:35;pointer-events:none;overflow:visible}
+body.sl-crop-active .sl-crop-overlay{display:block!important}
 .sl-crop-shade{position:absolute;background:rgba(0,0,0,.58);pointer-events:none;backdrop-filter:saturate(.78)}
 .sl-crop-frame{position:absolute;box-sizing:border-box;border:1px solid rgba(163,230,53,.98);box-shadow:0 0 0 1px rgba(0,0,0,.5),0 0 22px rgba(163,230,53,.08);cursor:move;pointer-events:auto;touch-action:none}
 .sl-crop-frame::before,.sl-crop-frame::after{content:"";position:absolute;inset:0;pointer-events:none}
