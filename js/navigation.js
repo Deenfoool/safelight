@@ -50,9 +50,10 @@ loadStyle('css/theme-transition.css?v=1');
 loadScript('js/theme-settings.js?v=1');
 loadScript('js/theme-transition.js?v=1');
 loadScript('js/visual-polish.js?v=4');
-loadScript('js/advanced.js?v=14',()=>{
+loadScript('js/advanced.js?v=15',()=>{
   loadStyle('css/live-editor.css?v=5');
   loadStyle('css/direct-manipulation.css?v=3');
+  loadStyle('css/watermark-tools.css?v=1');
   loadStyle('css/editor-polish.css?v=2');
   loadStyle('css/favicon-tools.css?v=3');
   loadStyle('css/adjust-tools.css?v=3');
@@ -78,7 +79,8 @@ loadScript('js/advanced.js?v=14',()=>{
                   loadScript('js/annotation-ui.js?v=1',()=>{
                     loadScript('js/favicon-tools.js?v=1',()=>{
                       loadScript('js/favicon-background.js?v=1',()=>{
-                        loadScript('js/direct-manipulation.js?v=4',()=>{
+                        loadScript('js/direct-manipulation.js?v=5',()=>{
+                          loadScript('js/watermark-renderer.js?v=1');
                           loadScript('js/editor-polish.js?v=5',()=>{
                             loadScript('js/apply-tools.js?v=6',()=>{
                               loadScript('js/ui-motion.js?v=2');
