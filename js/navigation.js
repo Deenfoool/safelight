@@ -55,7 +55,7 @@ loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/direct-manipulation.css?v=3');
   loadStyle('css/editor-polish.css?v=2');
   loadStyle('css/favicon-tools.css?v=3');
-  loadStyle('css/adjust-tools.css?v=1');
+  loadStyle('css/adjust-tools.css?v=2');
   loadStyle('css/canvas-tools.css?v=2');
   loadStyle('css/crop-tools.css?v=1');
   loadStyle('css/apply-tools.css?v=2');
@@ -69,6 +69,7 @@ loadScript('js/advanced.js?v=13',()=>{
         loadScript('js/preview-render-guard.js?v=2',()=>{
           loadScript('js/crop-tools.js?v=2',()=>{
             loadScript('js/adjust-tools.js?v=1',()=>{
+              loadScript('js/adjust-accordion.js?v=1');
               loadScript('js/canvas-tools.js?v=2',()=>{
                 loadScript('js/annotation-tools.js?v=1',()=>{
                   loadScript('js/annotation-ui.js?v=1',()=>{
