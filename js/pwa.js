@@ -5,13 +5,40 @@
 
   let deferredPrompt = null;
 
-  function installManifest() {
-    if (!document.querySelector('link[rel="manifest"]')) {
+  function installFavicons() {
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach((link) => link.remove());
+
+    const icons = [
+      ["icon", "16x16", "assets/images/favicon-16x16.png?v=2"],
+      ["icon", "32x32", "assets/images/favicon-32x32.png?v=2"],
+      ["icon", "48x48", "assets/images/favicon-48x48.png?v=2"],
+      ["icon", "64x64", "assets/images/favicon-64x64.png?v=2"]
+    ];
+
+    icons.forEach(([rel, sizes, href]) => {
       const link = document.createElement("link");
+      link.rel = rel;
+      link.type = "image/png";
+      link.sizes = sizes;
+      link.href = href;
+      document.head.appendChild(link);
+    });
+
+    const apple = document.createElement("link");
+    apple.rel = "apple-touch-icon";
+    apple.href = "assets/images/android-chrome-192x192.png?v=2";
+    document.head.appendChild(apple);
+  }
+
+  function installManifest() {
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement("link");
       link.rel = "manifest";
-      link.href = "manifest.webmanifest";
       document.head.appendChild(link);
     }
+    link.href = "manifest.webmanifest?v=2";
+
     const metas = [
       ["apple-mobile-web-app-capable", "yes"],
       ["apple-mobile-web-app-status-bar-style", "black-translucent"],
@@ -82,6 +109,7 @@
     return button;
   }
 
+  installFavicons();
   installManifest();
   installCustomScrollbars();
 
