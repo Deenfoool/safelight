@@ -44,7 +44,10 @@ const hero=document.getElementById('hero-cta');if(hero)hero.addEventListener('cl
 document.addEventListener('click',e=>{if(!e.target.closest('.nav-group'))closeMenus()});const observer=new MutationObserver(buildGroups);if(nav)observer.observe(nav,{childList:true});[0,150,500].forEach(d=>setTimeout(buildGroups,d));window.safelightActivate=activate;activate('home');
 function loadScript(src,onload){const script=document.createElement('script');script.src=src;script.onerror=()=>console.error('Safelight: failed to load',src);if(onload)script.onload=onload;document.body.appendChild(script)}
 function loadStyle(src){if([...document.styleSheets].some(s=>s.href&&s.href.includes(src.split('?')[0])))return;const link=document.createElement('link');link.rel='stylesheet';link.href=src;document.head.appendChild(link)}
-loadStyle('css/visual-polish.css?v=5');loadScript('js/visual-polish.js?v=4');
+loadStyle('css/visual-polish.css?v=5');
+loadStyle('css/theme-settings.css?v=1');
+loadScript('js/theme-settings.js?v=1');
+loadScript('js/visual-polish.js?v=4');
 loadScript('js/advanced.js?v=13',()=>{
   loadStyle('css/live-editor.css?v=5');
   loadStyle('css/direct-manipulation.css?v=3');
