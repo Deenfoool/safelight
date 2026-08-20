@@ -4,7 +4,7 @@
 
 Compress, convert, resize, crop, blur, inspect metadata, extract palettes and more — without uploading your images to a server.
 
-[**Open Safelight**](https://deenfoool.github.io/safelight/) · [Roadmap](ROADMAP.md) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [MIT License](LICENSE)
+[**Open Safelight**](https://deenfoool.github.io/safelight/) · [Roadmap](ROADMAP.md) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [Attribution License](LICENSE)
 
 ![Safelight interface](portfolio.png)
 
@@ -138,4 +138,12 @@ Contributions and practical feedback are welcome.
 
 ## License
 
-Safelight itself is released under the [MIT License](LICENSE). The bundled HEIC codec contains third-party components with their own licenses; see [Third-party notices](THIRD_PARTY_NOTICES.md).
+Safelight is released under the custom [Safelight Attribution License 1.0](LICENSE). Public use, deployment, redistribution, modified versions and derivative products that use Safelight or a substantial portion of it must provide clear attribution to the original project and a working link to https://github.com/Deenfoool/safelight.
+
+Minimum attribution:
+
+> Based on Safelight — https://github.com/Deenfoool/safelight
+
+Private/internal use does not require a user-facing notice, but copies must retain the license and original project reference. Commercial use is permitted as long as the attribution requirements are followed.
+
+The bundled HEIC codec and other third-party components retain their own licenses; see [Third-party notices](THIRD_PARTY_NOTICES.md).
