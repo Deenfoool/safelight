@@ -383,6 +383,10 @@
 
     fileInput.addEventListener("change", (event) => addFiles(event.target.files), true);
     dropzone?.addEventListener("drop", (event) => addFiles(event.dataTransfer?.files), true);
+    window.addEventListener("safelight:clipboard-file", (event) => {
+      const file = event.detail?.file;
+      if (file) addFiles([file]);
+    });
 
     stage.addEventListener("dragover", (event) => {
       event.preventDefault();

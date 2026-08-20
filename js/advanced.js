@@ -99,6 +99,10 @@
         <div class="field sl-batch-size-field" id="b-size-field" hidden><label for="b-size">Целевой размер, px</label><input id="b-size" type="number" min="1" max="16384" value="1920"></div>
         <label class="check-row sl-batch-upscale" id="b-upscale-row" hidden><input id="b-no-upscale" type="checkbox" checked><span><b>Не увеличивать маленькие изображения</b><small>Изменяется только размер файлов крупнее заданного</small></span></label>
         <div class="slider-row" id="b-quality-row"><div class="top"><span>Качество</span><b id="b-quality-val">85%</b></div><input id="b-quality" type="range" min="1" max="100" value="85"></div>
+        <div class="field-row sl-batch-two">
+          <div class="field"><label for="b-background">Фон прозрачности</label><select id="b-background"><option value="transparent" selected>Сохранить</option><option value="white">Белый</option><option value="custom">Свой цвет</option></select></div>
+          <div class="field" id="b-bg-color-field" hidden><label for="b-bg-color">Цвет фона</label><input id="b-bg-color" type="color" value="#ffffff"></div>
+        </div>
       </div>
 
       <div class="sl-batch-section">

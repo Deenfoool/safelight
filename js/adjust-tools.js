@@ -6,15 +6,16 @@
   const $=id=>document.getElementById(id);
   const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
   const CURVE_X=[0,64,128,192,255];
+  const PREVIEW_MAX_SIDE=1800,PREVIEW_MAX_PIXELS=2200000;
   let sourceImage=null;
   let sourceSrc="";
   let renderTimer=0;
   let renderToken=0;
-  let lastCanvas=null;
   let exporting=false;
   let curveDrag=-1;
 
   function active(){return !!document.querySelector("#panel-adjust.active")}
+  function previewScale(width,height){return Math.min(1,PREVIEW_MAX_SIDE/Math.max(1,width,height),Math.sqrt(PREVIEW_MAX_PIXELS/Math.max(1,width*height)))}
   function number(id,fallback){const value=Number($(id)?.value);return Number.isFinite(value)?value:fallback}
   function curveValues(){
     return [
@@ -447,9 +448,9 @@
     const ctx=out.getContext("2d");ctx.filter=`blur(${radius}px)`;ctx.drawImage(canvas,0,0);ctx.filter="none";return out;
   }
 
-  function denoise(canvas,amount,detail){
+  function denoise(canvas,amount,detail,pixelScale){
     if(amount<=0||canvas.width<2||canvas.height<2)return;
-    const radius=.45+amount/100*1.55,blurred=blurredCopy(canvas,radius);
+    const radius=Math.max(.25,(.45+amount/100*1.55)*(pixelScale||1)),blurred=blurredCopy(canvas,radius);
     const ctx=canvas.getContext("2d",{willReadFrequently:true}),original=ctx.getImageData(0,0,canvas.width,canvas.height),smooth=blurred.getContext("2d",{willReadFrequently:true}).getImageData(0,0,canvas.width,canvas.height),a=original.data,b=smooth.data;
     const strength=amount/100,edgeLimit=8+detail/100*62;
     for(let i=0;i<a.length;i+=4){
@@ -484,35 +485,32 @@
     ctx.save();ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);ctx.restore();
   }
 
-  async function buildCanvas(){
+  async function buildCanvas(options){
     const image=await loadSource();if(!image)return null;
-    const s=state(),canvas=document.createElement("canvas");canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const s=state(),scale=options?.preview?previewScale(image.naturalWidth,image.naturalHeight):1,canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
     const ctx=canvas.getContext("2d"),exposure=Math.pow(2,s.exposure),brightness=clamp(exposure*(1+s.brightness/100),0,4);
-    ctx.filter=`brightness(${brightness}) contrast(${clamp(100+s.contrast,0,200)}%) saturate(${clamp(100+s.saturation,0,200)}%) blur(${s.blur}px) sepia(${s.sepia}%) grayscale(${s.grayscale?100:0}%)`;
+    ctx.filter=`brightness(${brightness}) contrast(${clamp(100+s.contrast,0,200)}%) saturate(${clamp(100+s.saturation,0,200)}%) blur(${s.blur*scale}px) sepia(${s.sepia}%) grayscale(${s.grayscale?100:0}%)`;
     ctx.drawImage(image,0,0,canvas.width,canvas.height);ctx.filter="none";
     tonePixels(canvas,s);
-    denoise(canvas,s.denoise,s.denoiseDetail);
-    unsharpMask(canvas,s.sharpness,s.sharpRadius,s.sharpThreshold);
+    denoise(canvas,s.denoise,s.denoiseDetail,scale);
+    unsharpMask(canvas,s.sharpness,Math.max(.2,s.sharpRadius*scale),s.sharpThreshold);
     vignette(canvas,s.vignette,s.vignetteFeather);
     return canvas;
   }
-
-  function copyCanvas(input){const out=document.createElement("canvas");out.width=input.width;out.height=input.height;out.getContext("2d").drawImage(input,0,0);return out}
 
   async function renderNow(){
     if(!active())return null;
     const token=++renderToken;
     try{
-      const built=await buildCanvas();
+      const built=await buildCanvas({preview:true});
       if(!built||token!==renderToken||!active())return null;
       const live=$("sl-live-canvas");if(!live)return null;
       live.width=built.width;live.height=built.height;
       const ctx=live.getContext("2d");ctx.clearRect(0,0,live.width,live.height);ctx.drawImage(built,0,0);
       $("previewWrap")?.classList.add("sl-live-ready");
-      lastCanvas=copyCanvas(built);
-      if($("ro-dims"))$("ro-dims").textContent=`${built.width} × ${built.height} px`;
+      if($("ro-dims"))$("ro-dims").textContent=`${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} px`;
       if($("ro-format"))$("ro-format").textContent="LIVE";
-      return lastCanvas;
+      return built;
     }catch(error){console.error("Safelight advanced adjust:",error);return null}
   }
 
@@ -532,7 +530,7 @@
   async function exportAdjusted(format){
     if(exporting)return;exporting=true;
     try{
-      const canvas=await renderNow()||lastCanvas;if(!canvas)throw new Error("Сначала загрузите изображение");
+      const canvas=await buildCanvas({preview:false});if(!canvas)throw new Error("Сначала загрузите изображение");
       if(format==="heic"){
         const encoder=window.safelightHeicCodec?.encodeCanvas;if(typeof encoder!=="function")throw new Error("HEIC WASM-кодек не загрузился");
         download(await encoder(canvas),baseName()+"-safelight.heic");
@@ -571,7 +569,7 @@
     if(!panel||!preview||!app){setTimeout(boot,50);return}
     installPanel();installExportOverride();
     new MutationObserver(()=>{
-      sourceImage=null;sourceSrc="";lastCanvas=null;
+      sourceImage=null;sourceSrc="";
       if(active())scheduleRender(0);
     }).observe(preview,{attributes:true,attributeFilter:["src"]});
     window.addEventListener("safelight:toolchange",()=>setTimeout(()=>{updateInspector();if(active()){scheduleRender(0);refreshHistogram();drawCurve()}},20));
@@ -584,7 +582,7 @@
     updateInspector();if(active())scheduleRender(0);
   }
 
-  const api=Object.freeze({render:renderNow,state,applyPreset,reset:()=>resetAdjustments(true),autoLevels:applyAutoLevels});
+  const api=Object.freeze({render:()=>buildCanvas({preview:false}),renderPreview:renderNow,state,applyPreset,reset:()=>resetAdjustments(true),autoLevels:applyAutoLevels});
   window.safelightAdjustTools=api;
   window.safelightAdvancedAdjust=api;
   boot();

@@ -7,6 +7,8 @@
   const MODES = new Set(["blur", "pixelate", "black"]);
   const SHAPES = new Set(["rect", "ellipse", "free"]);
   const MIN_AREA = 0.012;
+  const PREVIEW_MAX_SIDE = 1800;
+  const PREVIEW_MAX_PIXELS = 2200000;
   const $ = (id) => document.getElementById(id);
   const state = {
     mode: "blur",
@@ -21,12 +23,15 @@
     sourceToken: 0,
     renderTimer: 0,
     renderToken: 0,
-    lastCanvas: null,
     faceBusy: false,
   };
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function previewScale(width, height) {
+    return Math.min(1, PREVIEW_MAX_SIDE / Math.max(1, width, height), Math.sqrt(PREVIEW_MAX_PIXELS / Math.max(1, width * height)));
   }
 
   function active() {
@@ -532,12 +537,13 @@
     }
   }
 
-  async function buildCanvas() {
+  async function buildCanvas(options) {
     const source = await loadSource();
     if (!source) return null;
+    const scale = options?.preview ? previewScale(source.naturalWidth, source.naturalHeight) : 1;
     const output = document.createElement("canvas");
-    output.width = source.naturalWidth;
-    output.height = source.naturalHeight;
+    output.width = Math.max(1, Math.round(source.naturalWidth * scale));
+    output.height = Math.max(1, Math.round(source.naturalHeight * scale));
     const context = output.getContext("2d");
     context.drawImage(source, 0, 0, output.width, output.height);
 
@@ -553,7 +559,7 @@
         context.fillStyle = "#050505";
         context.fillRect(x, y, width, height);
       } else if (area.mode === "pixelate") {
-        const block = Math.max(2, Math.round(area.strength));
+        const block = Math.max(2, Math.round(area.strength * scale));
         const tiny = document.createElement("canvas");
         tiny.width = Math.max(1, Math.ceil(width / block));
         tiny.height = Math.max(1, Math.ceil(height / block));
@@ -561,7 +567,8 @@
         context.imageSmoothingEnabled = false;
         context.drawImage(tiny, 0, 0, tiny.width, tiny.height, x, y, width, height);
       } else {
-        const padding = Math.ceil(Math.max(2, area.strength) * 2.5);
+        const blur = Math.max(1, area.strength * scale);
+        const padding = Math.ceil(Math.max(2, blur) * 2.5);
         const sourceX = Math.max(0, x - padding);
         const sourceY = Math.max(0, y - padding);
         const sourceWidth = Math.min(output.width - sourceX, width + padding * 2);
@@ -570,7 +577,7 @@
         patch.width = Math.max(1, sourceWidth);
         patch.height = Math.max(1, sourceHeight);
         patch.getContext("2d").drawImage(output, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, patch.width, patch.height);
-        context.filter = "blur(" + Math.max(1, area.strength) + "px)";
+        context.filter = "blur(" + blur + "px)";
         context.drawImage(patch, sourceX, sourceY);
         context.filter = "none";
       }
@@ -601,10 +608,11 @@
     try {
       const source = await loadSource();
       if (!source) throw new Error("Изображение изменилось");
+      const scale = previewScale(source.naturalWidth, source.naturalHeight);
       const canvas = document.createElement("canvas");
-      canvas.width = source.naturalWidth;
-      canvas.height = source.naturalHeight;
-      canvas.getContext("2d").drawImage(source, 0, 0);
+      canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+      canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
       const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 50 });
       const faces = await detector.detect(canvas);
       let added = 0;
@@ -648,7 +656,7 @@
     if (!active()) return;
     const token = ++state.renderToken;
     try {
-      const built = await buildCanvas();
+      const built = await buildCanvas({ preview: true });
       if (!built || token !== state.renderToken || !active()) return;
       const wrap = $("previewWrap");
       if (!wrap) return;
@@ -664,12 +672,8 @@
       const context = live.getContext("2d");
       context.clearRect(0, 0, live.width, live.height);
       context.drawImage(built, 0, 0);
-      state.lastCanvas = document.createElement("canvas");
-      state.lastCanvas.width = live.width;
-      state.lastCanvas.height = live.height;
-      state.lastCanvas.getContext("2d").drawImage(live, 0, 0);
       wrap.classList.add("sl-live-ready");
-      if ($("ro-dims")) $("ro-dims").textContent = live.width + " × " + live.height + " px";
+      if ($("ro-dims")) $("ro-dims").textContent = state.sourceImage.naturalWidth + " × " + state.sourceImage.naturalHeight + " px";
       if ($("ro-format")) $("ro-format").textContent = "CENSORED";
       requestAnimationFrame(syncSurface);
     } catch (error) {
@@ -697,7 +701,7 @@
   }
 
   async function exportResult(format) {
-    const canvas = await buildCanvas();
+    const canvas = await buildCanvas({ preview: false });
     if (!canvas) throw new Error("Изображение изменилось. Повторите экспорт.");
     if (format === "pdf") {
       if (!window.jspdf?.jsPDF) throw new Error("Локальный PDF-модуль не загрузился");
@@ -903,7 +907,8 @@
   }
 
   window.safelightPrivacyEffects = Object.freeze({
-    render: async () => buildCanvas(),
+    render: async () => buildCanvas({ preview: false }),
+    renderPreview: renderCurrent,
     getAreas: () => state.areas.map((area) => ({ ...area, points: area.points?.map((item) => ({ ...item })) })),
     addArea,
     detectFaces,

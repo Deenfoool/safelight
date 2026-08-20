@@ -240,10 +240,13 @@
     const upscale = $("b-upscale-row");
     const qualityRow = $("b-quality-row");
     const quality = $("b-quality");
+    const background = $("b-background")?.value || "transparent";
+    const colorField = $("b-bg-color-field");
     if (sizeField) sizeField.hidden = !resizing;
     if (upscale) upscale.hidden = !resizing;
     if (qualityRow) qualityRow.classList.toggle("muted", format === "png" || format === "heic");
     if (quality) quality.disabled = state.running || format === "png" || format === "heic";
+    if (colorField) colorField.hidden = background !== "custom";
     if ($("b-quality-val")) $("b-quality-val").textContent = (quality?.value || "85") + "%";
   }
 
@@ -258,6 +261,8 @@
       quality: Math.max(0.01, Math.min(1, (Number($("b-quality")?.value) || 85) / 100)),
       prefix: cleanName($("b-prefix")?.value),
       suffix: cleanName($("b-suffix")?.value),
+      background: ["transparent", "white", "custom"].includes($("b-background")?.value) ? $("b-background").value : "transparent",
+      backgroundColor: /^#[0-9a-f]{6}$/i.test($("b-bg-color")?.value || "") ? $("b-bg-color").value : "#ffffff",
     };
   }
 
@@ -335,11 +340,12 @@
       const canvas = document.createElement("canvas");
       canvas.width = output.width;
       canvas.height = output.height;
-      const context = canvas.getContext("2d", { alpha: options.format !== "jpeg" });
+      const fillBackground = options.format === "jpeg" || options.background !== "transparent";
+      const context = canvas.getContext("2d", { alpha: !fillBackground });
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = "high";
-      if (options.format === "jpeg") {
-        context.fillStyle = "#ffffff";
+      if (fillBackground) {
+        context.fillStyle = options.background === "custom" ? options.backgroundColor : "#ffffff";
         context.fillRect(0, 0, canvas.width, canvas.height);
       }
       context.drawImage(opened.source, 0, 0, canvas.width, canvas.height);
@@ -498,7 +504,7 @@
       state.cancelRequested = true;
       setStatus("Останавливаю после текущего файла…");
     });
-    ["b-format", "b-resize-mode", "b-quality"].forEach((id) => {
+    ["b-format", "b-resize-mode", "b-quality", "b-background", "b-bg-color"].forEach((id) => {
       $(id)?.addEventListener("input", syncSettingsUi);
       $(id)?.addEventListener("change", syncSettingsUi);
     });

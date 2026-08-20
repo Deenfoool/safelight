@@ -108,6 +108,30 @@
     image.src = sourceUrl;
   }
 
+  function openFileThroughInput(file) {
+    try {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      fileInput.files = transfer.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (_) {
+      handleFile(file);
+      window.dispatchEvent(new CustomEvent("safelight:clipboard-file", { detail: { file } }));
+    }
+  }
+
+  document.addEventListener("paste", (event) => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName || "") || event.target?.isContentEditable) return;
+    const item = [...(event.clipboardData?.items || [])].find((entry) => entry.kind === "file" && entry.type.startsWith("image/"));
+    const pasted = item?.getAsFile();
+    if (!pasted) return;
+    event.preventDefault();
+    const ext = pasted.type === "image/jpeg" ? "jpg" : pasted.type === "image/webp" ? "webp" : "png";
+    const name = pasted.name && !/^image\.(png|jpe?g|webp)$/i.test(pasted.name) ? pasted.name : `safelight-paste-${Date.now()}.${ext}`;
+    const file = new File([pasted], name, { type: pasted.type || "image/png", lastModified: Date.now() });
+    Promise.resolve(window.safelightActivate?.("compress")).catch(() => {}).then(() => openFileThroughInput(file));
+  }, true);
+
   window.addEventListener("safelight:working-source", (event) => {
     const width = Math.max(1, Math.round(Number(event.detail?.width) || previewImg.naturalWidth || imgW || 1));
     const height = Math.max(1, Math.round(Number(event.detail?.height) || previewImg.naturalHeight || imgH || 1));
