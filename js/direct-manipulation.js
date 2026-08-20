@@ -248,6 +248,7 @@
     installWatermarkMode(); polishTransform(); moveExportIntoInspector(); bindInspector();
     document.addEventListener("pointermove", onPointerMove, { passive: true }); document.addEventListener("pointerup", stopPointerDrag); document.addEventListener("pointercancel", stopPointerDrag);
     window.addEventListener("resize", () => requestAnimationFrame(renderInteractiveOverlay), { passive: true });
+    window.addEventListener("safelight:zoomchange", () => requestAnimationFrame(renderInteractiveOverlay));
     window.addEventListener("safelight:toolchange", () => setTimeout(() => { moveExportIntoInspector(); updateTransformVisuals(); renderInteractiveOverlay(); }, 0));
     window.addEventListener("safelight:live-render", () => requestAnimationFrame(renderInteractiveOverlay));
     new MutationObserver(() => requestAnimationFrame(renderInteractiveOverlay)).observe(sourceImageElement(), { attributes: true, attributeFilter: ["src"] });

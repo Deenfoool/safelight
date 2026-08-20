@@ -68,7 +68,7 @@ function ensureEditorRuntime(){
     'css/editor-polish.css?v=2','css/favicon-tools.css?v=3','css/adjust-tools.css?v=3',
     'css/canvas-tools.css?v=2','css/crop-tools.css?v=2','css/background-removal.css?v=1',
     'css/apply-tools.css?v=2','css/inspector-motion.css?v=2','css/annotation-tools.css?v=2',
-    'css/batch-tools.css?v=1','css/ui-motion.css?v=2'
+    'css/batch-tools.css?v=1','css/ui-motion.css?v=2','css/preview-zoom.css?v=1'
   ];
   styles.forEach(loadStyle);
   editorRuntimePromise=(async()=>{
@@ -84,6 +84,7 @@ function ensureEditorRuntime(){
     await loadScript('js/batch-tools.js?v=1');
     await loadScript('js/live-editor.js?v=8');
     await loadScript('js/preview-render-guard.js?v=3');
+    await loadScript('js/preview-zoom.js?v=1');
     await loadScript('js/crop-tools.js?v=3');
     await loadScript('js/adjust-tools.js?v=2');
     await loadScript('js/canvas-tools.js?v=2');
