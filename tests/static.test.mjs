@@ -36,3 +36,33 @@ test("the documented HEIC artifact checksum is current", async () => {
   const digest = createHash("sha256").update(codec).digest("hex");
   assert.match(notices, new RegExp(digest));
 });
+
+test("batch processing ships a local queue and ZIP pipeline", async () => {
+  const panel = await readFile(path.join(root, "js/advanced.js"), "utf8");
+  const runtime = await readFile(path.join(root, "js/batch-tools.js"), "utf8");
+  const navigation = await readFile(path.join(root, "js/navigation.js"), "utf8");
+
+  for (const id of ["batch-files", "b-queue", "b-format", "b-resize-mode", "b-prefix", "b-suffix", "b-download"]) {
+    assert.match(panel, new RegExp(`id=["']${id}["']`), `missing batch control ${id}`);
+  }
+  assert.match(runtime, /new JSZip\(\)/);
+  assert.match(runtime, /safelightHeicCodec\?\.decodeFile/);
+  assert.match(runtime, /safelight-errors\.txt/);
+  assert.match(runtime, /zip\.generateAsync\(\{ type: "blob" \}/);
+  assert.match(navigation, /loadScript\('js\/batch-tools\.js/);
+  assert.match(navigation, /css\/batch-tools\.css/);
+});
+
+test("advanced censorship supports multiple modes, shapes and face detection fallback", async () => {
+  const runtime = await readFile(path.join(root, "js/privacy-effects.js"), "utf8");
+  const styles = await readFile(path.join(root, "css/privacy-effects.css"), "utf8");
+
+  for (const mode of ["blur", "pixelate", "black"]) assert.match(runtime, new RegExp(`data-pe-mode=["']${mode}["']`));
+  for (const shape of ["rect", "ellipse", "free"]) assert.match(runtime, new RegExp(`data-pe-shape=["']${shape}["']`));
+  assert.match(runtime, /window\.FaceDetector/);
+  assert.match(runtime, /FaceDetector !== "function"/);
+  assert.match(runtime, /data-pe-resize/);
+  assert.match(runtime, /safelightPrivacyEffects = Object\.freeze/);
+  assert.match(styles, /\.sl-pe-area\.shape-free/);
+  assert.match(styles, /\.sl-pe-resize\.nw/);
+});

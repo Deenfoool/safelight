@@ -73,14 +73,57 @@
   `);
   card('background','УДАЛЕНИЕ ФОНА','Цветовой ключ, Magic Wand и ручная маска прозрачности.','');
 
-  const batch=card('batch','МАССОВАЯ ОБРАБОТКА','Обрабатывайте много изображений и скачивайте один ZIP.','<label class="batch-drop"><span>Выберите несколько изображений</span><input id="batch-files" type="file" accept="image/*" multiple></label><div class="field-row"><div class="field"><label>Качество</label><input id="b-quality" type="number" min="1" max="100" value="85"></div><div class="field"><label>Макс. ширина</label><input id="b-width" type="number" min="0" value="0"></div></div><div class="batch-progress"><div id="b-bar"></div></div>');
-  batch.querySelector('#batch-files')?.addEventListener('change',()=>{const bar=batch.querySelector('#b-bar');if(bar)bar.style.width='0%'});
+  card('batch','ПАКЕТНАЯ ОБРАБОТКА','Обрабатывайте несколько изображений с общими настройками и скачивайте результат одним ZIP.',`
+    <div class="sl-batch-panel">
+      <label class="batch-drop" id="batch-drop">
+        <input id="batch-files" type="file" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
+        <span class="sl-batch-drop-icon" aria-hidden="true">+</span>
+        <span><b>Добавить изображения</b><small>Перетащите сюда или выберите файлы</small></span>
+      </label>
+
+      <div class="sl-batch-queue-head">
+        <span><b id="b-count">0</b> файлов</span>
+        <button type="button" id="b-clear" class="sl-batch-link" disabled>Очистить</button>
+      </div>
+      <div class="sl-batch-queue" id="b-queue" role="list">
+        <div class="sl-batch-empty">Очередь пока пуста</div>
+      </div>
+      <div class="sl-batch-summary" id="b-summary">Добавьте PNG, JPEG, WebP или HEIC</div>
+
+      <div class="sl-batch-section">
+        <div class="sl-batch-section-head"><span>Результат</span><small>общие настройки для всей очереди</small></div>
+        <div class="field-row sl-batch-two">
+          <div class="field"><label for="b-format">Формат</label><select id="b-format"><option value="webp" selected>WebP</option><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="heic">HEIC</option></select></div>
+          <div class="field"><label for="b-resize-mode">Размер</label><select id="b-resize-mode"><option value="none" selected>Не изменять</option><option value="longest">Длинная сторона</option><option value="width">По ширине</option><option value="height">По высоте</option></select></div>
+        </div>
+        <div class="field sl-batch-size-field" id="b-size-field" hidden><label for="b-size">Целевой размер, px</label><input id="b-size" type="number" min="1" max="16384" value="1920"></div>
+        <label class="check-row sl-batch-upscale" id="b-upscale-row" hidden><input id="b-no-upscale" type="checkbox" checked><span><b>Не увеличивать маленькие изображения</b><small>Изменяется только размер файлов крупнее заданного</small></span></label>
+        <div class="slider-row" id="b-quality-row"><div class="top"><span>Качество</span><b id="b-quality-val">85%</b></div><input id="b-quality" type="range" min="1" max="100" value="85"></div>
+      </div>
+
+      <div class="sl-batch-section">
+        <div class="sl-batch-section-head"><span>Имена файлов</span><small>исходное имя сохраняется в середине</small></div>
+        <div class="field-row sl-batch-two">
+          <div class="field"><label for="b-prefix">Префикс</label><input id="b-prefix" type="text" maxlength="48" placeholder="например, web-"></div>
+          <div class="field"><label for="b-suffix">Суффикс</label><input id="b-suffix" type="text" maxlength="48" value="-safelight"></div>
+        </div>
+        <label class="check-row sl-batch-privacy"><input type="checkbox" checked disabled><span><b>Метаданные будут удалены</b><small>EXIF, GPS и данные камеры не попадут в новые файлы</small></span></label>
+      </div>
+
+      <div class="batch-progress" id="b-progress" role="progressbar" aria-label="Прогресс пакетной обработки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="b-bar"></div></div>
+      <div class="status-line sl-batch-status" id="b-status" role="status" aria-live="polite">Добавьте изображения, чтобы начать.</div>
+      <div class="sl-batch-actions">
+        <button type="button" class="btn primary" id="b-download" disabled>Обработать и скачать ZIP</button>
+        <button type="button" class="btn ghost" id="b-cancel" hidden>Отменить</button>
+      </div>
+    </div>
+  `);
   card('metadata','МЕТАДАННЫЕ','Проверяйте информацию о файле и очищайте её перед экспортом.','<div class="meta-box" id="meta-box">Загрузите изображение.</div>');
   card('favicon','FAVICON GENERATOR','Создавайте набор иконок для сайта из одного изображения.','');
 
   const titles={
     transform:['Трансформация','Поворот и отражение изображений.'],watermark:['Водяной знак','Текст или логотип с цветом, обводкой, поворотом и повторяющимся паттерном.'],
-    background:['Удаление фона','Цветовой ключ, Magic Wand, кисть и Feather для маски прозрачности.'],batch:['Массовая обработка','Обрабатывайте множество изображений одним действием.'],
+    background:['Удаление фона','Цветовой ключ, Magic Wand, кисть и Feather для маски прозрачности.'],batch:['Пакетная обработка','Обрабатывайте несколько изображений с общими настройками и ZIP-экспортом.'],
     metadata:['Метаданные','Проверяйте и очищайте данные изображения.'],favicon:['Favicon Generator','Создавайте набор иконок для сайта.']
   };
   function setAdvanced(id){

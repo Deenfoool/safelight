@@ -123,8 +123,48 @@ try {
   assert.ok(download.suggestedFilename().endsWith(".png"));
   assert.ok(downloadPath && (await stat(downloadPath)).size > 0, "exported PNG is empty");
 
+  await page.locator(".sl-sidebar [data-page='privacy']").click();
+  await page.waitForFunction(() => document.getElementById("sl-inspector-title")?.textContent === "Продвинутая цензура");
+  await page.evaluate(() => window.safelightPrivacyEffects.addArea({ x: 0, y: 0, w: 1, h: 1, mode: "black", shape: "ellipse" }));
+  await page.waitForFunction(() => window.safelightPrivacyEffects?.getAreas().length === 1);
+  assert.equal(await page.locator("#pe-count").textContent(), "1");
+  assert.equal(await page.locator("#sl-privacy-surface .sl-pe-area.mode-black.shape-ellipse").count(), 1);
+  await page.locator("#pe-duplicate").click();
+  await page.waitForFunction(() => window.safelightPrivacyEffects?.getAreas().length === 2);
+  await page.locator("[data-pe-shape='free']").click();
+  assert.equal((await page.evaluate(() => window.safelightPrivacyEffects.getAreas().at(-1).shape)), "free");
+  const censoredPixel = await page.evaluate(async () => {
+    const canvas = await window.safelightPrivacyEffects.render();
+    return [...canvas.getContext("2d").getImageData(0, 0, 1, 1).data];
+  });
+  assert.ok(censoredPixel[0] < 16 && censoredPixel[1] < 16 && censoredPixel[2] < 16, "black censorship should affect exported pixels");
+
+  await page.locator(".sl-sidebar [data-page='batch']").click();
+  await page.waitForFunction(() => document.getElementById("sl-inspector-title")?.textContent === "Пакетная обработка");
+  await page.locator("#batch-files").setInputFiles([
+    { name: "batch-one.png", mimeType: "image/png", buffer: image },
+    { name: "batch-two.png", mimeType: "image/png", buffer: image },
+  ]);
+  await page.waitForFunction(() => window.safelightBatchTools?.state().count === 2);
+  assert.equal(await page.locator("#b-count").textContent(), "2");
+  assert.equal(await page.locator("#sl-export").isDisabled(), false, "batch export should be available when the queue has files");
+
+  await page.locator("#b-format").selectOption("png");
+  await page.locator("#b-resize-mode").selectOption("width");
+  await page.locator("#b-size").fill("1");
+  await page.locator("#b-prefix").fill("ready-");
+  await page.locator("#b-suffix").fill("-clean");
+  const batchDownloadPromise = page.waitForEvent("download");
+  await page.locator("#b-download").click();
+  const batchDownload = await batchDownloadPromise;
+  const batchDownloadPath = await batchDownload.path();
+  assert.equal(batchDownload.suggestedFilename(), "safelight-batch-2.zip");
+  assert.ok(batchDownloadPath && (await stat(batchDownloadPath)).size > 0, "batch ZIP is empty");
+  await page.waitForFunction(() => document.querySelectorAll("#b-queue .sl-batch-item.done").length === 2);
+  assert.match(await page.locator("#b-status").textContent(), /Готово: 2 из 2/);
+
   assert.deepEqual(errors, [], errors.join("\n"));
-  console.log("Smoke test passed: lazy load, image flow, layout, tools, accessibility, history, export.");
+  console.log("Smoke test passed: lazy load, image flow, layout, tools, accessibility, history, single and batch export.");
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

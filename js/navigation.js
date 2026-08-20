@@ -68,21 +68,22 @@ function ensureEditorRuntime(){
     'css/editor-polish.css?v=2','css/favicon-tools.css?v=3','css/adjust-tools.css?v=3',
     'css/canvas-tools.css?v=2','css/crop-tools.css?v=2','css/background-removal.css?v=1',
     'css/apply-tools.css?v=2','css/inspector-motion.css?v=2','css/annotation-tools.css?v=2',
-    'css/ui-motion.css?v=2'
+    'css/batch-tools.css?v=1','css/ui-motion.css?v=2'
   ];
   styles.forEach(loadStyle);
   editorRuntimePromise=(async()=>{
-    await loadScript('js/advanced.js?v=15');
-    await loadScript('js/ui-shell.js?v=7');
+    await loadScript('js/advanced.js?v=16');
+    await loadScript('js/ui-shell.js?v=9');
     await loadScript('js/metadata-tools.js?v=2');
-    await loadScript('js/privacy-effects.js?v=4');
+    await loadScript('js/privacy-effects.js?v=5');
     await loadScript('js/palette-tools.js?v=2');
     await loadScript('js/background-removal.js?v=1');
     await loadScript('js/background-removal-shell.js?v=1');
     await loadScript('js/inspector-motion.js?v=3');
     await loadScript('js/source-cleanup.js?v=2');
-    await loadScript('js/live-editor.js?v=7');
-    await loadScript('js/preview-render-guard.js?v=2');
+    await loadScript('js/batch-tools.js?v=1');
+    await loadScript('js/live-editor.js?v=8');
+    await loadScript('js/preview-render-guard.js?v=3');
     await loadScript('js/crop-tools.js?v=3');
     await loadScript('js/adjust-tools.js?v=2');
     await loadScript('js/canvas-tools.js?v=2');
@@ -93,7 +94,7 @@ function ensureEditorRuntime(){
     await loadScript('js/direct-manipulation.js?v=5');
     await loadScript('js/watermark-renderer.js?v=1');
     await loadScript('js/editor-polish.js?v=5');
-    await loadScript('js/apply-tools.js?v=6');
+    await loadScript('js/apply-tools.js?v=7');
     await loadScript('js/ui-motion.js?v=2');
   })().catch(error=>{editorRuntimePromise=null;throw error});
   return editorRuntimePromise;

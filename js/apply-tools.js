@@ -5,7 +5,7 @@
 
   const $=id=>document.getElementById(id);
   const SUPPORTED=new Set(['resize','crop','adjust','transform','watermark','canvas','privacy','annotation','background']);
-  const TOOL_LABELS={resize:'Размер',crop:'Обрезка',adjust:'Коррекция',transform:'Трансформация',watermark:'Водяной знак',canvas:'Холст',privacy:'Размытие / пикселизация',annotation:'Аннотации',background:'Удаление фона'};
+  const TOOL_LABELS={resize:'Размер',crop:'Обрезка',adjust:'Коррекция',transform:'Трансформация',watermark:'Водяной знак',canvas:'Холст',privacy:'Цензура',annotation:'Аннотации',background:'Удаление фона'};
   const MAX_HISTORY=20;
 
   let history=[];
