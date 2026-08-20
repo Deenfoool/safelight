@@ -49,10 +49,18 @@ body.page-tool{background:transparent!important}
 
 @media(max-width:640px){
   #sl-grid-bg{opacity:.80}
+  .wrap{padding-left:18px;padding-right:18px}
+  body.page-home>nav .wrap{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:8px}
+  .hero{padding:56px 0 38px}
+  .hero .pill{max-width:100%;padding-inline:10px;font-size:9.5px;white-space:normal;text-align:left}
+  .hero p.sub{font-size:14.5px;margin-bottom:26px}
+  .hero .cta-row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:42px}
+  .hero .cta-row #hero-cta{grid-column:1/-1;width:100%;min-height:48px}
   .home-tools-marquee{border-radius:11px;padding:15px 0}
   .home-tools-marquee:before,.home-tools-marquee:after{width:42px}
   .htm-chip{height:37px;padding:0 13px;font-size:10.5px}
-  .hero .cta-row .home-external-link{min-width:0;flex:1 1 130px;max-width:180px}
+  .hero .cta-row .home-external-link{width:100%;min-width:0;max-width:none;min-height:46px;flex:1 1 130px}
+  footer{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){
   #sl-grid-bg{display:none}

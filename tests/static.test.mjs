@@ -66,3 +66,16 @@ test("advanced censorship supports multiple modes, shapes and face detection fal
   assert.match(styles, /\.sl-pe-area\.shape-free/);
   assert.match(styles, /\.sl-pe-resize\.nw/);
 });
+
+test("mobile editor keeps tools and export within thumb reach", async () => {
+  const html = await readFile(path.join(root, "index.html"), "utf8");
+  const shell = await readFile(path.join(root, "css/app-shell.css"), "utf8");
+  const ui = await readFile(path.join(root, "js/ui-shell.js"), "utf8");
+
+  assert.match(html, /viewport-fit=cover/);
+  assert.match(shell, /scroll-snap-type:x proximity/);
+  assert.match(shell, /\.sl-inspector-export\s*\{[\s\S]*?position:fixed!important/);
+  assert.match(shell, /font-size:16px/);
+  assert.match(ui, /aria-current/);
+  assert.match(ui, /scrollTo\(\{/);
+});

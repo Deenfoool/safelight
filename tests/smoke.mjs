@@ -164,7 +164,63 @@ try {
   assert.match(await page.locator("#b-status").textContent(), /Готово: 2 из 2/);
 
   assert.deepEqual(errors, [], errors.join("\n"));
-  console.log("Smoke test passed: lazy load, image flow, layout, tools, accessibility, history, single and batch export.");
+
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, acceptDownloads: true });
+  const mobileErrors = [];
+  mobile.on("pageerror", (error) => mobileErrors.push(`pageerror: ${error.message}`));
+  mobile.on("console", (message) => {
+    if (message.type() === "error") mobileErrors.push(`console: ${message.text()}`);
+  });
+  await mobile.goto(baseURL, { waitUntil: "networkidle" });
+  const mobileChooserPromise = mobile.waitForEvent("filechooser");
+  await mobile.locator("#hero-cta").click();
+  const mobileChooser = await mobileChooserPromise;
+  await mobile.locator(".sl-app").waitFor({ state: "visible" });
+  await mobileChooser.setFiles({ name: "mobile.png", mimeType: "image/png", buffer: image });
+  await mobile.waitForFunction(() => document.getElementById("previewImg")?.naturalWidth === 2);
+  await mobile.locator(".sl-inspector-export").waitFor({ state: "visible" });
+
+  const mobileLayout = await mobile.evaluate(() => {
+    const box = (selector) => {
+      const rect = document.querySelector(selector)?.getBoundingClientRect();
+      return rect ? { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height } : null;
+    };
+    const tools = [...document.querySelectorAll(".sl-sidebar .sl-tool")].map((node) => node.getBoundingClientRect());
+    const rail = document.querySelector(".sl-sidebar");
+    const exportWrap = document.querySelector(".sl-inspector-export");
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      documentWidth: document.documentElement.scrollWidth,
+      toolbar: box(".sl-topbar"),
+      toolRail: box(".sl-sidebar"),
+      stage: box(".sl-stage-host"),
+      inspector: box(".sl-inspector"),
+      exportAction: box(".sl-inspector-export"),
+      exportPosition: getComputedStyle(exportWrap).position,
+      toolRailScrollable: rail.scrollWidth > rail.clientWidth,
+      minToolWidth: Math.min(...tools.map((rect) => rect.width)),
+      minToolHeight: Math.min(...tools.map((rect) => rect.height)),
+    };
+  });
+  assert.ok(mobileLayout.documentWidth <= mobileLayout.viewport.width, "mobile editor must not overflow horizontally");
+  assert.ok(mobileLayout.toolbar.height <= 64, `mobile toolbar is too tall: ${mobileLayout.toolbar.height}px`);
+  assert.ok(mobileLayout.toolRail.height <= 82, `mobile tool rail is too tall: ${mobileLayout.toolRail.height}px`);
+  assert.equal(mobileLayout.toolRailScrollable, true, "mobile tools should use one horizontally scrollable rail");
+  assert.ok(mobileLayout.minToolWidth >= 64 && mobileLayout.minToolHeight >= 44, "mobile tool targets are too small");
+  assert.ok(mobileLayout.stage.height >= 260 && mobileLayout.stage.height <= 360, `mobile preview height is unexpected: ${mobileLayout.stage.height}px`);
+  assert.ok(mobileLayout.inspector.top < mobileLayout.viewport.height, "mobile settings should begin inside the first viewport");
+  assert.equal(mobileLayout.exportPosition, "fixed", "mobile export must remain reachable");
+  assert.ok(mobileLayout.exportAction.top >= 0 && mobileLayout.exportAction.bottom <= mobileLayout.viewport.height, "mobile export must stay in the viewport");
+
+  await mobile.locator(".sl-sidebar [data-page='resize']").click();
+  await mobile.waitForFunction(() => document.getElementById("sl-inspector-title")?.textContent === "Размер");
+  assert.equal(await mobile.locator(".sl-sidebar [data-page='resize']").getAttribute("aria-current"), "page");
+  const inputFontSize = await mobile.locator("#r-width").evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+  assert.ok(inputFontSize >= 16, `mobile input font size can trigger Safari zoom: ${inputFontSize}px`);
+  assert.deepEqual(mobileErrors, [], mobileErrors.join("\n"));
+  await mobile.close();
+
+  console.log("Smoke test passed: desktop workflow plus mobile layout, touch targets, navigation and export.");
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

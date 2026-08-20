@@ -20,6 +20,7 @@ Safelight takes a different approach: **your image stays on your device**. Proce
 - No backend upload
 - No tracking-dependent workflow
 - Works as an installable PWA
+- Mobile editor with a one-row tool rail, touch-sized controls and a fixed export action
 - Core runtime is bundled locally — no Google Fonts or CDN dependency at runtime
 - Original files stay untouched until you explicitly export a result
 
@@ -124,6 +125,7 @@ Safelight currently includes:
 - [x] Palette extraction / eyedropper
 - [x] PWA support
 - [x] Local fonts
+- [x] Mobile-first editor layout and touch controls
 - [x] Offline vendor runtime
 
 ## Feedback and contributions
