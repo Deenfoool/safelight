@@ -49,8 +49,10 @@
 }
 
 .sl-cscroll{
-  position:fixed;
-  z-index:90;
+  /* Defensive !important: the ambient background also styles direct body
+     children and must never turn these viewport rails into flow content. */
+  position:fixed!important;
+  z-index:90!important;
   display:none;
   border-radius:999px;
   background:rgba(31,31,36,.72);
