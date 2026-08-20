@@ -73,7 +73,7 @@ function ensureEditorRuntime(){
   styles.forEach(loadStyle);
   editorRuntimePromise=(async()=>{
     await loadScript('js/advanced.js?v=16');
-    await loadScript('js/ui-shell.js?v=9');
+    await loadScript('js/ui-shell.js?v=10');
     await loadScript('js/metadata-tools.js?v=2');
     await loadScript('js/privacy-effects.js?v=5');
     await loadScript('js/palette-tools.js?v=2');
@@ -99,7 +99,7 @@ function ensureEditorRuntime(){
   })().catch(error=>{editorRuntimePromise=null;throw error});
   return editorRuntimePromise;
 }
-loadStyle('css/visual-polish.css?v=6');
+loadStyle('css/visual-polish.css?v=7');
 loadStyle('css/theme-settings.css?v=1');
 loadStyle('css/theme-transition.css?v=1');
 loadScript('js/theme-settings.js?v=1').catch(error=>console.error(error));

@@ -6,7 +6,7 @@
 
   const css = document.createElement("link");
   css.rel = "stylesheet";
-  css.href = "css/app-shell.css?v=3";
+  css.href = "css/app-shell.css?v=4";
   document.head.appendChild(css);
 
   const TOOL_INFO = {
@@ -98,7 +98,7 @@
         <button class="sl-export" id="sl-export" type="button">${icon("M12 15V4m0 0L8 8m4-4 4 4M5 13v6h14v-6")}<span>Экспорт</span></button>
       </header>
       <div class="sl-app-body">
-        <aside class="sl-sidebar"><div class="sl-sidebar-inner"><div id="sl-tool-nav"></div><div class="sl-privacy">${icon("M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5")}<span>Файлы остаются на вашем устройстве. Safelight не загружает изображения на сервер.</span></div></div></aside>
+        <aside class="sl-sidebar" aria-label="Инструменты редактора"><div class="sl-sidebar-inner"><div id="sl-tool-nav"></div><div class="sl-privacy">${icon("M12 3 19 6v5c0 4.2-2.5 7.5-7 9.3C7.5 18.5 5 15.2 5 11V6zM9 12l2 2 4-5")}<span>Файлы остаются на вашем устройстве. Safelight не загружает изображения на сервер.</span></div></div></aside>
         <section class="sl-center">
           <div class="sl-stage-host"></div>
           <div class="sl-readout-host"></div>
@@ -170,6 +170,8 @@
         button.classList.add("sl-tool");
         button.removeAttribute("role");
         button.onclick = null;
+        button.title = TOOL_INFO[id]?.[0] || button.textContent.trim();
+        button.setAttribute("aria-label", button.title);
         button.addEventListener("click", (event) => {
           event.preventDefault();
           window.safelightActivate(id);
@@ -238,7 +240,28 @@
     const desc = document.getElementById("sl-inspector-desc");
     if (title) title.textContent = info[0];
     if (desc) desc.textContent = info[1];
-    document.querySelectorAll(".sl-sidebar .sl-tool").forEach((button) => button.classList.toggle("active", button.dataset.page === tool));
+    let activeButton = null;
+    document.querySelectorAll(".sl-sidebar .sl-tool").forEach((button) => {
+      const active = button.dataset.page === tool;
+      button.classList.toggle("active", active);
+      if (active) {
+        button.setAttribute("aria-current", "page");
+        activeButton = button;
+      } else button.removeAttribute("aria-current");
+    });
+    if (activeButton && window.matchMedia("(max-width: 760px), (max-width: 1024px) and (max-height: 600px) and (orientation: landscape)").matches) {
+      requestAnimationFrame(() => {
+        const scroller = activeButton.closest(".sl-sidebar");
+        if (!scroller) return;
+        const item = activeButton.getBoundingClientRect();
+        const rail = scroller.getBoundingClientRect();
+        const left = scroller.scrollLeft + item.left - rail.left - (rail.width - item.width) / 2;
+        scroller.scrollTo({
+          left: Math.max(0, left),
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        });
+      });
+    }
   }
 
   function wireToolbar(shell) {
