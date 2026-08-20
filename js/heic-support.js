@@ -329,7 +329,7 @@ function patchExportMenu(){
   const tool=currentTool();
   if(!tool)return;
   if(tool==='slice')insertHeicOption(menu,'slice-heic','Нарезка HEIC','ZIP');
-  else if(tool==='batch')insertHeicOption(menu,'batch-heic','Все в HEIC','ZIP');
+  else if(tool==='batch')return;
   else if(tool==='palette')insertHeicOption(menu,'palette-heic','Карточка палитры HEIC','HEVC');
   else insertHeicOption(menu,'heic','HEIC','HEVC');
 }
@@ -381,34 +381,6 @@ async function exportSliceHeic(){
   downloadBlob(await zip.generateAsync({type:'blob'}),currentBaseName()+'-tiles-heic.zip');
 }
 
-async function fileToCanvas(file,maxWidth){
-  let source=file;
-  if(isHeicFile(file))source=await decodeHeicFile(file);
-  const bitmap=await createImageBitmap(source);
-  const scale=maxWidth&&bitmap.width>maxWidth?maxWidth/bitmap.width:1;
-  const canvas=document.createElement('canvas');
-  canvas.width=Math.max(1,Math.round(bitmap.width*scale));
-  canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-  canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
-  bitmap.close?.();
-  return canvas;
-}
-
-async function exportBatchHeic(){
-  if(!window.JSZip)throw new Error('Локальный ZIP-модуль не загрузился');
-  const files=[...($('batch-files')?.files||[])];
-  if(!files.length)throw new Error('Сначала выберите изображения для пакетной обработки');
-  const maxWidth=Math.max(0,Number($('b-width')?.value)||0);
-  const bar=$('b-bar');
-  const zip=new JSZip();
-  for(let i=0;i<files.length;i++){
-    const canvas=await fileToCanvas(files[i],maxWidth);
-    zip.file(baseName(files[i].name)+'-safelight.heic',await encodeCanvas(canvas));
-    if(bar)bar.style.width=Math.round(((i+1)/files.length)*100)+'%';
-  }
-  downloadBlob(await zip.generateAsync({type:'blob'}),'safelight-batch-heic.zip');
-}
-
 function paletteCanvas(){
   const colors=[...document.querySelectorAll('#palette-list [data-palette-hex]')].map(node=>{
     const hex=node.dataset.paletteHex||'#000000';
@@ -447,7 +419,6 @@ function paletteCanvas(){
 
 async function exportSpecialHeic(value,tool){
   if(value==='slice-heic')return exportSliceHeic();
-  if(value==='batch-heic')return exportBatchHeic();
   if(value==='palette-heic'){
     downloadBlob(await encodeCanvas(paletteCanvas()),currentBaseName()+'-palette.heic');
     return;
@@ -466,7 +437,7 @@ function bindSpecialHeicExport(){
     if(!option)return;
     const value=option.dataset.export||'';
     const tool=currentTool();
-    const special=value==='slice-heic'||value==='batch-heic'||value==='palette-heic'||(value==='heic'&&(tool==='privacy'||tool==='metadata'));
+    const special=value==='slice-heic'||value==='palette-heic'||(value==='heic'&&(tool==='privacy'||tool==='metadata'));
     if(!special)return;
     event.preventDefault();
     event.stopPropagation();

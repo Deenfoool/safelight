@@ -42,10 +42,14 @@ Drop in an image and start editing immediately. There is no signup screen and no
 - Brightness, contrast and saturation controls
 - Rotate and flip
 - Watermarks with draggable positioning
-- Blur or pixelate selected regions
+- Advanced censorship with multiple rectangular, elliptical and freeform masks
+- Blur, pixelation or solid black fill per mask, with optional local face detection
 
 ### Utilities
-- Batch processing
+- Batch queue with shared resize, format and quality settings
+- PNG / JPEG / WebP / HEIC batch export to one local ZIP archive
+- Batch filename prefixes and suffixes, duplicate-safe names and per-file error reporting
+- Metadata-free batch output created by re-encoding images locally
 - Image slicing with draggable guides and ZIP export
 - Dominant color palette extraction: 3 / 5 / 8 / 12 colors
 - Eyedropper with HEX / RGB / HSL values
@@ -116,7 +120,7 @@ Safelight currently includes:
 - [x] Batch processing
 - [x] Metadata inspector / cleaner
 - [x] Favicon generator
-- [x] Region blur / pixelation
+- [x] Advanced censorship: multiple masks, freeform lasso, face detection, blur / pixelation / black fill
 - [x] Palette extraction / eyedropper
 - [x] PWA support
 - [x] Local fonts

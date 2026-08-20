@@ -11,7 +11,7 @@
   let lastCanvas = null;
   let exportBusy = false;
 
-  const IMAGE_TOOLS = new Set(["compress", "convert", "resize", "crop", "adjust", "transform", "watermark", "slice", "batch", "metadata", "favicon"]);
+  const IMAGE_TOOLS = new Set(["compress", "convert", "resize", "crop", "adjust", "transform", "watermark", "slice", "metadata", "favicon"]);
   const $ = (id) => document.getElementById(id);
 
   function currentTool() {
@@ -21,7 +21,7 @@
   function mimeFor(format) { if (format === "png") return "image/png"; if (format === "webp") return "image/webp"; return "image/jpeg"; }
   function extFor(format) { return format === "jpeg" ? "jpg" : format; }
   function qualityForTool(tool) {
-    const map = { compress: "c-quality", convert: "v-quality", batch: "b-quality" };
+    const map = { compress: "c-quality", convert: "v-quality" };
     const id = map[tool];
     if (!id) return 0.92;
     return Math.max(0.01, Math.min(1, (Number($(id)?.value) || 92) / 100));
@@ -170,14 +170,6 @@
     boundaries.y.slice(1, -1).forEach((value) => { const y = out.height * value; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(out.width, y); ctx.stroke(); });
     ctx.restore(); return out;
   }
-  async function batchCanvas() {
-    const maxWidth = Math.max(0, Number($("b-width")?.value) || 0), scale = maxWidth && sourceImage.naturalWidth > maxWidth ? maxWidth / sourceImage.naturalWidth : 1;
-    const width = Math.max(1, Math.round(sourceImage.naturalWidth * scale)), height = Math.max(1, Math.round(sourceImage.naturalHeight * scale));
-    const raw = document.createElement("canvas"); raw.width = width; raw.height = height; raw.getContext("2d").drawImage(sourceImage, 0, 0, width, height);
-    const blob = await canvasBlob(raw, "image/webp", qualityForTool("batch")); const url = URL.createObjectURL(blob);
-    try { const image = await imageFrom(url); const out = document.createElement("canvas"); out.width = image.naturalWidth; out.height = image.naturalHeight; out.getContext("2d").drawImage(image, 0, 0); return out; }
-    finally { URL.revokeObjectURL(url); }
-  }
   function faviconCanvas() {
     const size = 512, out = document.createElement("canvas"); out.width = out.height = size; const ctx = out.getContext("2d");
     ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
@@ -191,7 +183,7 @@
     if (tool === "convert") return drawOriginalCanvas();
     if (tool === "resize") return resizeCanvas(); if (tool === "crop") return cropCanvas(); if (tool === "adjust") return adjustCanvas();
     if (tool === "transform") return transformCanvas(); if (tool === "watermark") return watermarkCanvas(); if (tool === "slice") return sliceCanvas();
-    if (tool === "batch") return batchCanvas(); if (tool === "favicon") return faviconCanvas(); return drawOriginalCanvas();
+    if (tool === "favicon") return faviconCanvas(); return drawOriginalCanvas();
   }
   function updateReadout(canvas) {
     if (!canvas) return; if ($("ro-dims")) $("ro-dims").textContent = canvas.width + " × " + canvas.height + " px";
@@ -233,7 +225,7 @@
   function exportMenuItems(tool) {
     if (tool === "favicon") return [{ value: "favicon-zip", label: "Favicon пакет", meta: "ZIP" }];
     if (tool === "slice") return [{ value: "slice-webp", label: "Нарезка WebP", meta: "ZIP" }, { value: "slice-jpeg", label: "Нарезка JPEG", meta: "ZIP" }, { value: "slice-png", label: "Нарезка PNG", meta: "ZIP" }];
-    if (tool === "batch") return [{ value: "batch-webp", label: "Все в WebP", meta: "ZIP" }, { value: "batch-jpeg", label: "Все в JPEG", meta: "ZIP" }, { value: "batch-png", label: "Все в PNG", meta: "ZIP" }];
+    if (tool === "batch") return window.safelightBatchTools?.menuItems?.() || [{ value: "batch-zip", label: "Скачать ZIP", meta: "пакет" }];
     if (tool === "metadata") return metadataExportItems();
     const items = [{ value: "webp", label: "WebP", meta: "оптимально" }, { value: "jpeg", label: "JPEG", meta: "совместимо" }, { value: "png", label: "PNG", meta: "без потерь" }];
     if (tool === "convert") items.push({ value: "heic", label: "HEIC", meta: "HEVC" });
@@ -309,18 +301,8 @@
     download(await zip.generateAsync({ type: "blob" }), baseName() + "-tiles.zip");
   }
   async function exportBatch(format) {
-    if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился");
-    const files = [...($("batch-files")?.files || [])].filter((file) => file.type.startsWith("image/")); if (!files.length) throw new Error("Сначала выберите изображения для пакетной обработки");
-    const zip = new JSZip(), maxWidth = Math.max(0, Number($("b-width")?.value) || 0), quality = Math.max(0.01, Math.min(1, (Number($("b-quality")?.value) || 85) / 100)), bar = $("b-bar");
-    for (let i = 0; i < files.length; i++) {
-      const bitmap = await createImageBitmap(files[i]), scale = maxWidth && bitmap.width > maxWidth ? maxWidth / bitmap.width : 1, canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale)); const ctx = canvas.getContext("2d");
-      if (format === "jpeg") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      zip.file(files[i].name.replace(/\.[^.]+$/, "") + "-safelight." + extFor(format), await canvasBlob(canvas, mimeFor(format), format === "png" ? undefined : quality));
-      bitmap.close?.(); if (bar) bar.style.width = Math.round(((i + 1) / files.length) * 100) + "%";
-    }
-    download(await zip.generateAsync({ type: "blob" }), "safelight-batch.zip");
+    if (typeof window.safelightBatchTools?.export !== "function") throw new Error("Модуль пакетной обработки не загрузился");
+    return window.safelightBatchTools.export(format);
   }
   async function exportFavicon() {
     if (!window.JSZip) throw new Error("Локальный ZIP-модуль не загрузился"); const zip = new JSZip();
@@ -342,11 +324,17 @@
         showHint("Метаданные обработаны. Экспорт готов.");
         return;
       }
-      if (!sourceReady()) throw new Error("Сначала загрузите изображение");
-      if (value === "favicon-zip") await exportFavicon(); else if (value.startsWith("slice-")) await exportSlice(value.slice(6)); else if (value.startsWith("batch-")) await exportBatch(value.slice(6)); else await exportImage(value);
+      if (value.startsWith("batch-")) await exportBatch(value.slice(6));
+      else {
+        if (!sourceReady()) throw new Error("Сначала загрузите изображение");
+        if (value === "favicon-zip") await exportFavicon(); else if (value.startsWith("slice-")) await exportSlice(value.slice(6)); else await exportImage(value);
+      }
       showHint("Экспорт готов.");
     } catch (error) { console.error("Safelight export:", error); showHint(error.message || "Не удалось экспортировать файл"); }
-    finally { exportBusy = false; if (button) button.disabled = !sourceReady(); }
+    finally {
+      exportBusy = false;
+      if (button) button.disabled = currentTool() === "batch" ? !window.safelightBatchTools?.hasFiles?.() : !sourceReady();
+    }
   }
   function bindControls() {
     const inspector = document.querySelector(".sl-inspector"); if (!inspector) return;

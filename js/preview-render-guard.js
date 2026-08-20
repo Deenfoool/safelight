@@ -4,7 +4,7 @@
   window.safelightPreviewRenderGuardLoaded=true;
 
   const $=id=>document.getElementById(id);
-  const LEGACY_LIVE=new Set(['compress','convert','resize','transform','watermark','slice','batch']);
+  const LEGACY_LIVE=new Set(['compress','convert','resize','transform','watermark','slice']);
   const DEDICATED_LIVE=new Set(['adjust','canvas','privacy']);
   const SOURCE_ONLY=new Set(['crop','annotation','favicon','metadata','palette']);
   let requestedPage='';

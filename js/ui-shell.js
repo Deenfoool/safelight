@@ -19,7 +19,7 @@
     transform: ["Трансформация", "Поворот и отражение исходного изображения."],
     watermark: ["Водяной знак", "Добавляйте текстовый watermark прямо поверх изображения."],
     background: ["Удаление фона", "Цветовой ключ, Magic Wand, кисть и мягкое сглаживание краёв."],
-    privacy: ["Размытие / пикселизация", "Скрывайте выбранные области и сразу проверяйте результат."],
+    privacy: ["Продвинутая цензура", "Несколько масок, свободное лассо, размытие, пикселизация и чёрная заливка."],
     canvas: ["Холст / рамки / поля", "Настраивайте пропорции, фон, рамку и положение изображения."],
     annotation: ["Аннотации", "Добавляйте текст, стрелки, линии, фигуры, маркеры и нумерацию."],
     batch: ["Пакетная обработка", "Обрабатывайте несколько файлов с общими настройками."],
@@ -131,6 +131,7 @@
       ensureControlLabels(shell);
       syncExportAvailability();
     }, 0));
+    window.addEventListener("safelight:batch-change", syncExportAvailability);
 
     new MutationObserver(() => {
       ensureControlLabels(panelHost);
@@ -277,7 +278,7 @@
     if (!button) return;
     const tool = currentTool();
     const hasSource = !!document.getElementById("previewImg")?.src;
-    const batchHasFiles = (document.getElementById("batch-files")?.files?.length || 0) > 0;
+    const batchHasFiles = window.safelightBatchTools?.hasFiles?.() || (document.getElementById("batch-files")?.files?.length || 0) > 0;
     button.disabled = !tool || (!hasSource && !(tool === "batch" && batchHasFiles));
   }
 
