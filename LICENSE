@@ -1,16 +1,78 @@
-MIT License
+Safelight Attribution License 1.0 (SAL-1.0)
 
 Copyright (c) 2026 Deenfoool (Денис Маняхин) and contributors
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted to any person obtaining a copy of this software
+and associated documentation files (the "Software") to use, copy, modify,
+merge, publish, distribute, and use the Software for private, public, or
+commercial purposes, subject to all of the following conditions.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. REQUIRED ATTRIBUTION
+
+Any public use, deployment, distribution, publication, modified version,
+derivative work, website, application, service, product, or other project that
+uses the Software or a substantial portion of the Software must provide clear
+and reasonably visible attribution to the original Safelight project.
+
+The attribution must include, at minimum:
+
+    Based on Safelight
+    https://github.com/Deenfoool/safelight
+
+Equivalent wording is permitted, provided that the name "Safelight" and a
+working link to the original repository are clearly present.
+
+2. LOCATION OF ATTRIBUTION
+
+For a publicly accessible website, application, service, or product, the
+required attribution must be reasonably accessible to users. It may be placed
+in the user interface, footer, About screen, Credits screen, documentation, or
+another comparably visible location.
+
+Attribution that exists only in minified source code, hidden metadata, commit
+history, or a location not reasonably discoverable by users does not satisfy
+this requirement for a public-facing product.
+
+3. SOURCE AND BINARY REDISTRIBUTION
+
+Any redistribution of the Software, in source or compiled/bundled form, must
+include this license and must preserve the copyright notice and the required
+reference to the original Safelight project.
+
+4. PRIVATE AND INTERNAL USE
+
+Private or internal use that is not made available to the public does not
+require a user-facing attribution notice. However, copies of the Software must
+retain this license, the copyright notice, and the reference to the original
+Safelight repository.
+
+5. MODIFIED VERSIONS
+
+Modified or derivative versions must not be represented as the original,
+unmodified Safelight project. If modifications have been made, that fact must
+be made clear where appropriate.
+
+The required attribution to the original Safelight project must not be removed
+or replaced by attribution only to the modified project.
+
+6. COMMERCIAL USE
+
+Commercial use is permitted, provided that all conditions of this license,
+including the attribution requirement, are followed.
+
+7. NO ENDORSEMENT
+
+Use of the Safelight name for attribution does not imply endorsement,
+sponsorship, certification, or approval of a modified project, product, or
+service by the original author or contributors.
+
+8. THIRD-PARTY COMPONENTS
+
+Third-party components bundled with or used by Safelight remain subject to
+their own licenses. Nothing in this license replaces, limits, or overrides the
+license terms of those third-party components.
+
+9. WARRANTY DISCLAIMER
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,3 +81,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+By using, copying, modifying, distributing, deploying, or publishing the
+Software, you agree to comply with the conditions of this license.
