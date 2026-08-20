@@ -1,0 +1,14 @@
+{
+  "name": "safelight",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first image tools that run in the browser.",
+  "scripts": {
+    "test": "npm run test:static && npm run test:smoke",
+    "test:static": "node --test tests/static.test.mjs",
+    "test:smoke": "node tests/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

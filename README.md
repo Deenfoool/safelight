@@ -132,4 +132,4 @@ Contributions and practical feedback are welcome.
 
 ## License
 
-Safelight itself is released under the [MIT License](LICENSE). The bundled HEIC codec contains third-party components with their own licenses.
+Safelight itself is released under the [MIT License](LICENSE). The bundled HEIC codec contains third-party components with their own licenses; see [Third-party notices](THIRD_PARTY_NOTICES.md).

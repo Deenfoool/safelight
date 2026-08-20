@@ -30,11 +30,11 @@
 
   function installCustomScrollbars() {
     const current = [...document.querySelectorAll('link[rel="stylesheet"]')].find((link) => /css\/scrollbars\.css(?:\?|$)/.test(link.getAttribute("href") || ""));
-    if (current) current.href = "css/scrollbars.css?v=2";
+    if (current) current.href = "css/scrollbars.css?v=3";
     else {
       const link = document.createElement("link");
       link.rel = "stylesheet";
-      link.href = "css/scrollbars.css?v=2";
+      link.href = "css/scrollbars.css?v=3";
       document.head.appendChild(link);
     }
 

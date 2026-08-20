@@ -8,7 +8,9 @@ body{
 }
 #sl-grid-bg{position:fixed;inset:0;width:100vw;height:100vh;display:block;pointer-events:none;z-index:0;opacity:.96;mix-blend-mode:screen}
 .sl-noise{position:fixed;inset:0;pointer-events:none;opacity:.035;z-index:9999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E")}
-body>*:not(#sl-grid-bg):not(.sl-noise){position:relative;z-index:1}
+/* Keep normal page content above the ambient canvas without changing the
+   positioning model of editor overlays appended directly to <body>. */
+body>*:not(#sl-grid-bg):not(.sl-noise):not(.sl-cscroll){position:relative;z-index:1}
 body>nav{background:rgba(9,9,11,.70)!important;backdrop-filter:blur(14px)}
 .hero{position:relative}.hero:before{content:"";position:absolute;width:560px;height:560px;left:-230px;top:-30px;background:radial-gradient(circle,rgba(163,230,53,.07) 0,transparent 68%);filter:blur(12px);pointer-events:none;z-index:-1}
 #about,footer{background:transparent}

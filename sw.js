@@ -1,4 +1,4 @@
-const CACHE = "safelight-shell-v2026-08-19-64";
+const CACHE = "safelight-shell-v2026-08-20-65";
 const CORE = [
   "./",
   "./index.html",
@@ -77,9 +77,9 @@ const CORE = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE).then(async (cache) => {
-      await Promise.allSettled(CORE.map((url) => cache.add(url)));
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((cache) => cache.addAll(CORE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -121,7 +121,7 @@ self.addEventListener("fetch", (event) => {
           if (cacheable(response)) caches.open(CACHE).then((cache) => cache.put(request, response.clone()));
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match(url.pathname.replace(self.location.pathname, "./"))))
+        .catch(() => caches.match(request, { ignoreSearch: true }))
     );
     return;
   }

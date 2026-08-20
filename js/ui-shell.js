@@ -6,7 +6,7 @@
 
   const css = document.createElement("link");
   css.rel = "stylesheet";
-  css.href = "css/app-shell.css?v=2";
+  css.href = "css/app-shell.css?v=3";
   document.head.appendChild(css);
 
   const TOOL_INFO = {
@@ -14,13 +14,22 @@
     slice: ["Нарезка", "Разделяйте изображение на сетку или полосы и экспортируйте ZIP."],
     convert: ["Конвертация", "PNG, JPEG, WebP, HEIC и PDF без отправки файла на сервер."],
     resize: ["Размер", "Изменяйте разрешение с сохранением пропорций или вручную."],
-    crop: ["Обрезка", "Получайте фрагмент нужного размера из исходного изображения."],
+    crop: ["Обрезка", "Горизонт, композиционные сетки, фиксированные пропорции и точный кадр."],
     adjust: ["Коррекция", "Яркость, контраст, насыщенность и чёрно-белый режим."],
     transform: ["Трансформация", "Поворот и отражение исходного изображения."],
     watermark: ["Водяной знак", "Добавляйте текстовый watermark прямо поверх изображения."],
+    background: ["Удаление фона", "Цветовой ключ, Magic Wand, кисть и мягкое сглаживание краёв."],
+    privacy: ["Размытие / пикселизация", "Скрывайте выбранные области и сразу проверяйте результат."],
+    canvas: ["Холст / рамки / поля", "Настраивайте пропорции, фон, рамку и положение изображения."],
+    annotation: ["Аннотации", "Добавляйте текст, стрелки, линии, фигуры, маркеры и нумерацию."],
     batch: ["Пакетная обработка", "Обрабатывайте несколько файлов с общими настройками."],
     metadata: ["Метаданные", "Проверяйте сведения о файле и очищайте их пересохранением."],
     favicon: ["Favicon", "Создавайте набор иконок для сайта из одного изображения."],
+    palette: ["Палитра изображения", "Извлекайте основные цвета и используйте точную пипетку."],
+  };
+
+  const PANEL_TOOL_ALIASES = {
+    "crop-ui": "crop",
   };
 
   const GROUPS = [
@@ -114,14 +123,19 @@
     wireToolbar(shell);
     wireFileTray(shell, fileInput, dropzone, stage, preview);
     syncInspector();
+    ensureControlLabels(shell);
     syncFileMeta(shell, filemeta);
 
     window.addEventListener("safelight:toolchange", () => setTimeout(() => {
       syncInspector();
+      ensureControlLabels(shell);
       syncExportAvailability();
     }, 0));
 
-    new MutationObserver(() => syncExportAvailability()).observe(panelHost, {
+    new MutationObserver(() => {
+      ensureControlLabels(panelHost);
+      syncExportAvailability();
+    }).observe(panelHost, {
       subtree: true,
       attributes: true,
       attributeFilter: ["class", "disabled"],
@@ -167,7 +181,53 @@
 
   function currentTool() {
     const panel = document.querySelector("#sl-inspector-panels .panel.active");
-    return panel ? panel.id.replace("panel-", "") : null;
+    if (!panel) return null;
+    const raw = panel.dataset.tool || panel.id.replace("panel-", "");
+    return PANEL_TOOL_ALIASES[raw] || raw;
+  }
+
+  function normalizedLabel(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function inferredControlLabel(control) {
+    const explicit = control.getAttribute("aria-label");
+    if (explicit) return explicit;
+
+    const wrappingLabel = control.closest("label");
+    if (wrappingLabel) {
+      const lead = wrappingLabel.querySelector(":scope > span, :scope > b");
+      const text = normalizedLabel(lead?.textContent || wrappingLabel.childNodes[0]?.textContent);
+      if (text) return text;
+    }
+
+    const fieldLabel = control.closest(".field")?.querySelector(":scope > label");
+    if (fieldLabel) {
+      const text = normalizedLabel(fieldLabel.textContent);
+      if (text) return text;
+    }
+
+    const sliderLabel = control.closest(".slider-row")?.querySelector(".top span");
+    if (sliderLabel) {
+      const text = normalizedLabel(sliderLabel.textContent);
+      if (text) return text;
+    }
+
+    const fallbacks = {
+      fileInput: "Выбрать изображения",
+      "crop-angle": "Угол горизонта",
+      "crop-angle-number": "Точный угол горизонта",
+    };
+    return fallbacks[control.id] || "";
+  }
+
+  function ensureControlLabels(root) {
+    root.querySelectorAll("input,select,textarea").forEach((control) => {
+      if (control.getAttribute("aria-label") || control.getAttribute("aria-labelledby")) return;
+      if (control.id && document.querySelector('label[for="' + control.id + '"]')) return;
+      const label = inferredControlLabel(control);
+      if (label) control.setAttribute("aria-label", label);
+    });
   }
 
   function syncInspector() {
