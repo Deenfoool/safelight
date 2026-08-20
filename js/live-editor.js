@@ -5,11 +5,14 @@
   window.safelightLiveEditorLoaded = true;
 
   let sourceImage = null;
+  let previewSource = null;
+  let previewScale = 1;
   let sourceSrc = "";
   let renderToken = 0;
   let renderTimer = 0;
-  let lastCanvas = null;
   let exportBusy = false;
+  const PREVIEW_MAX_SIDE = 1800;
+  const PREVIEW_MAX_PIXELS = 2200000;
 
   const IMAGE_TOOLS = new Set(["compress", "convert", "resize", "crop", "adjust", "transform", "watermark", "slice", "metadata", "favicon"]);
   const $ = (id) => document.getElementById(id);
@@ -48,6 +51,19 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
   function sourceReady() { return !!(sourceImage && sourceImage.naturalWidth && sourceImage.naturalHeight); }
+  function sourceSize(input) { return { width: input?.naturalWidth || input?.width || 0, height: input?.naturalHeight || input?.height || 0 }; }
+  function capScale(width, height) { return Math.min(1, PREVIEW_MAX_SIDE / Math.max(1, width, height), Math.sqrt(PREVIEW_MAX_PIXELS / Math.max(1, width * height))); }
+  function rebuildPreviewSource() {
+    if (!sourceReady()) { previewSource = null; previewScale = 1; return; }
+    previewScale = capScale(sourceImage.naturalWidth, sourceImage.naturalHeight);
+    if (previewScale >= .999) { previewSource = null; previewScale = 1; return; }
+    const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(sourceImage.naturalWidth * previewScale)); canvas.height = Math.max(1, Math.round(sourceImage.naturalHeight * previewScale));
+    const context = canvas.getContext("2d"); context.imageSmoothingEnabled = true; context.imageSmoothingQuality = "high"; context.drawImage(sourceImage, 0, 0, canvas.width, canvas.height); previewSource = canvas;
+  }
+  function previewDimensions(width, height, preview) {
+    const scale = preview ? capScale(width, height) : 1;
+    return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), scale };
+  }
   function getLiveCanvas() {
     const wrap = $("previewWrap"); if (!wrap) return null;
     let canvas = $("sl-live-canvas");
@@ -57,45 +73,40 @@
     }
     return canvas;
   }
-  function clearLiveCanvas() { $("previewWrap")?.classList.remove("sl-live-ready"); lastCanvas = null; }
-  function copyCanvas(input) {
-    const out = document.createElement("canvas"); out.width = input.width; out.height = input.height;
-    out.getContext("2d").drawImage(input, 0, 0); return out;
-  }
-  function drawSource(canvas, width, height, fillWhite) {
+  function clearLiveCanvas() { $("previewWrap")?.classList.remove("sl-live-ready"); }
+  function drawSource(canvas, width, height, fillWhite, input) {
     canvas.width = Math.max(1, Math.round(width)); canvas.height = Math.max(1, Math.round(height));
     const ctx = canvas.getContext("2d"); ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (fillWhite) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-    ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height); return ctx;
+    ctx.drawImage(input || sourceImage, 0, 0, canvas.width, canvas.height); return ctx;
   }
-  async function compressionCanvas(quality) {
-    const raw = document.createElement("canvas"); drawSource(raw, sourceImage.naturalWidth, sourceImage.naturalHeight, false);
+  async function compressionCanvas(quality, input) {
+    const size = sourceSize(input), raw = document.createElement("canvas"); drawSource(raw, size.width, size.height, false, input);
     const blob = await canvasBlob(raw, "image/webp", quality); const url = URL.createObjectURL(blob);
     try {
       const compressed = await imageFrom(url); const out = document.createElement("canvas");
       out.width = compressed.naturalWidth; out.height = compressed.naturalHeight; out.getContext("2d").drawImage(compressed, 0, 0); return out;
     } finally { URL.revokeObjectURL(url); }
   }
-  function resizeCanvas() {
-    const width = Math.max(1, Number($("r-width")?.value) || sourceImage.naturalWidth);
-    const height = Math.max(1, Number($("r-height")?.value) || sourceImage.naturalHeight);
-    const out = document.createElement("canvas"); out.width = Math.round(width); out.height = Math.round(height);
+  function resizeCanvas(input, preview) {
+    const width = Math.max(1, Number($("r-width")?.value) || sourceImage.naturalWidth), height = Math.max(1, Number($("r-height")?.value) || sourceImage.naturalHeight), dims = previewDimensions(width, height, preview);
+    const out = document.createElement("canvas"); out.width = dims.width; out.height = dims.height;
     const ctx = out.getContext("2d"); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(sourceImage, 0, 0, out.width, out.height); return out;
+    ctx.drawImage(input, 0, 0, out.width, out.height); return out;
   }
-  function cropCanvas() {
+  function cropCanvas(input, preview) {
     const width = Math.min(sourceImage.naturalWidth, Math.max(1, Number($("cr-width")?.value) || sourceImage.naturalWidth));
     const height = Math.min(sourceImage.naturalHeight, Math.max(1, Number($("cr-height")?.value) || sourceImage.naturalHeight));
     let x = Math.floor((sourceImage.naturalWidth - width) / 2); let y = Math.floor((sourceImage.naturalHeight - height) / 2);
     const position = $("cr-position")?.value || "center"; if (position === "top") y = 0; if (position === "bottom") y = sourceImage.naturalHeight - height;
-    const out = document.createElement("canvas"); out.width = Math.round(width); out.height = Math.round(height);
-    out.getContext("2d").drawImage(sourceImage, x, y, width, height, 0, 0, out.width, out.height); return out;
+    const inputSize=sourceSize(input),inputScale=inputSize.width/sourceImage.naturalWidth,dims=previewDimensions(width,height,preview),out = document.createElement("canvas"); out.width = dims.width; out.height = dims.height;
+    out.getContext("2d").drawImage(input, x*inputScale, y*inputScale, width*inputScale, height*inputScale, 0, 0, out.width, out.height); return out;
   }
-  function adjustCanvas() {
-    const out = document.createElement("canvas"); out.width = sourceImage.naturalWidth; out.height = sourceImage.naturalHeight;
+  function adjustCanvas(input) {
+    const size=sourceSize(input),out = document.createElement("canvas"); out.width = size.width; out.height = size.height;
     const ctx = out.getContext("2d");
     const brightness = Number($("a-bright")?.value || 0), contrast = Number($("a-contrast")?.value || 0), saturation = Number($("a-sat")?.value || 0);
-    ctx.filter = `brightness(${100 + brightness}%) contrast(${100 + contrast}%) saturate(${100 + saturation}%)`; ctx.drawImage(sourceImage, 0, 0); ctx.filter = "none";
+    ctx.filter = `brightness(${100 + brightness}%) contrast(${100 + contrast}%) saturate(${100 + saturation}%)`; ctx.drawImage(input, 0, 0); ctx.filter = "none";
     if ($("a-gray")?.checked) {
       const data = ctx.getImageData(0, 0, out.width, out.height);
       for (let i = 0; i < data.data.length; i += 4) {
@@ -106,15 +117,15 @@
     }
     return out;
   }
-  function transformCanvas() {
+  function transformCanvas(input) {
     const state = window.safelightTransformState || { angle: 0, h: false, v: false }, angle = Number(state.angle) || 0, swap = angle % 180 !== 0;
-    const out = document.createElement("canvas"); out.width = swap ? sourceImage.naturalHeight : sourceImage.naturalWidth; out.height = swap ? sourceImage.naturalWidth : sourceImage.naturalHeight;
+    const size=sourceSize(input),out = document.createElement("canvas"); out.width = swap ? size.height : size.width; out.height = swap ? size.width : size.height;
     const ctx = out.getContext("2d"); ctx.translate(out.width / 2, out.height / 2); ctx.rotate((angle * Math.PI) / 180); ctx.scale(state.h ? -1 : 1, state.v ? -1 : 1);
-    ctx.drawImage(sourceImage, -sourceImage.naturalWidth / 2, -sourceImage.naturalHeight / 2); return out;
+    ctx.drawImage(input, -size.width / 2, -size.height / 2); return out;
   }
-  function watermarkCanvas() {
-    const out = document.createElement("canvas"); drawSource(out, sourceImage.naturalWidth, sourceImage.naturalHeight, false); const ctx = out.getContext("2d");
-    const size = Math.max(8, Math.min(1000, Number($("wm-size")?.value) || 48));
+  function watermarkCanvas(input) {
+    const inputSize=sourceSize(input),sourceRatio=inputSize.width/sourceImage.naturalWidth,out = document.createElement("canvas"); drawSource(out, inputSize.width, inputSize.height, false, input); const ctx = out.getContext("2d");
+    const size = Math.max(4, Math.min(1000, Number($("wm-size")?.value) || 48)*sourceRatio);
     const text = ($("wm-text")?.value || "Safelight").trim() || "Safelight";
     const opacity = Math.max(1, Math.min(100, Number($("wm-opacity")?.value) || 45)) / 100;
     const direct = window.safelightDirectState?.watermark?.();
@@ -162,31 +173,38 @@
   function sliceBoundaries() {
     return window.safelightDirectState?.sliceBoundaries?.() || gridBoundaries();
   }
-  function sliceCanvas() {
-    const out = document.createElement("canvas"); drawSource(out, sourceImage.naturalWidth, sourceImage.naturalHeight, false); const ctx = out.getContext("2d");
+  function sliceCanvas(input) {
+    const size=sourceSize(input),out = document.createElement("canvas"); drawSource(out, size.width, size.height, false, input); const ctx = out.getContext("2d");
     const boundaries = sliceBoundaries();
     ctx.save(); ctx.strokeStyle = "rgba(163,230,53,.95)"; ctx.lineWidth = Math.max(1, Math.round(Math.min(out.width, out.height) / 700)); ctx.shadowColor = "rgba(0,0,0,.75)"; ctx.shadowBlur = 2;
     boundaries.x.slice(1, -1).forEach((value) => { const x = out.width * value; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, out.height); ctx.stroke(); });
     boundaries.y.slice(1, -1).forEach((value) => { const y = out.height * value; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(out.width, y); ctx.stroke(); });
     ctx.restore(); return out;
   }
-  function faviconCanvas() {
+  function faviconCanvas(input) {
     const size = 512, out = document.createElement("canvas"); out.width = out.height = size; const ctx = out.getContext("2d");
     ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, size, size);
-    const scale = Math.min(size / sourceImage.naturalWidth, size / sourceImage.naturalHeight), width = sourceImage.naturalWidth * scale, height = sourceImage.naturalHeight * scale;
-    ctx.drawImage(sourceImage, (size - width) / 2, (size - height) / 2, width, height); return out;
+    const inputSize=sourceSize(input),scale = Math.min(size / inputSize.width, size / inputSize.height), width = inputSize.width * scale, height = inputSize.height * scale;
+    ctx.drawImage(input, (size - width) / 2, (size - height) / 2, width, height); return out;
   }
-  function drawOriginalCanvas() { const out = document.createElement("canvas"); drawSource(out, sourceImage.naturalWidth, sourceImage.naturalHeight, false); return out; }
-  async function buildToolCanvas(tool) {
+  function drawOriginalCanvas(input) { const size=sourceSize(input),out = document.createElement("canvas"); drawSource(out, size.width, size.height, false, input); return out; }
+  async function buildToolCanvas(tool, options) {
     if (!sourceReady()) return null;
-    if (tool === "compress") return compressionCanvas(qualityForTool(tool));
-    if (tool === "convert") return drawOriginalCanvas();
-    if (tool === "resize") return resizeCanvas(); if (tool === "crop") return cropCanvas(); if (tool === "adjust") return adjustCanvas();
-    if (tool === "transform") return transformCanvas(); if (tool === "watermark") return watermarkCanvas(); if (tool === "slice") return sliceCanvas();
-    if (tool === "favicon") return faviconCanvas(); return drawOriginalCanvas();
+    const preview=!!options?.preview,input=preview&&previewSource?previewSource:sourceImage;
+    if (tool === "compress") return compressionCanvas(qualityForTool(tool),input);
+    if (tool === "convert") return drawOriginalCanvas(input);
+    if (tool === "resize") return resizeCanvas(input,preview); if (tool === "crop") return cropCanvas(input,preview); if (tool === "adjust") return adjustCanvas(input);
+    if (tool === "transform") return transformCanvas(input); if (tool === "watermark") return watermarkCanvas(input); if (tool === "slice") return sliceCanvas(input);
+    if (tool === "favicon") return faviconCanvas(input); return drawOriginalCanvas(input);
   }
-  function updateReadout(canvas) {
-    if (!canvas) return; if ($("ro-dims")) $("ro-dims").textContent = canvas.width + " × " + canvas.height + " px";
+  function fullResultDimensions(tool) {
+    let width=sourceImage?.naturalWidth||1,height=sourceImage?.naturalHeight||1;
+    if(tool==='resize'){width=Math.max(1,Math.round(Number($("r-width")?.value)||width));height=Math.max(1,Math.round(Number($("r-height")?.value)||height))}
+    if(tool==='transform'&&(Number(window.safelightTransformState?.angle)||0)%180!==0)[width,height]=[height,width];
+    if(tool==='favicon')width=height=512;return{width,height}
+  }
+  function updateReadout(canvas,tool) {
+    if (!canvas) return; const full=fullResultDimensions(tool);if ($("ro-dims")) $("ro-dims").textContent = full.width + " × " + full.height + " px";
     if ($("ro-format")) $("ro-format").textContent = currentTool() === "favicon" ? "ICON" : "LIVE";
   }
   async function renderNow() {
@@ -194,18 +212,18 @@
     if (!IMAGE_TOOLS.has(tool)) return;
     if (!sourceReady()) { clearLiveCanvas(); return; }
     try {
-      const built = await buildToolCanvas(tool); if (!built || token !== renderToken) return;
+      const built = await buildToolCanvas(tool,{preview:true}); if (!built || token !== renderToken) return;
       const live = getLiveCanvas(); live.width = built.width; live.height = built.height;
       const ctx = live.getContext("2d"); ctx.clearRect(0, 0, live.width, live.height); ctx.drawImage(built, 0, 0);
-      lastCanvas = copyCanvas(live); $("previewWrap")?.classList.add("sl-live-ready"); updateReadout(live);
-      window.dispatchEvent(new CustomEvent("safelight:live-render", { detail: { tool, width: live.width, height: live.height } }));
+      $("previewWrap")?.classList.add("sl-live-ready"); updateReadout(live,tool);const full=fullResultDimensions(tool);
+      window.dispatchEvent(new CustomEvent("safelight:live-render", { detail: { tool, width: full.width, height: full.height, previewWidth: live.width, previewHeight: live.height, optimized: live.width!==full.width||live.height!==full.height } }));
     } catch (error) { console.error("Safelight live render:", error); }
   }
   function scheduleRender(delay) { clearTimeout(renderTimer); renderTimer = setTimeout(renderNow, delay == null ? 55 : delay); }
   async function syncSource() {
     const preview = $("previewImg"); if (!preview?.src || preview.src === sourceSrc) return;
     sourceSrc = preview.src; clearLiveCanvas();
-    try { sourceImage = await imageFrom(sourceSrc); scheduleRender(0); } catch (error) { sourceImage = null; console.error("Safelight source:", error); }
+    try { sourceImage = await imageFrom(sourceSrc); rebuildPreviewSource(); scheduleRender(0); } catch (error) { sourceImage = null; previewSource=null;previewScale=1;console.error("Safelight source:", error); }
   }
   function installLiveState() {
     const inspector = document.querySelector(".sl-inspector"), panels = $("sl-inspector-panels"); if (!inspector || !panels || $("sl-live-state")) return;
@@ -259,28 +277,30 @@
     return false;
   }
   async function exportImage(format) {
-    if (!lastCanvas) await renderNow(); if (!lastCanvas) throw new Error("Нет изображения для экспорта");
+    const canvas = await buildToolCanvas(currentTool(), { preview: false });
+    if (!canvas) throw new Error("Нет изображения для экспорта");
     if (format === "heic") {
       const encoder = window.safelightHeicCodec?.encodeCanvas;
       if (typeof encoder !== "function") throw new Error("Локальный HEIC WASM-кодек не загрузился");
-      const blob = await encoder(lastCanvas);
+      const blob = await encoder(canvas);
       download(blob, baseName() + "-safelight.heic");
       return;
     }
     if (format === "pdf") {
       if (!(await ensureJsPdf())) throw new Error("Локальный PDF-модуль не загрузился");
-      const { jsPDF } = window.jspdf, orientation = lastCanvas.width > lastCanvas.height ? "landscape" : "portrait";
+      const { jsPDF } = window.jspdf, orientation = canvas.width > canvas.height ? "landscape" : "portrait";
       const doc = new jsPDF({ orientation, unit: "mm", format: "a4" }), pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin = 10;
-      const scale = Math.min((pageW - margin * 2) / lastCanvas.width, (pageH - margin * 2) / lastCanvas.height), w = lastCanvas.width * scale, h = lastCanvas.height * scale;
-      const jpeg = lastCanvas.toDataURL("image/jpeg", 0.94); doc.addImage(jpeg, "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h, undefined, "FAST");
+      const scale = Math.min((pageW - margin * 2) / canvas.width, (pageH - margin * 2) / canvas.height), w = canvas.width * scale, h = canvas.height * scale;
+      const jpeg = canvas.toDataURL("image/jpeg", 0.94); doc.addImage(jpeg, "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h, undefined, "FAST");
       download(doc.output("blob"), baseName() + "-safelight.pdf"); return;
     }
-    let canvas = lastCanvas;
+    let output = canvas;
     if (format === "jpeg") {
-      const opaque = document.createElement("canvas"); opaque.width = canvas.width; opaque.height = canvas.height; const ctx = opaque.getContext("2d");
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, opaque.width, opaque.height); ctx.drawImage(canvas, 0, 0); canvas = opaque;
+      const opaque = document.createElement("canvas"); opaque.width = output.width; opaque.height = output.height; const ctx = opaque.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, opaque.width, opaque.height); ctx.drawImage(canvas, 0, 0);
+      output = opaque;
     }
-    const blob = await canvasBlob(canvas, mimeFor(format), format === "png" ? undefined : qualityForTool(currentTool()));
+    const blob = await canvasBlob(output, mimeFor(format), format === "png" ? undefined : qualityForTool(currentTool()));
     download(blob, baseName() + "-safelight." + extFor(format));
   }
   async function exportSlice(format) {
@@ -353,5 +373,17 @@
     if (!document.querySelector(".sl-app") || !$("previewImg")) { setTimeout(boot, 50); return; }
     installLiveState(); installExportMenu(); bindControls(); watchSource();
   }
+  window.safelightLiveEditor = Object.freeze({
+    renderFull: (tool) => buildToolCanvas(tool || currentTool(), { preview: false }),
+    renderPreview: renderNow,
+    performance: () => ({
+      sourceWidth: sourceImage?.naturalWidth || 0,
+      sourceHeight: sourceImage?.naturalHeight || 0,
+      previewWidth: previewSource?.width || sourceImage?.naturalWidth || 0,
+      previewHeight: previewSource?.height || sourceImage?.naturalHeight || 0,
+      previewScale,
+      optimized: previewScale < 1
+    })
+  });
   boot();
 })();

@@ -21,6 +21,8 @@ Safelight takes a different approach: **your image stays on your device**. Proce
 - No tracking-dependent workflow
 - Works as an installable PWA
 - Mobile editor with a one-row tool rail, touch-sized controls and a fixed export action
+- Paste screenshots and copied images directly with `Ctrl+V` / `Cmd+V`
+- Zoom only while the pointer is over the image, then pan with `Space` + drag or the middle mouse button
 - Core runtime is bundled locally — no Google Fonts or CDN dependency at runtime
 - Original files stay untouched until you explicitly export a result
 
@@ -45,9 +47,12 @@ Drop in an image and start editing immediately. There is no signup screen and no
 - Watermarks with draggable positioning
 - Advanced censorship with multiple rectangular, elliptical and freeform masks
 - Blur, pixelation or solid black fill per mask, with optional local face detection
+- Background removal with color key, Magic Wand, brush masks, feathering and color-halo cleanup
+- Bounded interactive previews for large images; Apply and Export rebuild the full-resolution result
 
 ### Utilities
-- Batch queue with shared resize, format and quality settings
+- Reusable local export profiles for format, quality, maximum side, background and filename rules
+- Batch queue with shared resize, format, quality and transparency-background settings
 - PNG / JPEG / WebP / HEIC batch export to one local ZIP archive
 - Batch filename prefixes and suffixes, duplicate-safe names and per-file error reporting
 - Metadata-free batch output created by re-encoding images locally
@@ -122,6 +127,10 @@ Safelight currently includes:
 - [x] Metadata inspector / cleaner
 - [x] Favicon generator
 - [x] Advanced censorship: multiple masks, freeform lasso, face detection, blur / pixelation / black fill
+- [x] Background removal with defringe / color-halo cleanup
+- [x] Local export profiles for individual and batch workflows
+- [x] Clipboard image import, pointer-scoped zoom and desktop panning
+- [x] Downscaled large-image preview with full-resolution Apply / Export
 - [x] Palette extraction / eyedropper
 - [x] PWA support
 - [x] Local fonts

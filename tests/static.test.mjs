@@ -42,12 +42,13 @@ test("batch processing ships a local queue and ZIP pipeline", async () => {
   const runtime = await readFile(path.join(root, "js/batch-tools.js"), "utf8");
   const navigation = await readFile(path.join(root, "js/navigation.js"), "utf8");
 
-  for (const id of ["batch-files", "b-queue", "b-format", "b-resize-mode", "b-prefix", "b-suffix", "b-download"]) {
+  for (const id of ["batch-files", "b-queue", "b-format", "b-resize-mode", "b-background", "b-bg-color", "b-prefix", "b-suffix", "b-download"]) {
     assert.match(panel, new RegExp(`id=["']${id}["']`), `missing batch control ${id}`);
   }
   assert.match(runtime, /new JSZip\(\)/);
   assert.match(runtime, /safelightHeicCodec\?\.decodeFile/);
   assert.match(runtime, /safelight-errors\.txt/);
+  assert.match(runtime, /options\.background === "custom"/);
   assert.match(runtime, /zip\.generateAsync\(\{ type: "blob" \}/);
   assert.match(navigation, /loadScript\('js\/batch-tools\.js/);
   assert.match(navigation, /css\/batch-tools\.css/);
@@ -78,9 +79,54 @@ test("preview zoom only consumes the wheel over the rendered image", async () =>
   assert.match(runtime, /MIN_ZOOM = 0\.25/);
   assert.match(runtime, /MAX_ZOOM = 4/);
   assert.match(runtime, /safelight:zoomchange/);
+  assert.match(runtime, /event\.button === 1/);
+  assert.match(runtime, /event\.code !== "Space"/);
+  assert.match(runtime, /data-zoom-action="fit"/);
+  assert.match(runtime, /setPointerCapture/);
   assert.match(styles, /--sl-preview-zoom/);
   assert.match(navigation, /loadScript\('js\/preview-zoom\.js/);
   assert.match(navigation, /css\/preview-zoom\.css/);
+});
+
+test("clipboard import, export profiles and large-image preview are wired into the local workflow", async () => {
+  const app = await readFile(path.join(root, "js/app.js"), "utf8");
+  const profiles = await readFile(path.join(root, "js/export-profiles.js"), "utf8");
+  const live = await readFile(path.join(root, "js/live-editor.js"), "utf8");
+  const adjust = await readFile(path.join(root, "js/adjust-tools.js"), "utf8");
+  const canvas = await readFile(path.join(root, "js/canvas-tools.js"), "utf8");
+  const privacy = await readFile(path.join(root, "js/privacy-effects.js"), "utf8");
+  const navigation = await readFile(path.join(root, "js/navigation.js"), "utf8");
+  const worker = await readFile(path.join(root, "sw.js"), "utf8");
+
+  assert.match(app, /addEventListener\("paste"/);
+  assert.match(app, /clipboardData\?\.items/);
+  assert.match(app, /safelight-paste-/);
+  for (const id of ["web", "share", "lossless"]) assert.match(profiles, new RegExp(`id: ["']${id}["']`));
+  assert.match(profiles, /localStorage\.setItem\(STORAGE_KEY/);
+  assert.match(profiles, /safelightLiveEditor\?\.renderFull/);
+  assert.match(profiles, /applyToBatch/);
+  assert.match(live, /PREVIEW_MAX_SIDE = 1800/);
+  assert.match(live, /PREVIEW_MAX_PIXELS = 2200000/);
+  assert.match(live, /renderFull:/);
+  for (const runtime of [adjust, canvas, privacy]) {
+    assert.match(runtime, /PREVIEW_MAX_SIDE/);
+    assert.match(runtime, /preview:true|preview: true/);
+    assert.match(runtime, /preview:false|preview: false/);
+  }
+  assert.match(navigation, /loadScript\('js\/export-profiles\.js/);
+  assert.match(worker, /\.\/js\/export-profiles\.js/);
+  assert.match(worker, /\.\/css\/export-profiles\.css/);
+});
+
+test("background removal includes defringe and a bounded working mask", async () => {
+  const runtime = await readFile(path.join(root, "js/background-removal.js"), "utf8");
+
+  assert.match(runtime, /slider\('bg-defringe'/);
+  assert.match(runtime, /MAX_WORKING_SIDE=2800/);
+  assert.match(runtime, /MAX_WORKING_PIXELS=4000000/);
+  assert.match(runtime, /buildMaskCanvas/);
+  assert.match(runtime, /Готовлю полноразмерный край без цветного ореола/);
+  assert.match(runtime, /sourceImage\.naturalWidth===canvas\.width/);
 });
 
 test("mobile editor keeps tools and export within thumb reach", async () => {

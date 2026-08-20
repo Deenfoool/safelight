@@ -47,16 +47,20 @@
   }
   async function currentResultCanvas(tool){
     if(tool==='crop'){
-      if(typeof window.safelightCropTools?.render==='function'){const canvas=await window.safelightCropTools.render();if(canvas)return copyCanvas(canvas)}
+      if(typeof window.safelightCropTools?.render==='function'){const canvas=await window.safelightCropTools.render();if(canvas)return canvas}
       return legacyCropCanvas();
     }
-    if(tool==='adjust'&&typeof window.safelightAdjustTools?.render==='function'){const canvas=await window.safelightAdjustTools.render();if(canvas)return copyCanvas(canvas)}
-    if(tool==='canvas'&&typeof window.safelightCanvasTools?.render==='function'){const canvas=await window.safelightCanvasTools.render();if(canvas)return copyCanvas(canvas)}
-    if(tool==='annotation'&&typeof window.safelightAnnotationTools?.render==='function'){const canvas=await window.safelightAnnotationTools.render();if(canvas)return copyCanvas(canvas)}
-    if(tool==='background'&&typeof window.safelightBackgroundRemovalTools?.render==='function'){const canvas=await window.safelightBackgroundRemovalTools.render();if(canvas)return copyCanvas(canvas)}
+    if(tool==='adjust'&&typeof window.safelightAdjustTools?.render==='function'){const canvas=await window.safelightAdjustTools.render();if(canvas)return canvas}
+    if(tool==='canvas'&&typeof window.safelightCanvasTools?.render==='function'){const canvas=await window.safelightCanvasTools.render();if(canvas)return canvas}
+    if(tool==='annotation'&&typeof window.safelightAnnotationTools?.render==='function'){const canvas=await window.safelightAnnotationTools.render();if(canvas)return canvas}
+    if(tool==='background'&&typeof window.safelightBackgroundRemovalTools?.render==='function'){const canvas=await window.safelightBackgroundRemovalTools.render();if(canvas)return canvas}
+    if(tool==='watermark'&&typeof window.safelightWatermarkTools?.render==='function'){const canvas=await window.safelightWatermarkTools.render();if(canvas)return canvas}
     if(tool==='privacy'){
-      const live=$('sl-live-canvas'),wrap=$('previewWrap');if(live&&live.width&&live.height&&wrap?.classList.contains('sl-live-ready'))return copyCanvas(live);
-      throw new Error('Предпросмотр размытия ещё не готов');
+      if(typeof window.safelightPrivacyEffects?.render==='function'){const canvas=await window.safelightPrivacyEffects.render();if(canvas)return canvas}
+      throw new Error('Результат размытия ещё не готов');
+    }
+    if(typeof window.safelightLiveEditor?.renderFull==='function'){
+      const canvas=await window.safelightLiveEditor.renderFull(tool);if(canvas)return canvas;
     }
     await waitForLive(tool);
     const live=$('sl-live-canvas'),wrap=$('previewWrap');if(live&&live.width&&live.height&&wrap?.classList.contains('sl-live-ready')&&(lastLiveTool===tool||!lastLiveTool))return copyCanvas(live);

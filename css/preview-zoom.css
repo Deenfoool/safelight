@@ -18,15 +18,15 @@
   z-index: 80;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 5px 5px 10px;
+  gap: 4px;
+  padding: 5px;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 999px;
   background: rgba(13,13,16,.88);
   box-shadow: 0 8px 24px rgba(0,0,0,.32);
   color: #f4f4f5;
   font: 600 10px var(--mono);
-  pointer-events: none;
+  pointer-events: auto;
   backdrop-filter: blur(10px);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .sl-preview-zoom-hud button {
-  min-width: 42px;
+  min-width: 28px;
   height: 26px;
   padding: 0 8px;
   border: 1px solid rgba(74,222,128,.25);
@@ -47,9 +47,39 @@
   pointer-events: auto;
 }
 
+.sl-preview-zoom-hud button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.sl-preview-zoom-hud .sl-preview-zoom-value {
+  min-width: 52px;
+}
+
+.sl-preview-zoom-hud .sl-preview-zoom-fit {
+  min-width: 58px;
+  color: #d4d4d8;
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+
 .sl-preview-zoom-hud button:hover {
   border-color: rgba(74,222,128,.55);
   background: rgba(74,222,128,.16);
+}
+
+.sl-app #previewWrap.sl-preview-pan-ready,
+.sl-app #previewWrap.sl-preview-pan-ready .sl-crop-overlay,
+.sl-app #previewWrap.sl-preview-pan-ready .sl-privacy-surface,
+.sl-app #previewWrap.sl-preview-pan-ready .sl-ann-surface,
+.sl-app #previewWrap.sl-preview-pan-ready .sl-bg-removal-canvas {
+  cursor: grab !important;
+}
+
+.sl-app #previewWrap.sl-preview-panning,
+.sl-app #previewWrap.sl-preview-panning * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 @media (max-width: 760px), (hover: none) and (pointer: coarse) {
