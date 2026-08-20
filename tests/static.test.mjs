@@ -67,6 +67,22 @@ test("advanced censorship supports multiple modes, shapes and face detection fal
   assert.match(styles, /\.sl-pe-resize\.nw/);
 });
 
+test("preview zoom only consumes the wheel over the rendered image", async () => {
+  const runtime = await readFile(path.join(root, "js/preview-zoom.js"), "utf8");
+  const styles = await readFile(path.join(root, "css/preview-zoom.css"), "utf8");
+  const navigation = await readFile(path.join(root, "js/navigation.js"), "utf8");
+
+  assert.match(runtime, /pointIsOnSurface\(event, surface\)/);
+  assert.match(runtime, /event\.preventDefault\(\)/);
+  assert.match(runtime, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
+  assert.match(runtime, /MIN_ZOOM = 0\.25/);
+  assert.match(runtime, /MAX_ZOOM = 4/);
+  assert.match(runtime, /safelight:zoomchange/);
+  assert.match(styles, /--sl-preview-zoom/);
+  assert.match(navigation, /loadScript\('js\/preview-zoom\.js/);
+  assert.match(navigation, /css\/preview-zoom\.css/);
+});
+
 test("mobile editor keeps tools and export within thumb reach", async () => {
   const html = await readFile(path.join(root, "index.html"), "utf8");
   const shell = await readFile(path.join(root, "css/app-shell.css"), "utf8");

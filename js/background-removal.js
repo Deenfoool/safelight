@@ -220,7 +220,7 @@
     updateLabels();setMode('key');setBrushMode('erase');setView('transparent');
     window.addEventListener('safelight:toolchange',event=>{const page=String(event.detail?.page||'').replace(/-ui$/,'');if(page==='background')activate();else deactivate()});
     new MutationObserver(()=>{sourceSrc='';sourceData=null;resultData=null;mask=null;baseAlpha=null;if(active())setTimeout(()=>loadSource().catch(()=>{}),0)}).observe(preview,{attributes:true,attributeFilter:['src']});
-    window.addEventListener('resize',positionCanvas,{passive:true});window.addEventListener('scroll',positionCanvas,{passive:true});
+    window.addEventListener('resize',positionCanvas,{passive:true});window.addEventListener('scroll',positionCanvas,{passive:true});window.addEventListener('safelight:zoomchange',positionCanvas);
     if(active())activate();
   }
 

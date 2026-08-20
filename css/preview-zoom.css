@@ -1,0 +1,59 @@
+.sl-app #previewWrap {
+  --sl-preview-zoom: 1;
+  --sl-preview-pan-x: 0px;
+  --sl-preview-pan-y: 0px;
+}
+
+.sl-app #previewWrap > #previewImg,
+.sl-app #previewWrap > #sl-live-canvas {
+  transform: translate(var(--sl-preview-pan-x), var(--sl-preview-pan-y)) scale(var(--sl-preview-zoom));
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.sl-preview-zoom-hud {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 5px 5px 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  background: rgba(13,13,16,.88);
+  box-shadow: 0 8px 24px rgba(0,0,0,.32);
+  color: #f4f4f5;
+  font: 600 10px var(--mono);
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+}
+
+.sl-preview-zoom-hud[hidden] {
+  display: none !important;
+}
+
+.sl-preview-zoom-hud button {
+  min-width: 42px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(74,222,128,.25);
+  border-radius: 999px;
+  background: rgba(74,222,128,.1);
+  color: var(--accent);
+  font: 700 9px var(--mono);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.sl-preview-zoom-hud button:hover {
+  border-color: rgba(74,222,128,.55);
+  background: rgba(74,222,128,.16);
+}
+
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  .sl-preview-zoom-hud {
+    display: none !important;
+  }
+}

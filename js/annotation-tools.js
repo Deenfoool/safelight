@@ -251,6 +251,7 @@
   },true);
 
   window.addEventListener('resize',()=>requestAnimationFrame(syncSurface),{passive:true});
+  window.addEventListener('safelight:zoomchange',()=>requestAnimationFrame(syncSurface));
   window.addEventListener('safelight:toolchange',e=>{if(e.detail?.page==='annotation')setTimeout(()=>{syncSource().then(()=>{renderSurface();syncSurface()}).catch(()=>{})},0);else $('sl-ann-surface')?.classList.remove('show')});
   new MutationObserver(()=>{if(active()){syncSource().then(()=>{renderSurface();syncSurface()}).catch(()=>{})}}).observe($('previewImg')||document.documentElement,{attributes:true,attributeFilter:['src']});
 

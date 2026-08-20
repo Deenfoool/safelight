@@ -86,8 +86,53 @@ try {
   assert.ok(layout.rails.length > 0, "custom scrollbar rails were not installed");
   assert.ok(layout.rails.every((position) => position === "fixed"), "scrollbar rails must be fixed");
 
+  const wheelZoom = await page.evaluate(() => {
+    const wrap = document.getElementById("previewWrap");
+    const surface = [document.getElementById("sl-live-canvas"), document.getElementById("previewImg")]
+      .find((node) => node && getComputedStyle(node).display !== "none" && node.getBoundingClientRect().width);
+    const imageRect = surface.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const inside = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      clientX: imageRect.left + imageRect.width / 2,
+      clientY: imageRect.top + imageRect.height / 2,
+      deltaY: -120,
+    });
+    wrap.dispatchEvent(inside);
+    const afterInside = window.safelightPreviewZoom.get().zoom;
+    const outside = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+      clientX: wrapRect.left + 4,
+      clientY: wrapRect.top + 4,
+      deltaY: -120,
+    });
+    wrap.dispatchEvent(outside);
+    return {
+      insidePrevented: inside.defaultPrevented,
+      outsidePrevented: outside.defaultPrevented,
+      afterInside,
+      afterOutside: window.safelightPreviewZoom.get().zoom,
+    };
+  });
+  assert.equal(wheelZoom.insidePrevented, true, "wheel over the image should control zoom");
+  assert.equal(wheelZoom.outsidePrevented, false, "wheel outside the image must keep its native scroll behavior");
+  assert.ok(wheelZoom.afterInside > 1, "wheel up over the image should zoom in");
+  assert.equal(wheelZoom.afterOutside, wheelZoom.afterInside, "wheel outside the image must not change zoom");
+  await page.locator(".sl-preview-zoom-hud button").click();
+  assert.equal(await page.evaluate(() => window.safelightPreviewZoom.get().zoom), 1);
+
   await page.locator(".sl-sidebar [data-page='crop']").click();
   await page.waitForFunction(() => document.getElementById("sl-inspector-title")?.textContent === "Обрезка");
+  await page.evaluate(() => window.safelightPreviewZoom.set(1.5));
+  await page.waitForFunction(() => {
+    const source = document.getElementById("sl-crop-source")?.getBoundingClientRect();
+    const preview = document.getElementById("previewImg")?.getBoundingClientRect();
+    return source && preview && Math.abs(source.left - preview.left) < 1 && Math.abs(source.top - preview.top) < 1
+      && Math.abs(source.width - preview.width) < 1 && Math.abs(source.height - preview.height) < 1;
+  });
+  await page.evaluate(() => window.safelightPreviewZoom.reset());
   await page.locator(".sl-sidebar [data-page='canvas']").click();
   await page.waitForFunction(() => document.getElementById("sl-inspector-title")?.textContent === "Холст / рамки / поля");
 

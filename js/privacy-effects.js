@@ -880,6 +880,7 @@
   });
 
   window.addEventListener("resize", () => requestAnimationFrame(syncSurface), { passive: true });
+  window.addEventListener("safelight:zoomchange", () => requestAnimationFrame(syncSurface));
   const preview = $("previewImg");
   if (preview) {
     new MutationObserver(() => {
