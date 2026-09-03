@@ -45,6 +45,20 @@
     document.body.appendChild(script);
   }
 
+  function installSliceSelectionExtension() {
+    if (!document.querySelector('link[href*="slice-selection.css"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "css/slice-selection.css?v=1";
+      document.head.appendChild(link);
+    }
+    if (window.safelightSliceSelectionLoaded || document.querySelector('script[src*="slice-selection.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "js/slice-selection.js?v=1";
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+
   function standalone() {
     return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
   }
@@ -106,6 +120,7 @@
 
   function watchShell() {
     if (document.querySelector(".sl-app")) {
+      installSliceSelectionExtension();
       const button = ensureInstallUi();
       if (button && deferredPrompt) button.classList.add("show");
       return;
