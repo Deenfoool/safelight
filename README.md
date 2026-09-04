@@ -6,7 +6,7 @@ Compress, convert, resize, crop, blur, inspect metadata, extract palettes and mo
 
 [**Open Safelight**](https://deenfoool.github.io/safelight/) · [Roadmap](ROADMAP.md) · [Report a bug](https://github.com/Deenfoool/safelight/issues) · [Attribution License](LICENSE)
 
-![Safelight interface](portfolio.png)
+![Safelight interface](portfolio/cover.png)
 
 ---
 
